@@ -11,7 +11,7 @@ const CONFIG = {
 
   // SHA-256 hash admin key. Default password: "admin123"
   // Ganti: buka console → hashAdminKey("passwordBaru")
-  adminKeyHash: "371e62e927013dba836c44089c85cfea0ffdfcb4b2976e379c651e484122a207",
+  adminKeyHash: "7a88a6de1c012cdb506f4d9479d20d7a85a81a5e5a2c5a502367c7f03b251af3",
 
   webhookSaran: "https://discord.com/api/webhooks/1556123893679525918/CzaMKFNp4eRiVHAGCy9Jzsyfry86SecT40jbwywIuVP15kOB8gBug__MfDcPiVye7iLF",
 
