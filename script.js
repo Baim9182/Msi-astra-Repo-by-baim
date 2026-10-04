@@ -4,31 +4,30 @@
 const CONFIG = {
   appName: "MSI ASTRA",
 
-  //  Pakai Worker sebagai proxy
+  // Worker URL
   api: {
     baseUrl: "https://msi-astra-worker.muhammadbaimab.workers.dev"
   },
 
-  // SHA-256 hash admin key. Default password: "admin123"
-  // Ganti: buka console → hashAdminKey("passwordBaru")
-  adminKeyHash: "7a88a6de1c012cdb506f4d9479d20d7a85a81a5e5a2c5a502367c7f03b251af3",
+  // Password admin (SHA-256 hash)
+  // Default "admin123" = 240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9
+  adminKeyHash: "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
 
   webhookSaran: "https://discord.com/api/webhooks/1556123893679525918/CzaMKFNp4eRiVHAGCy9Jzsyfry86SecT40jbwywIuVP15kOB8gBug__MfDcPiVye7iLF",
 
   developer: {
-    name: "Baim𖣂︎",
+    name: "Baim",
     username: "@wthf_b6",
     role: "AI-Assisted Developer",
     profileImage: "https://i.ibb.co.com/twHc7kkk/Proyek-Baru-14-B060999.png",
     bannerImage:  "https://i.ibb.co.com/Wpfcnm91/a75a910e72dc11e3d0cab3b195729320.jpg",
-    description: "Gw suka minta bantuan AI buat ngoding, cari solusi, debugging, bikin desain, sampai nyari ide. Gw mungkin belum jago semuanya, tapi gw suka belajar sambil jalan.",
+    description: "Gw suka minta bantuan AI buat ngoding, cari solusi, debugging, bikin desain, sampai nyari ide.",
     badges: [
       { label:"AI Assisted", icon:"fa-solid fa-robot" },
       { label:"Logic",       icon:"fa-solid fa-brain" },
       { label:"WebView",     icon:"fa-solid fa-globe" },
       { label:"Android",     icon:"fa-brands fa-android" },
-      { label:"UI Design",   icon:"fa-solid fa-palette" },
-      { label:"Problem Solving", icon:"fa-solid fa-lightbulb" }
+      { label:"UI Design",   icon:"fa-solid fa-palette" }
     ]
   },
 
@@ -38,25 +37,20 @@ const CONFIG = {
   },
 
   quotes: [
-    'Jangan takut salah — <span class="qa">takut itu ilusi</span> yang kita bikin sendiri.',
+    'Jangan takut salah, <span class="qa">takut itu ilusi</span> yang kita bikin sendiri.',
     '<span class="qa">Skill</span> itu bukan bakat, tapi hasil dari ngulik terus-terusan.',
-    'AI nggak bakal gantiin lu, tapi <span class="qa">orang yang pake AI</span> bakal gantiin lu.',
-    'Koding itu <span class="qa">10% nulis</span>, 90% nyari kenapa error. 🤣',
-    'Kalau capek, <span class="qa">istirahat</span> — bukan berhenti.',
-    'Yang penting <span class="qa">jalan dulu</span>, sempurna mah nanti aja.',
-    'Error itu bukan musuh, tapi <span class="qa">guru paling jujur</span>.',
-    'Jangan bandingin progress lu sama orang lain, bandingin sama <span class="qa">diri lu kemarin</span>.'
+    'Kalau capek, <span class="qa">istirahat</span>, bukan berhenti.',
+    'Yang penting <span class="qa">jalan dulu</span>, sempurna mah nanti aja.'
   ]
 };
 
 /* ==========================================================
-   CONSTANTS & STATE
+   CONSTANTS
    ========================================================== */
-const GIST_API = "https://api.github.com/gists";
-const DEVICE_KEY = "msi_astra_device";
-const SESSION_KEY = "msi_astra_session";
-const VISITED_KEY = "msi_astra_visited";
-const THEME_KEY = "msi_astra_theme";
+const DEVICE_KEY = "msi_device";
+const SESSION_KEY = "msi_session";
+const VISITED_KEY = "msi_visited";
+const THEME_KEY = "msi_theme";
 
 let DEVICE_ID = "";
 try{
@@ -77,55 +71,33 @@ const $$ = (s,c=document)=>[...c.querySelectorAll(s)];
 const esc = (s="") => String(s).replace(/[&<>"']/g,x=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[x]));
 
 /* ==========================================================
-   CLOUD — GitHub Gist
+   CLOUD via WORKER
    ========================================================== */
-function cloudReady(){
-  return CONFIG.cloud?.gistId && CONFIG.cloud.gistId.length > 5 && !CONFIG.cloud.gistId.includes("PASTE")
-      && CONFIG.cloud?.token && CONFIG.cloud.token.length > 10 && !CONFIG.cloud.token.includes("PASTE");
-}
-
 async function cloudLoad(){
-  if(!cloudReady()) return null;
+  if(!CONFIG.api?.baseUrl) return null;
   try{
-    const r = await fetch(`${GIST_API}/${CONFIG.cloud.gistId}`, {
-      headers: {
-        "Accept": "application/vnd.github+json",
-        "Authorization": "Bearer " + CONFIG.cloud.token
-      }
-    });
+    const r = await fetch(`${CONFIG.api.baseUrl}/data`, { method: "GET" });
     if(!r.ok) throw new Error("HTTP " + r.status);
-    const g = await r.json();
-    const f = g.files?.[CONFIG.cloud.filename];
-    if(!f) throw new Error("File gak ada di Gist");
-    let content = f.content;
-    if(f.truncated){
-      const rr = await fetch(f.raw_url);
-      content = await rr.text();
-    }
-    return JSON.parse(content);
+    return await r.json();
   }catch(e){
-    console.warn("[Gist] load error:", e);
+    console.warn("[Cloud] load error:", e);
     return null;
   }
 }
 
 async function cloudSave(data){
-  if(!cloudReady()) return false;
+  if(!CONFIG.api?.baseUrl) return false;
   try{
-    const r = await fetch(`${GIST_API}/${CONFIG.cloud.gistId}`, {
-      method: "PATCH",
-      headers: {
-        "Accept": "application/vnd.github+json",
-        "Authorization": "Bearer " + CONFIG.cloud.token,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        files: { [CONFIG.cloud.filename]: { content: JSON.stringify(data, null, 2) } }
-      })
+    const r = await fetch(`${CONFIG.api.baseUrl}/save`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
     });
-    return r.ok;
+    if(!r.ok) return false;
+    const j = await r.json();
+    return j.ok === true;
   }catch(e){
-    console.warn("[Gist] save error:", e);
+    console.warn("[Cloud] save error:", e);
     return false;
   }
 }
@@ -177,7 +149,7 @@ function copyText(text){
 function statusBadge(status){
   const s = (status||"").toLowerCase();
   let cls = "available";
-  if(s.includes("tidak") || s.includes("unavailable") || s === "off") cls = "unavailable";
+  if(s.includes("tidak") || s.includes("unavailable")) cls = "unavailable";
   else if(s.includes("pre")) cls = "preorder";
   else if(s.includes("coming")) cls = "comingsoon";
   else if(s.includes("maintenance")) cls = "maintenance";
@@ -189,7 +161,7 @@ window.hashAdminKey = async function(pass){
   if(!p) return;
   const h = await sha256(p);
   console.log("%cHash: " + h, "color:#6c7cff;font-weight:bold");
-  try{ await navigator.clipboard.writeText(h); alert("Hash dicopy ke clipboard:\n\n" + h); }
+  try{ await navigator.clipboard.writeText(h); alert("Hash dicopy:\n\n" + h); }
   catch(e){ prompt("Copy manual:", h); }
   return h;
 };
@@ -368,14 +340,27 @@ function checkMaintenance(){
 }
 
 /* ==========================================================
-   ADMIN AUTH (MAIN + BACKUP KEY)
+   ADMIN AUTH — SIMPLE 1 KEY
    ========================================================== */
-function setSession(type="main", bkId=null){
+function checkIsAdmin(){
+  try{
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+    if(!s || s.deviceId !== DEVICE_ID || Date.now() >= s.exp){
+      IS_ADMIN = false;
+      return false;
+    }
+    IS_ADMIN = true;
+    return true;
+  }catch(e){
+    IS_ADMIN = false;
+    return false;
+  }
+}
+
+function setSession(){
   try{
     localStorage.setItem(SESSION_KEY, JSON.stringify({
       deviceId: DEVICE_ID,
-      type: type,
-      bkId: bkId,
       exp: Date.now() + (7 * 86400000)
     }));
   }catch(e){}
@@ -385,63 +370,14 @@ function clearSession(){
   try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
 }
 
-function getSession(){
-  try{ return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); }catch(e){ return null; }
-}
-
-function checkIsAdmin(){
-  const a = CLOUD_DATA?.admin || {};
-  const s = getSession();
-
-  if(!s || s.deviceId !== DEVICE_ID || Date.now() >= s.exp){
-    IS_ADMIN = false;
-    return false;
-  }
-
-  if(s.type === "backup"){
-    const bk = (a.backupKeys || []).find(x => x.id === s.bkId);
-    const valid = !!(bk && bk.active && bk.hash);
-    IS_ADMIN = valid;
-    if(!valid) clearSession();
-    return IS_ADMIN;
-  }
-
-  IS_ADMIN = !!(a.claimed && a.ownerId === DEVICE_ID);
-  return IS_ADMIN;
-}
-
-async function performAdminClaim(key){
+async function performAdminLogin(key){
   const hash = await sha256(key);
-  const a = CLOUD_DATA?.admin || {};
-
-  if(hash === CONFIG.adminKeyHash){
-    if(a.claimed && a.ownerId !== DEVICE_ID){
-      return { ok:false, reason:"Key utama sudah dipakai di device lain." };
-    }
-    CLOUD_DATA.admin = CLOUD_DATA.admin || {};
-    CLOUD_DATA.admin.claimed = true;
-    CLOUD_DATA.admin.ownerId = DEVICE_ID;
-    CLOUD_DATA.admin.claimedAt = new Date().toISOString();
-    setSession("main", null);
-    const ok = await persistCloud();
-    if(!ok) return { ok:false, reason:"Gagal simpan ke cloud." };
-    IS_ADMIN = true;
-    return { ok:true, type:"main" };
+  if(hash !== CONFIG.adminKeyHash){
+    return { ok:false, reason:"Key salah." };
   }
-
-  const bks = a.backupKeys || [];
-  for(const bk of bks){
-    if(bk.hash && bk.hash === hash){
-      if(!bk.active){
-        return { ok:false, reason:`${bk.label} sedang dinonaktifkan.` };
-      }
-      setSession("backup", bk.id);
-      IS_ADMIN = true;
-      return { ok:true, type:"backup", label: bk.label };
-    }
-  }
-
-  return { ok:false, reason:"Key salah." };
+  setSession();
+  IS_ADMIN = true;
+  return { ok:true };
 }
 
 /* ==========================================================
@@ -476,17 +412,13 @@ function initAdminLogin(){
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifikasi...';
     err.style.display = "none";
 
-    const res = await performAdminClaim(val);
+    const res = await performAdminLogin(val);
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-solid fa-unlock"></i> Masuk';
 
     if(res.ok){
       closeAdminLogin();
-      if(res.type === "main"){
-        toast("Welcome, Admin Utama! 🎉","success");
-      } else {
-        toast(`Welcome via ${res.label}! 🎉`,"success");
-      }
+      toast("Welcome, Admin!","success");
       applyAdminMode();
       checkMaintenance();
       setTimeout(()=>openAdminPanel(), 300);
@@ -526,8 +458,7 @@ const ADMIN_LABELS = {
   services: "Jasa",
   products: "Produk",
   payment:  "Payment",
-  website:  "Website",
-  backupKey:"Backup Key"
+  website:  "Website"
 };
 
 const ADMIN_FIELDS = {
@@ -546,12 +477,12 @@ const ADMIN_FIELDS = {
     { k:"icon", l:"Icon (Font Awesome class)", type:"text" }
   ],
   payment: [
-    { k:"id", l:"ID Unik (qris/gopay/dll)", type:"text" },
+    { k:"id", l:"ID Unik", type:"text" },
     { k:"name", l:"Nama Payment", type:"text" },
     { k:"icon", l:"Icon (Font Awesome)", type:"text" },
-    { k:"color", l:"Warna (hex, contoh #25d366)", type:"text" },
+    { k:"color", l:"Warna (hex)", type:"text" },
     { k:"type", l:"Tipe", type:"select", opts:["qris","phone","url"] },
-    { k:"value", l:"Value (nomor/URL/URL gambar)", type:"textarea" },
+    { k:"value", l:"Value", type:"textarea" },
     { k:"status", l:"Status", type:"select", opts:["available","unavailable","maintenance"] }
   ]
 };
@@ -571,7 +502,7 @@ function renderAdminPanel(){
     box.innerHTML = `
       <button class="modal-close" data-act="cancel"><i class="fa-solid fa-xmark"></i></button>
       <div class="modal-title" style="margin-bottom:14px">
-        ${isNew ? "➕ Tambah" : "✏️ Edit"} ${ADMIN_LABELS[tab]}
+        ${isNew ? "Tambah" : "Edit"} ${ADMIN_LABELS[tab]}
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;padding-right:4px">
         ${fields.map(f => {
@@ -621,17 +552,14 @@ function renderAdminPanel(){
       refreshAll();
       ADMIN_EDITING = null;
       renderAdminPanel();
-      toast(ok ? "Tersimpan ke cloud." : "Tersimpan lokal (cloud error).", ok ? "success" : "info");
+      toast(ok ? "Tersimpan." : "Gagal simpan ke cloud.", ok ? "success" : "error");
     };
     return;
   }
 
   const tab = ADMIN_TAB;
   const isWebsite = tab === "website";
-  const isBackup = tab === "backupKey";
-  const list = (isWebsite || isBackup) ? [] : (CLOUD_DATA[tab] || []);
-  const siteMode = (CLOUD_DATA?.site?.mode || "open").toLowerCase();
-  const isM = siteMode === "maintenance";
+  const list = isWebsite ? [] : (CLOUD_DATA[tab] || []);
 
   box.innerHTML = `
     <button class="modal-close" data-act="close"><i class="fa-solid fa-xmark"></i></button>
@@ -648,9 +576,7 @@ function renderAdminPanel(){
       ).join("")}
     </div>
 
-    ${isWebsite ? renderWebsiteTab(box)
-      : isBackup ? renderBackupKeysTab()
-      : `
+    ${isWebsite ? renderWebsiteTab() : `
       <button class="btn btn-primary btn-block" data-act="add" style="margin-bottom:12px">
         <i class="fa-solid fa-plus"></i> Tambah ${ADMIN_LABELS[tab]}
       </button>
@@ -662,8 +588,8 @@ function renderAdminPanel(){
               <small>${esc(it.status || it.price || it.value || "")}</small>
             </div>
             <div class="admin-item-btns">
-              <button data-edit="${i}" aria-label="Edit"><i class="fa-solid fa-pen"></i></button>
-              <button class="del" data-del="${i}" aria-label="Hapus"><i class="fa-solid fa-trash"></i></button>
+              <button data-edit="${i}"><i class="fa-solid fa-pen"></i></button>
+              <button class="del" data-del="${i}"><i class="fa-solid fa-trash"></i></button>
             </div>
           </div>`).join("")
         : `<div class="empty" style="padding:24px"><p>Belum ada data</p></div>`}
@@ -674,20 +600,12 @@ function renderAdminPanel(){
       <button class="btn btn-ghost" data-act="sync" style="flex:1;font-size:11px;padding:9px">
         <i class="fa-solid fa-rotate"></i> Sync
       </button>
-      <button class="btn btn-ghost" data-act="export" style="flex:1;font-size:11px;padding:9px">
-        <i class="fa-solid fa-download"></i> Export
-      </button>
     </div>
   `;
 
   box.querySelector("[data-act='close']").onclick = closeAdminPanel;
   box.querySelector("[data-act='logout']").onclick = () => {
-    const s = getSession();
-    const isBackup = s?.type === "backup";
-    const msg = isBackup
-      ? "Logout dari sesi backup key ini?"
-      : "Logout admin? Device ini bakal kehilangan akses admin utama.";
-    if(!confirm(msg)) return;
+    if(!confirm("Logout admin?")) return;
     clearSession();
     IS_ADMIN = false;
     closeAdminPanel();
@@ -702,11 +620,7 @@ function renderAdminPanel(){
     renderAdminPanel();
   });
 
-  if(isBackup){
-    bindBackupKeyHandlers(box);
-  }
-
-  if(!isWebsite && !isBackup){
+  if(!isWebsite){
     const addBtn = box.querySelector("[data-act='add']");
     if(addBtn) addBtn.onclick = () => {
       ADMIN_EDITING = { tab, idx: -1 };
@@ -721,10 +635,10 @@ function renderAdminPanel(){
       const name = CLOUD_DATA[tab][i]?.name || "item";
       if(!confirm(`Hapus "${name}"?`)) return;
       CLOUD_DATA[tab].splice(i, 1);
-      await persistCloud();
+      const ok = await persistCloud();
       refreshAll();
       renderAdminPanel();
-      toast("Dihapus.","success");
+      toast(ok ? "Dihapus." : "Gagal hapus.", ok ? "success" : "error");
     });
   }
 
@@ -732,58 +646,32 @@ function renderAdminPanel(){
     const data = await cloudLoad();
     if(!data){ toast("Gagal sync.","error"); return; }
     CLOUD_DATA = data;
-    ensureBackupKeys();
     refreshAll();
     checkIsAdmin();
     applyAdminMode();
     checkMaintenance();
     renderAdminPanel();
-    toast("Synced dari cloud.","success");
-  };
-  box.querySelector("[data-act='export']").onclick = () => {
-    const blob = new Blob([JSON.stringify(CLOUD_DATA, null, 2)], { type:"application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "msi-astra-data.json";
-    a.click();
+    toast("Synced.","success");
   };
 }
 
-function renderWebsiteTab(box){
+function renderWebsiteTab(){
   const site = CLOUD_DATA?.site || {};
   const mode = (site.mode || "open").toLowerCase();
   const isM = mode === "maintenance";
 
   setTimeout(() => {
-    const toggleBtn = box.querySelector("#maintToggle");
+    const toggleBtn = document.querySelector("#maintToggle");
     if(toggleBtn){
       toggleBtn.onclick = async () => {
         const target = isM ? "open" : "maintenance";
         CLOUD_DATA.site = CLOUD_DATA.site || {};
         CLOUD_DATA.site.mode = target;
         toggleBtn.disabled = true;
-        toggleBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+        toggleBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>...';
         const ok = await persistCloud();
-        if(ok) toast(target === "maintenance" ? "Maintenance AKTIF" : "Website ONLINE","success");
-        else toast("Gagal simpan.","error");
+        toast(ok ? (target === "maintenance" ? "Maintenance AKTIF" : "Website ONLINE") : "Gagal simpan.", ok ? "success" : "error");
         renderAdminPanel();
-        checkMaintenance();
-      };
-    }
-    const saveMsg = box.querySelector("#saveMaintMsg");
-    if(saveMsg){
-      saveMsg.onclick = async () => {
-        const msg = box.querySelector("#maintMsgInput").value.trim();
-        const eta = box.querySelector("#maintEtaInput").value.trim();
-        CLOUD_DATA.site = CLOUD_DATA.site || {};
-        CLOUD_DATA.site.maintenanceMessage = msg || "Website lagi diperbaiki.";
-        CLOUD_DATA.site.maintenanceEta = eta;
-        saveMsg.disabled = true;
-        saveMsg.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
-        const ok = await persistCloud();
-        saveMsg.disabled = false;
-        saveMsg.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Pesan';
-        toast(ok ? "Pesan disimpan." : "Gagal simpan.", ok ? "success" : "error");
         checkMaintenance();
       };
     }
@@ -792,31 +680,12 @@ function renderWebsiteTab(box){
   return `
     <div class="maint-banner">
       <i class="fa-solid fa-circle"></i>
-      Status Website: <b style="margin-left:4px">${isM ? "MAINTENANCE" : "ONLINE"}</b>
+      Status: <b style="margin-left:4px">${isM ? "MAINTENANCE" : "ONLINE"}</b>
     </div>
-
-    <button class="btn ${isM ? 'btn-wa' : 'btn-primary'} btn-block" id="maintToggle" style="margin-bottom:16px">
-      ${isM ? '<i class="fa-solid fa-power-off"></i> Kembalikan Website ONLINE'
-            : '<i class="fa-solid fa-screwdriver-wrench"></i> Aktifkan Maintenance Mode'}
+    <button class="btn ${isM ? 'btn-wa' : 'btn-primary'} btn-block" id="maintToggle">
+      ${isM ? '<i class="fa-solid fa-power-off"></i> Kembalikan ONLINE' 
+            : '<i class="fa-solid fa-screwdriver-wrench"></i> Aktifkan Maintenance'}
     </button>
-
-    <div style="font-size:11.5px;font-weight:600;margin-bottom:8px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase">
-      Pesan Maintenance
-    </div>
-    <div class="field">
-      <textarea id="maintMsgInput" rows="3" placeholder="Pesan yang muncul buat user...">${esc(site.maintenanceMessage || "")}</textarea>
-    </div>
-    <div class="field" style="margin-top:10px">
-      <label>Estimasi (opsional)</label>
-      <input type="text" id="maintEtaInput" value="${esc(site.maintenanceEta || "")}" placeholder="Contoh: ± 30 menit">
-    </div>
-    <button class="btn btn-ghost btn-block" id="saveMaintMsg" style="margin-top:12px">
-      <i class="fa-solid fa-floppy-disk"></i> Simpan Pesan
-    </button>
-    <p style="font-size:10.5px;color:var(--muted-2);margin-top:12px;line-height:1.5;text-align:center">
-      <i class="fa-solid fa-circle-info"></i> 
-      Saat maintenance aktif, user lihat popup blocking. Lu tetap bisa akses normal.
-    </p>
   `;
 }
 
@@ -833,134 +702,12 @@ function renderWebsiteForm(box){
   });
 }
 
-function renderBackupKeysTab(){
-  const admin = CLOUD_DATA?.admin || {};
-  const bks = admin.backupKeys || [];
-
-  return `
-    <div style="font-size:11.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">
-      <i class="fa-solid fa-info-circle" style="color:var(--primary)"></i>
-      Backup key dipakai kalau lu butuh akses admin dari device lain atau kasih ke orang kepercayaan.
-      Set password dulu, lalu <b style="color:var(--primary)">aktifkan</b> kalau mau dipakai.
-    </div>
-    ${bks.map((bk, i) => {
-      const hasHash = !!bk.hash;
-      const isActive = bk.active && hasHash;
-      return `
-      <div class="admin-item" style="flex-direction:column;align-items:stretch;gap:10px;padding:14px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
-            background:${isActive ? 'rgba(34,197,94,0.15)' : 'var(--surface-3)'};
-            color:${isActive ? '#4ade80' : '#6b7280'};font-size:14px;
-            border:1px solid ${isActive ? 'rgba(34,197,94,0.3)' : 'var(--border)'}">
-            <i class="fa-solid fa-key"></i>
-          </div>
-          <div style="flex:1;min-width:0">
-            <b style="font-size:13px;display:block;margin-bottom:2px">${esc(bk.label)}</b>
-            <small style="font-size:10.5px;color:var(--muted)">
-              ${!hasHash
-                ? '<i class="fa-solid fa-circle-exclamation" style="color:#fbbf24"></i> Belum ada password'
-                : isActive
-                  ? '<i class="fa-solid fa-circle-check" style="color:#4ade80"></i> Aktif — bisa dipakai login'
-                  : '<i class="fa-solid fa-circle-xmark" style="color:#6b7280"></i> Password siap (OFF)'
-              }
-            </small>
-          </div>
-          <span class="badge ${isActive ? 'available' : 'unavailable'}">
-            ${isActive ? 'AKTIF' : 'OFF'}
-          </span>
-        </div>
-
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-ghost" data-setbk="${i}" style="flex:1;font-size:11px;padding:8px 6px">
-            <i class="fa-solid fa-key"></i> ${hasHash ? 'Ganti Password' : 'Set Password'}
-          </button>
-          ${hasHash ? `
-            <button class="btn ${isActive ? 'btn-wa' : 'btn-primary'}" data-togglebk="${i}" style="flex:1;font-size:11px;padding:8px 6px">
-              ${isActive
-                ? '<i class="fa-solid fa-power-off"></i> Matikan'
-                : '<i class="fa-solid fa-play"></i> Aktifkan'}
-            </button>
-          ` : ''}
-        </div>
-
-        ${hasHash ? `
-          <button class="btn btn-ghost" data-delbk="${i}" style="font-size:10.5px;padding:6px;color:#f87171;border-color:rgba(248,113,113,0.3)">
-            <i class="fa-solid fa-trash"></i> Hapus Password
-          </button>
-        ` : ''}
-      </div>`;
-    }).join("")}
-  `;
-}
-
-function bindBackupKeyHandlers(box){
-  box.querySelectorAll("[data-setbk]").forEach(b => b.onclick = async () => {
-    const i = Number(b.dataset.setbk);
-    const bk = CLOUD_DATA.admin.backupKeys[i];
-    const pwd = prompt(`Masukkan password untuk ${bk.label}:\n(minimal 4 karakter)`);
-    if(pwd === null) return;
-    if(pwd.length < 4){ toast("Minimal 4 karakter.","error"); return; }
-
-    const hash = await sha256(pwd);
-    CLOUD_DATA.admin.backupKeys[i].hash = hash;
-    CLOUD_DATA.admin.backupKeys[i].active = false;
-    const ok = await persistCloud();
-    if(ok){
-      toast(`Password ${bk.label} diset. Status masih OFF.`,"success");
-      renderAdminPanel();
-    } else {
-      CLOUD_DATA.admin.backupKeys[i].hash = "";
-      toast("Gagal simpan.","error");
-    }
-  });
-
-  box.querySelectorAll("[data-togglebk]").forEach(b => b.onclick = async () => {
-    const i = Number(b.dataset.togglebk);
-    const bk = CLOUD_DATA.admin.backupKeys[i];
-    if(!bk.hash){ toast("Set password dulu.","error"); return; }
-
-    const newState = !bk.active;
-    CLOUD_DATA.admin.backupKeys[i].active = newState;
-
-    b.disabled = true;
-    b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-    const ok = await persistCloud();
-
-    if(ok){
-      toast(newState ? `${bk.label} sekarang AKTIF` : `${bk.label} dimatikan.`,"success");
-      renderAdminPanel();
-    } else {
-      CLOUD_DATA.admin.backupKeys[i].active = !newState;
-      toast("Gagal simpan.","error");
-      renderAdminPanel();
-    }
-  });
-
-  box.querySelectorAll("[data-delbk]").forEach(b => b.onclick = async () => {
-    const i = Number(b.dataset.delbk);
-    const bk = CLOUD_DATA.admin.backupKeys[i];
-    if(!confirm(`Hapus password ${bk.label}? Sesi yang lagi pakai key ini bakal logout.`)) return;
-
-    CLOUD_DATA.admin.backupKeys[i].hash = "";
-    CLOUD_DATA.admin.backupKeys[i].active = false;
-    const ok = await persistCloud();
-    if(ok){
-      toast(`${bk.label} dihapus.`,"success");
-      renderAdminPanel();
-    } else {
-      toast("Gagal simpan.","error");
-    }
-  });
-}
-
 /* ==========================================================
    WELCOME
    ========================================================== */
 function showWelcome(){
   const adminBtn = $("#welcomeAdminBtn");
-  const a = CLOUD_DATA?.admin || {};
-  if(adminBtn) adminBtn.style.display = a.claimed ? "none" : "flex";
+  if(adminBtn) adminBtn.style.display = "flex";
   const ov = $("#welcomeOverlay");
   if(ov){ ov.classList.add("show"); document.body.style.overflow = "hidden"; }
 }
@@ -1006,13 +753,6 @@ function initGeneralEvents(){
     }
   });
 
-  document.addEventListener("keydown", e => {
-    if(e.key === "Enter"){
-      const card = document.activeElement?.closest?.(".card[data-type]");
-      if(card) openDetail(card.dataset.type, Number(card.dataset.idx));
-    }
-  });
-
   $("#modalClose")?.addEventListener("click", ()=>$("#detailModal").classList.remove("show"));
   $("#qrisClose")?.addEventListener("click", ()=>$("#qrisModal").classList.remove("show"));
   $("#detailModal")?.addEventListener("click", e=>{ if(e.target.id==="detailModal") e.target.classList.remove("show"); });
@@ -1024,12 +764,8 @@ function initGeneralEvents(){
   $("#userMaintRefresh")?.addEventListener("click", async () => {
     toast("Cek status...","info");
     const data = await cloudLoad();
-    if(data){
-      CLOUD_DATA = data;
-      ensureBackupKeys();
-      refreshAll();
-      checkMaintenance();
-    } else toast("Gagal cek. Coba lagi.","error");
+    if(data){ CLOUD_DATA = data; refreshAll(); checkMaintenance(); }
+    else toast("Gagal cek.","error");
   });
 
   $("#themeBtn")?.addEventListener("click", ()=>$("#themePanel").classList.add("show"));
@@ -1221,10 +957,8 @@ function initSuggest(){
     submitBtn.innerHTML = original;
 
     if(ok){
-      toast("Saran lu kekirim. Makasih! 🙏","success");
+      toast("Saran kekirim. Makasih!","success");
       setTimeout(()=>resetBtn.click(), 800);
-    } else {
-      toast("Webhook belum diisi.","error");
     }
   });
 }
@@ -1243,16 +977,16 @@ async function sendSaranToDiscord(payload){
     avatar_url: d.profileImage,
     allowed_mentions: { parse: [] },
     embeds: [{
-      title: "📬  Saran Baru Masuk",
+      title: "Saran Baru Masuk",
       description: "Ada masukan baru dari user.",
       color: 0x6c7cff,
       author: { name: "MSI ASTRA • Form Saran", icon_url: d.profileImage },
       thumbnail: { url: d.profileImage },
       fields: [
-        { name: "👤  Pengirim", value: "```" + (payload.nama || "Anonim").slice(0,90) + "```", inline: true },
-        { name: "🏷️  Kategori", value: "```" + (payload.kategori || "-").slice(0,90) + "```", inline: true },
-        { name: "⚡  Quick Tag", value: payload.tag ? `> 🏷️ **${payload.tag}**` : "> _Tidak ada tag_", inline: false },
-        { name: "💬  Isi Pesan", value: "```\n" + (payload.pesan || "").slice(0,1000) + "\n```", inline: false }
+        { name: "Pengirim", value: "```" + (payload.nama || "Anonim").slice(0,90) + "```", inline: true },
+        { name: "Kategori", value: "```" + (payload.kategori || "-").slice(0,90) + "```", inline: true },
+        { name: "Quick Tag", value: payload.tag ? `> **${payload.tag}**` : "> _Tidak ada tag_", inline: false },
+        { name: "Isi Pesan", value: "```\n" + (payload.pesan || "").slice(0,1000) + "\n```", inline: false }
       ],
       footer: { text: `MSI ASTRA App • ${tanggal}`, icon_url: d.profileImage },
       timestamp: now.toISOString()
@@ -1273,7 +1007,7 @@ async function sendSaranToDiscord(payload){
 }
 
 /* ==========================================================
-   RELOCATE SUGGEST (landscape)
+   RELOCATE SUGGEST
    ========================================================== */
 function relocateSuggest(){
   const isLandscape = window.matchMedia('(orientation: landscape) and (max-height: 600px)').matches;
@@ -1283,20 +1017,6 @@ function relocateSuggest(){
   if(!card || !slotP || !slotL) return;
   const target = isLandscape ? slotL : slotP;
   if(card.parentElement !== target) target.appendChild(card);
-}
-
-/* ==========================================================
-   ENSURE BACKUP KEYS
-   ========================================================== */
-function ensureBackupKeys(){
-  if(!CLOUD_DATA) return;
-  CLOUD_DATA.admin = CLOUD_DATA.admin || { claimed: false, ownerId: null };
-  if(!Array.isArray(CLOUD_DATA.admin.backupKeys) || CLOUD_DATA.admin.backupKeys.length < 2){
-    CLOUD_DATA.admin.backupKeys = [
-      { id: "bk1", label: "Backup 1", hash: "", active: false },
-      { id: "bk2", label: "Backup 2", hash: "", active: false }
-    ];
-  }
 }
 
 /* ==========================================================
@@ -1331,8 +1051,7 @@ function ensureBackupKeys(){
         services: [],
         products: [],
         payment: [],
-        site: { mode: "open", maintenanceMessage: "Website lagi diperbaiki." },
-        admin: { claimed: false, ownerId: null }
+        site: { mode: "open" }
       };
     }
 
@@ -1340,20 +1059,14 @@ function ensureBackupKeys(){
     CLOUD_DATA.products = CLOUD_DATA.products || [];
     CLOUD_DATA.payment  = CLOUD_DATA.payment  || [];
     CLOUD_DATA.site     = CLOUD_DATA.site     || { mode: "open" };
-    CLOUD_DATA.admin    = CLOUD_DATA.admin    || { claimed: false, ownerId: null };
-
-    ensureBackupKeys();
 
     checkIsAdmin();
     applyAdminMode();
-
     refreshAll();
 
     const visited = (()=>{ try{ return localStorage.getItem(VISITED_KEY) === "1"; }catch(e){ return false; } })();
-    const a = CLOUD_DATA.admin;
-    const needsWelcome = !visited || !a.claimed;
 
-    if(needsWelcome){
+    if(!visited){
       showWelcome();
     } else {
       checkMaintenance();
