@@ -16,7 +16,7 @@
     <div class="maintenance-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
     <div class="maintenance-badge"><i class="fa-solid fa-circle"></i> Maintenance</div>
     <h2>Website Lagi <span class="mt-title-accent">Diperbaiki</span></h2>
-    <p id="userMaintMsg">Kami sedang melakukan perbaikan.</p>
+    <p id="userMaintMsg">-</p>
     <p id="userMaintEta" class="maint-eta"></p>
     <button class="btn btn-primary btn-block" id="userMaintRefresh"><i class="fa-solid fa-rotate"></i> Cek Lagi</button>
   </div>
@@ -38,7 +38,10 @@
     <button class="header-btn" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
     <div class="brand">
       <div class="brand-mark"><i class="fa-solid fa-bolt"></i></div>
-      <div class="brand-text"><span>MSI ASTRA</span><small>WEBVIEW</small></div>
+      <div class="brand-text">
+        <span id="brandName">MSI ASTRA</span>
+        <small id="brandSubtitle">WEBVIEW</small>
+      </div>
     </div>
     <div class="header-right">
       <button class="icon-btn" id="themeQuickBtn"><i class="fa-solid fa-palette"></i></button>
@@ -55,11 +58,11 @@
     <div class="sidebar-head">
       <div class="sidebar-brand">
         <div class="brand-mark"><i class="fa-solid fa-bolt"></i></div>
-        <div class="brand-text"><span>MSI ASTRA</span><small>MENU</small></div>
+        <div class="brand-text"><span id="sidebarBrandName">MSI ASTRA</span><small>MENU</small></div>
       </div>
       <button class="icon-btn" id="sidebarClose"><i class="fa-solid fa-xmark"></i></button>
     </div>
-    <nav class="sidebar-nav"></nav>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
     <div class="sidebar-foot">
       <button class="btn btn-ghost btn-block" id="themeBtn"><i class="fa-solid fa-palette"></i> Ganti Tema</button>
     </div>
@@ -76,17 +79,10 @@
       </div>
 
       <div class="hero">
-        <div class="hero-badge"><i class="fa-solid fa-circle"></i> Online & Ready</div>
-        <div class="welcome-rotate" id="welcomeRotate">
-          <div class="welcome-item active">Halo, gw <span class="accent">Baim</span></div>
-          <div class="welcome-item">Butuh <span class="accent">jasa custom?</span></div>
-          <div class="welcome-item">Mau <span class="accent">aplikasi & WebView?</span></div>
-        </div>
-        <p class="hero-sub">Tempat jasa, aplikasi, dan project digital.</p>
-        <div class="hero-actions">
-          <button class="btn btn-primary" data-nav="services"><i class="fa-solid fa-store"></i> Lihat Jasa</button>
-          <a class="btn btn-wa" id="homeWaBtn" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Chat WA</a>
-        </div>
+        <div class="hero-badge" id="heroBadge"><i class="fa-solid fa-circle"></i> <span>-</span></div>
+        <div class="welcome-rotate" id="welcomeRotate"></div>
+        <p class="hero-sub" id="heroSub">-</p>
+        <div class="hero-actions" id="heroActions"></div>
       </div>
 
       <div class="section-head"><div class="section-title"><i class="fa-solid fa-fire"></i> Layanan Populer</div></div>
@@ -124,42 +120,17 @@
       <div class="section-head"><div class="section-title"><i class="fa-solid fa-address-book"></i> Hubungi Gw</div></div>
       <div class="contact-hero">
         <img id="contactAvatar" alt="Avatar" onerror="this.style.display='none'">
-        <div class="contact-info"><h2 id="contactName">Baim</h2><p id="contactRole">AI-Assisted Developer</p></div>
+        <div class="contact-info"><h2 id="contactName">-</h2><p id="contactRole">-</p></div>
       </div>
-      <div class="contact-list">
-        <a class="contact-item" id="contactWa" target="_blank" rel="noopener">
-          <div class="contact-icon" style="background:linear-gradient(135deg,#25d366,#1ebe5d)"><i class="fa-brands fa-whatsapp"></i></div>
-          <div class="contact-body"><span>WhatsApp</span><small>Chat langsung</small></div>
-          <i class="fa-solid fa-chevron-right contact-chevron"></i>
-        </a>
-        <a class="contact-item" id="contactChannel" target="_blank" rel="noopener">
-          <div class="contact-icon" style="background:linear-gradient(135deg,#25d366,#128c7e)"><i class="fa-solid fa-bullhorn"></i></div>
-          <div class="contact-body"><span>Saluran WhatsApp</span><small>Info & update</small></div>
-          <i class="fa-solid fa-chevron-right contact-chevron"></i>
-        </a>
-        <button class="contact-item" data-sidebar="about">
-          <div class="contact-icon" style="background:linear-gradient(135deg,var(--primary),var(--secondary))"><i class="fa-solid fa-user-astronaut"></i></div>
-          <div class="contact-body"><span>About Dev</span><small>Profil lengkap</small></div>
-          <i class="fa-solid fa-chevron-right contact-chevron"></i>
-        </button>
-        <button class="contact-item" data-sidebar="lapor">
-          <div class="contact-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316)"><i class="fa-solid fa-bullhorn"></i></div>
-          <div class="contact-body"><span>Lapor Bug / Saran</span><small>Kirim masukan</small></div>
-          <i class="fa-solid fa-chevron-right contact-chevron"></i>
-        </button>
-      </div>
+      <div class="contact-list" id="contactList"></div>
     </section>
+
+    <!-- Custom pages slot -->
+    <div id="customPagesSlot"></div>
   </main>
 
   <div class="bottom-dock">
-    <div class="dock-inner">
-      <nav class="nav-inner">
-        <button class="nav-item active" data-page="home"><i class="fa-solid fa-house"></i><span>Home</span></button>
-        <button class="nav-item" data-page="services"><i class="fa-solid fa-store"></i><span>Jasa/Jual</span></button>
-        <button class="nav-item" data-page="payment"><i class="fa-solid fa-wallet"></i><span>Payment</span></button>
-        <button class="nav-item" data-page="contact"><i class="fa-solid fa-address-book"></i><span>Contact</span></button>
-      </nav>
-    </div>
+    <div class="dock-inner"><nav class="nav-inner" id="mainNav"></nav></div>
   </div>
 </div>
 
@@ -202,9 +173,7 @@
     <div style="text-align:center;padding:8px 0 20px">
       <div class="admin-icon"><i class="fa-solid fa-lock"></i></div>
       <div class="modal-title" style="margin-top:16px;font-size:17px">Admin Access</div>
-      <p style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5">
-        Key cuma bisa dipakai <b style="color:var(--primary)">1x</b> di satu device.
-      </p>
+      <p style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5">Key cuma bisa dipakai <b style="color:var(--primary)">1x</b>.</p>
     </div>
     <div class="field">
       <label><i class="fa-solid fa-key"></i> Admin Key</label>
@@ -216,13 +185,13 @@
 </div>
 
 <div class="modal" id="adminPanelModal">
-  <div class="modal-box" id="adminPanelBox" style="max-width:640px"></div>
+  <div class="modal-box" id="adminPanelBox" style="max-width:660px"></div>
 </div>
 
 <div class="theme-panel" id="themePanel">
   <div class="theme-box">
     <h3><i class="fa-solid fa-palette" style="color:var(--primary)"></i> Ganti Tema</h3>
-    <p>Pilih tema yang lu suka. Banner & warna otomatis ikut.</p>
+    <p>Pilih tema yang lu suka.</p>
     <div class="theme-grid" id="themeGrid"></div>
     <button class="btn btn-ghost btn-block" id="themeClose">Tutup</button>
   </div>
