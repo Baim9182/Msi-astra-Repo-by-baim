@@ -1,5 +1,5 @@
 <style>
-.ct-wrap{max-width:640px;margin:0 auto;padding:4px 0 80px}
+.ct-wrap{max-width:640px;margin:0 auto;padding:4px 0 40px}
 .ct-head{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;margin-bottom:20px;letter-spacing:-.2px}
 .ct-head i{color:var(--primary);font-size:14px}
 
@@ -34,65 +34,40 @@
 .ct-feature-body h4{font-size:13.5px;font-weight:700;margin-bottom:4px}
 .ct-feature-body p{font-size:11.5px;color:var(--muted);line-height:1.55}
 
-/* ===== FOOTER — FIXED DI ATAS NAVBAR ===== */
-.ct-footer{
-  position:fixed;
-  left:0;right:0;
-  bottom:calc(var(--nav-h) + 14px + env(safe-area-inset-bottom,0px));
-  z-index:45;
-  padding:0 16px;
-  display:flex;justify-content:center;
-  pointer-events:none;
-  animation:ctFootIn .5s var(--ease-out) .2s both;
+/* ===== FOOTER BIASA ===== */
+.ct-foot{
+  margin-top:24px;
+  padding:20px 16px;
+  border-radius:16px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  text-align:center;
 }
-@keyframes ctFootIn{
-  from{opacity:0;transform:translateY(20px)}
-  to{opacity:1;transform:translateY(0)}
-}
-.ct-footer-inner{
-  pointer-events:auto;
-  width:100%;max-width:520px;
-  padding:10px 14px;
-  border-radius:14px;
-  background:var(--surface-2);
-  backdrop-filter:blur(24px) saturate(180%);
-  -webkit-backdrop-filter:blur(24px) saturate(180%);
-  border:1px solid var(--border-strong);
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  box-shadow:0 8px 24px rgba(0,0,0,.5);
-}
-.ct-footer-left{
+.ct-foot-top{
   display:flex;align-items:center;gap:8px;
-  font-size:10.5px;color:var(--muted-2);
+  font-size:12px;color:var(--muted);
   font-family:var(--font-mono);
   letter-spacing:.3px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
 }
-.ct-footer-left i{
-  color:var(--primary);font-size:11px;
-  flex-shrink:0;
-}
-.ct-footer-left b{
-  color:var(--text);font-weight:600;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.ct-footer-right{
+.ct-foot-top i{color:var(--primary);font-size:12px}
+.ct-foot-top b{color:var(--text);font-weight:600}
+.ct-foot-bottom{
   display:flex;align-items:center;gap:6px;
-  font-size:9.5px;color:var(--muted-2);
+  font-size:10px;color:var(--muted-2);
   font-family:var(--font-mono);
-  letter-spacing:.5px;
-  text-transform:uppercase;
-  flex-shrink:0;
+  letter-spacing:.4px;
 }
-.ct-footer-right .dot{
+.ct-foot-bottom .dot{
   width:5px;height:5px;border-radius:50%;
   background:#22c55e;
   box-shadow:0 0 6px #22c55e;
   animation:ctPulse 1.5s ease infinite;
+}
+.ct-foot-sep{
+  width:32px;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,var(--primary),transparent);
+  opacity:.4;margin:4px 0;
 }
 </style>
 
@@ -156,18 +131,17 @@
       <p>Biasanya admin balas dalam 1×24 jam. Buat respon cepat, kirim pesan via WhatsApp.</p>
     </div>
   </div>
-</div>
 
-<!-- FOOTER FIXED DI ATAS NAVBAR -->
-<div class="ct-footer">
-  <div class="ct-footer-inner">
-    <div class="ct-footer-left">
+  <!-- FOOTER BIASA -->
+  <div class="ct-foot">
+    <div class="ct-foot-top">
       <i class="fa-solid fa-bolt"></i>
-      <span>© <b id="ctFooterYear">2026</b> <b id="ctFooterName">MSI ASTRA</b></span>
+      <span>© <b id="ctFootYear">2026</b> <b id="ctFootName">MSI ASTRA</b></span>
     </div>
-    <div class="ct-footer-right">
+    <div class="ct-foot-sep"></div>
+    <div class="ct-foot-bottom">
       <span class="dot"></span>
-      <span>Online</span>
+      <span>All systems operational</span>
     </div>
   </div>
 </div>
@@ -186,7 +160,6 @@
   const setSrc = (id, v) => { const el = $(id); if(el) el.src = v || ""; };
   const setHref = (id, v) => { const el = $(id); if(el) el.href = v || "#"; };
 
-  /* Hero */
   setSrc("#ctAvatar", d.profileImage);
   setTxt("#ctName", d.name || "Developer");
   setTxt("#ctRole", d.role || "Developer");
@@ -194,11 +167,11 @@
   setHref("#ctWa", c.whatsapp || "#");
   setHref("#ctChannel", c.channel || "#");
 
-  /* Footer */
-  setTxt("#ctFooterYear", new Date().getFullYear());
-  setTxt("#ctFooterName", p.appName || "MSI ASTRA");
+  /* Footer year & name */
+  setTxt("#ctFootYear", new Date().getFullYear());
+  setTxt("#ctFootName", p.appName || "MSI ASTRA");
 
-  /* Sidebar triggers — biar bisa diklik dari dalam contact */
+  /* Sidebar triggers */
   document.querySelectorAll("[data-sidebar]").forEach(el => {
     el.onclick = () => {
       const target = el.dataset.sidebar;
