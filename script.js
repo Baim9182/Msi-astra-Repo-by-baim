@@ -1210,6 +1210,153 @@ function refreshAll(){
   renderCustomPages();
 }
 
+/* ============ FRAGMENT BINDERS ============ */
+window.bindAboutPage = function(){
+  const d = CLOUD_DATA.preferences?.developer || {};
+  const c = CLOUD_DATA.preferences?.contact || {};
+  const setTxt = (id,v)=>{ const el=$(id); if(el) el.textContent = v || ""; };
+  const setSrc = (id,v)=>{ const el=$(id); if(el) el.src = v || ""; };
+  const setHref = (id,v)=>{ const el=$(id); if(el) el.href = v || "#"; };
+  setTxt("#aboutNameText", d.name);
+  setTxt("#aboutUsernameText", d.username);
+  setTxt("#aboutQuote", d.quote);
+  setTxt("#aboutDesc", d.description);
+  setTxt("#aboutCurrently", d.currently);
+  setSrc("#aboutAvatar", d.profileImage);
+  const statsEl = $("#aboutStats");
+  if(statsEl) statsEl.innerHTML = (d.stats||[]).map(s => `<div class="about-stat"><div class="about-stat-num">${esc(s.num)}</div><div class="about-stat-label">${esc(s.label)}</div></div>`).join("");
+  const tkEl = $("#aboutToolkit");
+  if(tkEl) tkEl.innerHTML = (d.toolkit||[]).map(t => `<div class="about-tool ${esc(t.cls)}"><i class="${esc(t.icon)}"></i> ${esc(t.name)}</div>`).join("");
+  setHref("#aboutWaBtn", c.whatsapp);
+  setHref("#aboutChannelBtn", c.channel);
+  $$(".about-tab").forEach(t => t.onclick = () => { $$(".about-tab").forEach(x => x.classList.remove("active")); t.classList.add("active"); });
+};
+
+window.bindLaporPage = function(){
+  const form = $("#laporForm"); if(!form) return;
+  const nameEl = $("#lfName"), catEl = $("#lfCategory"), msgEl = $("#lfMessage"), countEl = $("#lfCount"), submitBtn = $("#lfSubmit");
+
+  try{
+    const lastName = localStorage.getItem("msi_lapor_name") || "";
+    if(lastName){ nameEl.value = lastName; $("#laporUserDisplay").textContent = "@" + lastName; }
+  }catch(e){}
+
+  const updateQuota = () => {
+    const rem = getRemainingLapor();
+    const limit = CLOUD_DATA.preferences?.dailyLimit || 5;
+    const q = $("#laporQuotaValue");
+    if(q) q.textContent = rem + "/" + limit;
+    if(rem <= 0){ submitBtn.disabled = true; submitBtn.style.opacity = "0.5"; }
+  };
+  updateQuota();
+
+  msgEl.addEventListener("input", () => { countEl.textContent = msgEl.value.length; });
+  nameEl.addEventListener("input", () => {
+    const v = nameEl.value.trim();
+    $("#laporUserDisplay").textContent = v ? "@" + v : "@-";
+  });
+
+  const t0 = Date.now();
+  setInterval(() => {
+    const s = Math.floor((Date.now() - t0) / 1000);
+    const m = Math.floor(s/60), ss = s % 60;
+    const el = $("#laporSession");
+    if(el) el.textContent = "Sesi " + String(m).padStart(2,"0") + ":" + String(ss).padStart(2,"0");
+  }, 1000);
+
+  submitBtn.onclick = async () => {
+    if(getRemainingLapor() <= 0){ toast("Kuota habis.","error"); return; }
+    const nama = nameEl.value.trim();
+    if(!nama){ toast("Isi nama dulu.","error"); nameEl.focus(); return; }
+    const pesan = msgEl.value.trim();
+    if(pesan.length < 5){ toast("Min 5 karakter.","error"); msgEl.focus(); return; }
+    submitBtn.disabled = true; submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    try{ localStorage.setItem("msi_lapor_name", nama); }catch(e){}
+    const ok = await sendLaporToDiscord({ nama, kategori: catEl.value, pesan });
+    if(ok){
+      incrementLapor({ nama, kategori: catEl.value, pesan: pesan.slice(0,100) });
+      toast("Terkirim. Makasih!","success");
+      msgEl.value = ""; countEl.textContent = "0"; updateQuota();
+    } else toast("Gagal kirim.","error");
+    submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+  };
+};
+
+window.bindOrderPage = function(){
+  const wa = CLOUD_DATA.preferences?.contact?.whatsapp || "#";
+  const all = [
+    ...(CLOUD_DATA.services||[]).map(s => ({ ...s, _cat: "jasa", _catLabel: "Jasa" })),
+    ...(CLOUD_DATA.products||[]).map(p => ({ ...p, _cat: "produk", _catLabel: "Produk" }))
+  ];
+  const statEl = $("#orderStatProducts");
+  if(statEl) statEl.textContent = all.length + "+";
+
+  let cat = "all", search = "";
+
+  const render = () => {
+    const c = $("#orderProducts"); if(!c) return;
+    const filtered = all.filter(p => {
+      if(cat !== "all" && p._cat !== cat) return false;
+      if(search){ const hay = (p.name + " " + (p.description||"")).toLowerCase(); if(!hay.includes(search.toLowerCase())) return false; }
+      return true;
+    });
+    if(!filtered.length){ c.innerHTML = `<div class="empty" style="padding:30px"><i class="fa-regular fa-folder-open"></i><p>Belum ada produk.</p></div>`; return; }
+    c.innerHTML = filtered.map(p => {
+      const msg = encodeURIComponent(`Halo, gw mau order "${p.name}". Bisa dijelasin detailnya?`);
+      const link = wa + (wa.includes("?")?"&":"?") + "text=" + msg;
+      return `<div class="order-product">
+        <div class="order-product-head">
+          <div class="order-product-icon" style="color:var(--primary)"><i class="${esc(p.icon||'fa-solid fa-box')}"></i></div>
+          <div class="order-product-badges"><span class="order-product-badge cat"><i class="fa-solid fa-tag"></i> ${esc(p._catLabel)}</span></div>
+        </div>
+        <div class="order-product-title">${esc(p.name)}</div>
+        <div class="order-product-desc">${esc(p.description||"")}</div>
+        <div class="order-product-features">
+          <div class="order-product-feature"><i class="fa-solid fa-check"></i> Harga terjangkau</div>
+          <div class="order-product-feature"><i class="fa-solid fa-check"></i> Proses cepat</div>
+        </div>
+        <div class="order-product-foot">
+          <div><div class="order-product-price">${esc(p.price||"-")}</div></div>
+          <a class="order-product-cta" href="${esc(link)}" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Order</a>
+        </div>
+      </div>`;
+    }).join("");
+  };
+  render();
+
+  $$("#orderCats .order-cat").forEach(b => b.onclick = () => {
+    $$("#orderCats .order-cat").forEach(x => x.classList.remove("active"));
+    b.classList.add("active"); cat = b.dataset.cat; render();
+  });
+  $("#orderSearch")?.addEventListener("input", e => { search = e.target.value.trim(); render(); });
+};
+
+/* sendLaporToDiscord — expose ke window */
+window.sendLaporToDiscord = async function(payload){
+  const url = (CONFIG.webhookSaran || "").trim();
+  if(!url || !/^https:\/\/discord(app)?\.com\/api\/webhooks\//.test(url)) return false;
+  const d = CLOUD_DATA.preferences?.developer || {};
+  const now = new Date();
+  const body = {
+    username: (d.name || "MSI ASTRA").slice(0, 80),
+    avatar_url: d.profileImage,
+    allowed_mentions: { parse: [] },
+    embeds: [{
+      title: "Pesan Baru dari User",
+      color: 0x06b6d4,
+      fields: [
+        { name: "Pengirim", value: "```" + (payload.nama||"Anonim").slice(0,90) + "```", inline: true },
+        { name: "Kategori", value: "```" + (payload.kategori||"-").slice(0,90) + "```", inline: true },
+        { name: "Isi Pesan", value: "```\n" + (payload.pesan||"").slice(0,1000) + "\n```", inline: false }
+      ],
+      timestamp: now.toISOString()
+    }]
+  };
+  const jsonStr = JSON.stringify(body);
+  if(navigator.sendBeacon){ try{ const blob = new Blob([jsonStr], { type:"application/json" }); if(navigator.sendBeacon(url, blob)) return true; }catch(e){} }
+  try{ fetch(url, { method:"POST", mode:"no-cors", headers:{ "Content-Type":"text/plain" }, body: jsonStr }).catch(()=>{}); return true; }catch(e){ return false; }
+};
+
 /* ============ INIT ============ */
 (async function init(){
   try{
