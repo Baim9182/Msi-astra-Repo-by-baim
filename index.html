@@ -11,6 +11,7 @@
 </head>
 <body>
 
+<!-- MAINTENANCE OVERLAY -->
 <div class="maintenance-overlay" id="userMaintOverlay">
   <div class="maintenance-card">
     <div class="maintenance-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
@@ -22,6 +23,7 @@
   </div>
 </div>
 
+<!-- CHANGELOG OVERLAY -->
 <div class="maintenance-overlay" id="changelogOverlay">
   <div class="maintenance-card changelog-card">
     <div class="changelog-icon"><i class="fa-solid fa-rocket"></i></div>
@@ -37,14 +39,14 @@
   <header class="header">
     <button class="header-btn" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
     <div class="brand">
-      <div class="brand-mark"><i class="fa-solid fa-bolt"></i></div>
+      <div class="brand-mark" id="brandMark"><i class="fa-solid fa-bolt"></i></div>
       <div class="brand-text">
         <span id="brandName">MSI ASTRA</span>
         <small id="brandSubtitle">WEBVIEW</small>
       </div>
     </div>
     <div class="header-right">
-      <button class="icon-btn" id="themeQuickBtn"><i class="fa-solid fa-palette"></i></button>
+      <button class="icon-btn" id="themeQuickBtn" title="Ganti Tema"><i class="fa-solid fa-palette"></i></button>
       <div class="clock">
         <i class="fa-regular fa-clock"></i>
         <span id="clockTime">--:--</span>
@@ -125,7 +127,6 @@
       <div class="contact-list" id="contactList"></div>
     </section>
 
-    <!-- Custom pages slot -->
     <div id="customPagesSlot"></div>
   </main>
 
@@ -134,6 +135,7 @@
   </div>
 </div>
 
+<!-- FULLPAGE OVERLAY -->
 <div class="fullpage" id="fullpage">
   <div class="fullpage-head">
     <button class="icon-btn" id="fullpageBack"><i class="fa-solid fa-arrow-left"></i></button>
@@ -146,6 +148,7 @@
   <div class="fullpage-body" id="fullpageBody"></div>
 </div>
 
+<!-- DETAIL MODAL -->
 <div class="modal" id="detailModal">
   <div class="modal-box">
     <button class="modal-close" id="modalClose"><i class="fa-solid fa-xmark"></i></button>
@@ -159,6 +162,7 @@
   </div>
 </div>
 
+<!-- QRIS MODAL -->
 <div class="modal" id="qrisModal">
   <div class="modal-box">
     <button class="modal-close" id="qrisClose"><i class="fa-solid fa-xmark"></i></button>
@@ -167,13 +171,16 @@
   </div>
 </div>
 
+<!-- ADMIN LOGIN MODAL -->
 <div class="modal" id="adminLoginModal">
   <div class="modal-box" style="max-width:400px">
     <button class="modal-close" id="adminLoginClose"><i class="fa-solid fa-xmark"></i></button>
     <div style="text-align:center;padding:8px 0 20px">
       <div class="admin-icon"><i class="fa-solid fa-lock"></i></div>
       <div class="modal-title" style="margin-top:16px;font-size:17px">Admin Access</div>
-      <p style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5">Key cuma bisa dipakai <b style="color:var(--primary)">1x</b>.</p>
+      <p style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5">
+        Masukkan admin key. Key cuma bisa dipakai <b style="color:var(--primary)">1x</b> di satu device.
+      </p>
     </div>
     <div class="field">
       <label><i class="fa-solid fa-key"></i> Admin Key</label>
@@ -184,10 +191,12 @@
   </div>
 </div>
 
+<!-- ADMIN PANEL MODAL -->
 <div class="modal" id="adminPanelModal">
   <div class="modal-box" id="adminPanelBox" style="max-width:660px"></div>
 </div>
 
+<!-- THEME PANEL -->
 <div class="theme-panel" id="themePanel">
   <div class="theme-box">
     <h3><i class="fa-solid fa-palette" style="color:var(--primary)"></i> Ganti Tema</h3>
