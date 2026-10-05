@@ -6,7 +6,8 @@
 .or-status{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;color:#4ade80;margin-top:4px;font-family:var(--font-mono)}
 .or-status::before{content:"";width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80;animation:orPulse 1.5s ease infinite}
 @keyframes orPulse{0%,100%{opacity:1}50%{opacity:.4}}
-.or-menu{width:38px;height:38px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;font-size:14px;color:var(--muted);flex-shrink:0}
+.or-menu{width:40px;height:40px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;font-size:14px;color:var(--muted);flex-shrink:0;cursor:pointer;transition:all .25s}
+.or-menu:active{transform:scale(.92);border-color:var(--primary)}
 .or-badge{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:999px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:#4ade80;font-size:10.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px;font-family:var(--font-mono)}
 .or-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80}
 .or-head{font-size:clamp(24px,6.5vw,34px);font-weight:800;line-height:1.12;letter-spacing:-1px;margin-bottom:12px}
@@ -49,6 +50,89 @@
 .or-product-cta{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:11px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#000;font-size:11px;font-weight:700;box-shadow:0 6px 14px var(--primary-glow);font-family:var(--font-mono);text-decoration:none}
 .or-product-cta:active{transform:scale(.94)}
 .or-empty{padding:30px;text-align:center;color:var(--muted);font-size:12.5px;border:1px dashed var(--border-strong);border-radius:12px}
+
+/* ═══ ORDER HISTORY SIDEBAR ═══ */
+.or-history-overlay{
+  position:fixed;inset:0;z-index:400;
+  background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.or-history-overlay.show{opacity:1;pointer-events:auto}
+.or-history{
+  position:fixed;top:16px;right:16px;bottom:16px;z-index:401;
+  width:min(360px, calc(100vw - 32px));
+  background:linear-gradient(180deg,rgba(20,20,26,0.98),rgba(10,10,14,0.99));
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:24px;
+  display:flex;flex-direction:column;
+  transform:translateX(calc(100% + 32px));
+  transition:transform .5s cubic-bezier(.65,.05,.36,1);
+  box-shadow:0 24px 60px rgba(0,0,0,0.75);
+  overflow:hidden;
+}
+.or-history.show{transform:translateX(0)}
+.or-history-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:18px;border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.or-history-title{
+  font-size:13px;font-weight:800;letter-spacing:2px;
+  text-transform:uppercase;font-family:var(--font-mono);
+}
+.or-history-sub{
+  font-size:10.5px;color:var(--muted-2);letter-spacing:.4px;
+  margin-top:4px;font-family:var(--font-mono);
+}
+.or-history-body{flex:1;overflow-y:auto;padding:12px;scrollbar-width:thin}
+.or-history-body::-webkit-scrollbar{width:4px}
+.or-history-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
+.or-history-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:60px 20px;color:var(--muted-2);
+}
+.or-history-empty i{font-size:32px;margin-bottom:12px;opacity:.5}
+.or-history-empty b{font-size:13px;color:var(--muted);margin-bottom:6px}
+.or-history-empty p{font-size:11.5px;line-height:1.5;max-width:220px}
+
+.or-history-item{
+  padding:14px;border-radius:14px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.06);
+  margin-bottom:8px;
+}
+.or-history-item-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;margin-bottom:8px;
+}
+.or-history-item-name{
+  font-size:12.5px;font-weight:700;line-height:1.3;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.or-history-item-status{
+  font-size:9px;font-weight:700;letter-spacing:.4px;
+  padding:3px 8px;border-radius:999px;font-family:var(--font-mono);
+  background:rgba(34,197,94,0.12);color:#4ade80;
+  border:1px solid rgba(34,197,94,0.3);flex-shrink:0;
+  text-transform:uppercase;
+}
+.or-history-item-status.pending{
+  background:rgba(245,158,11,0.12);color:#fbbf24;
+  border-color:rgba(245,158,11,0.3);
+}
+.or-history-item-meta{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;font-size:10.5px;font-family:var(--font-mono);color:var(--muted-2);
+}
+.or-history-item-price{color:var(--primary);font-weight:700}
+.or-history-clear{
+  margin:12px;padding:10px;border-radius:12px;
+  background:rgba(239,68,68,0.08);
+  border:1px solid rgba(239,68,68,0.25);
+  color:#f87171;font-size:11px;font-weight:600;
+  cursor:pointer;font-family:var(--font-mono);
+  text-align:center;
+}
+.or-history-clear:active{transform:scale(.97)}
 </style>
 
 <div class="or-wrap">
@@ -57,7 +141,9 @@
       <div class="or-name">Store<span class="sep">/</span>Digital</div>
       <div class="or-status">online</div>
     </div>
-    <div class="or-menu"><i class="fa-solid fa-bars"></i></div>
+    <button class="or-menu" id="orMenuBtn" aria-label="Riwayat">
+      <i class="fa-solid fa-bars"></i>
+    </button>
   </div>
 
   <div class="or-badge">Premium Store</div>
@@ -104,11 +190,30 @@
   <div class="or-products" id="orProducts"></div>
 </div>
 
+<!-- HISTORY SIDEBAR -->
+<div class="or-history-overlay" id="orHistoryOverlay"></div>
+<aside class="or-history" id="orHistory">
+  <div class="or-history-head">
+    <div>
+      <div class="or-history-title">Riwayat Pesanan</div>
+      <div class="or-history-sub">Order history</div>
+    </div>
+    <button class="icon-btn" id="orHistoryClose"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="or-history-body" id="orHistoryBody"></div>
+  <div class="or-history-clear" id="orHistoryClear" style="display:none">
+    <i class="fa-solid fa-trash"></i> Hapus Semua Riwayat
+  </div>
+</aside>
+
 <script>
 (function(){
   const $ = window.$;
   const esc = window.esc;
+  const toast = window.toast;
   const getCloudData = window.getCloudData;
+
+  const HISTORY_KEY = "msi_order_history";
 
   const data = getCloudData();
   if(!data) return;
@@ -126,6 +231,103 @@
   let cat = "all";
   let search = "";
 
+  /* ===== HISTORY FUNCTIONS ===== */
+  function getHistory(){
+    try{
+      const raw = localStorage.getItem(HISTORY_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){ return []; }
+  }
+  function saveHistory(list){
+    try{ localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); }catch(e){}
+  }
+  function addHistory(item){
+    const list = getHistory();
+    list.unshift({
+      id: "ORD-" + Date.now().toString(36).toUpperCase(),
+      name: item.name,
+      price: item.price,
+      icon: item.icon,
+      cat: item._catLabel,
+      status: "pending",
+      date: new Date().toISOString()
+    });
+    // Max 50 items
+    if(list.length > 50) list.length = 50;
+    saveHistory(list);
+  }
+  function clearHistory(){
+    saveHistory([]);
+    renderHistory();
+    toast("Riwayat dihapus.","success");
+  }
+
+  function formatDate(iso){
+    const d = new Date(iso);
+    const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+    const day = String(d.getDate()).padStart(2,"0");
+    const mon = months[d.getMonth()];
+    const hh = String(d.getHours()).padStart(2,"0");
+    const mm = String(d.getMinutes()).padStart(2,"0");
+    return `${day} ${mon} · ${hh}:${mm}`;
+  }
+
+  function renderHistory(){
+    const body = $("#orHistoryBody");
+    const clearBtn = $("#orHistoryClear");
+    if(!body) return;
+
+    const list = getHistory();
+    if(!list.length){
+      body.innerHTML = `
+        <div class="or-history-empty">
+          <i class="fa-regular fa-folder-open"></i>
+          <b>Belum ada riwayat</b>
+          <p>Order produk dulu, riwayat bakal muncul di sini.</p>
+        </div>`;
+      if(clearBtn) clearBtn.style.display = "none";
+      return;
+    }
+
+    body.innerHTML = list.map(it => `
+      <div class="or-history-item">
+        <div class="or-history-item-head">
+          <div class="or-history-item-name">${esc(it.name)}</div>
+          <span class="or-history-item-status ${it.status === "pending" ? "pending" : ""}">
+            ${it.status === "pending" ? "Pending" : "Done"}
+          </span>
+        </div>
+        <div class="or-history-item-meta">
+          <span>${esc(formatDate(it.date))}</span>
+          <span class="or-history-item-price">${esc(it.price || "-")}</span>
+        </div>
+      </div>
+    `).join("");
+
+    if(clearBtn) clearBtn.style.display = "block";
+  }
+
+  /* ===== SIDEBAR TOGGLE ===== */
+  function openHistory(){
+    renderHistory();
+    $("#orHistory")?.classList.add("show");
+    $("#orHistoryOverlay")?.classList.add("show");
+    document.body.classList.add("no-scroll");
+  }
+  function closeHistory(){
+    $("#orHistory")?.classList.remove("show");
+    $("#orHistoryOverlay")?.classList.remove("show");
+    document.body.classList.remove("no-scroll");
+  }
+
+  $("#orMenuBtn")?.addEventListener("click", openHistory);
+  $("#orHistoryClose")?.addEventListener("click", closeHistory);
+  $("#orHistoryOverlay")?.addEventListener("click", closeHistory);
+  $("#orHistoryClear")?.addEventListener("click", () => {
+    if(confirm("Hapus semua riwayat pesanan?")) clearHistory();
+  });
+
+  /* ===== PRODUCTS RENDER ===== */
   const render = () => {
     const c = $("#orProducts");
     if(!c) return;
@@ -144,11 +346,11 @@
       return;
     }
 
-    c.innerHTML = filtered.map(p => {
+    c.innerHTML = filtered.map((p, i) => {
       const msg = encodeURIComponent(`Halo, gw mau order "${p.name}". Bisa dijelasin detailnya?`);
       const link = wa + (wa.includes("?")?"&":"?") + "text=" + msg;
 
-      return `<div class="or-product">
+      return `<div class="or-product" data-idx="${i}">
         <div class="or-product-head">
           <div class="or-product-icon"><i class="${esc(p.icon||'fa-solid fa-box')}"></i></div>
           <div class="or-product-badges">
@@ -163,10 +365,20 @@
         </div>
         <div class="or-product-foot">
           <div><div class="or-product-price">${esc(p.price||"-")}</div></div>
-          <a class="or-product-cta" href="${esc(link)}" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Order</a>
+          <a class="or-product-cta" href="${esc(link)}" target="_blank" rel="noopener" data-order="${i}">
+            <i class="fa-brands fa-whatsapp"></i> Order
+          </a>
         </div>
       </div>`;
     }).join("");
+
+    // Bind order buttons → save to history
+    c.querySelectorAll("[data-order]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.order);
+        addHistory(filtered[idx]);
+      });
+    });
   };
   render();
 
