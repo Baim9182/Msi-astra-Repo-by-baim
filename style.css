@@ -598,4 +598,9 @@ main.content{
     transition-duration:.01ms !important;
   }
 }
+
+/* Tambahan untuk custom pages (di-render inline) */
+.custom-page-content { padding: 0; }
+.custom-page-content .section-head { margin-top: 20px; }
+
 :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:10px}
