@@ -152,38 +152,93 @@
     submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
   };
 
-  async function sendToDiscord(payload){
-    const data = getCloudData();
-    const url = data?.preferences?.webhookSaran || "";
-    if(!url || !/^https:\/\/discord(app)?\.com\/api\/webhooks\//.test(url)) return false;
-    const d = data?.preferences?.developer || {};
-    const now = new Date();
-    const body = {
-      username: (d.name || "MSI ASTRA").slice(0, 80),
-      avatar_url: d.profileImage,
-      allowed_mentions: { parse: [] },
-      embeds: [{
-        title: "Pesan Baru dari User",
-        color: 0x06b6d4,
-        fields: [
-          { name: "Pengirim", value: "```" + (payload.nama||"Anonim").slice(0,90) + "```", inline: true },
-          { name: "Kategori", value: "```" + (payload.kategori||"-").slice(0,90) + "```", inline: true },
-          { name: "Isi Pesan", value: "```\n" + (payload.pesan||"").slice(0,1000) + "\n```", inline: false }
-        ],
-        timestamp: now.toISOString()
-      }]
-    };
-    const jsonStr = JSON.stringify(body);
-    if(navigator.sendBeacon){
-      try{
-        const blob = new Blob([jsonStr], { type: "application/json" });
-        if(navigator.sendBeacon(url, blob)) return true;
-      }catch(e){}
-    }
+async function sendToDiscord(payload){
+  const data = getCloudData();
+  const url = data?.preferences?.webhookSaran || "";
+  if(!url || !/^https:\/\/discord(app)?\.com\/api\/webhooks\//.test(url)) return false;
+
+  const LOGO = "https://i.ibb.co.com/twHc7kkk/Proyek-Baru-14-B060999.png";
+  const now = new Date();
+  const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+  const tanggal = `${String(now.getDate()).padStart(2,"0")} ${months[now.getMonth()]} ${now.getFullYear()}, ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+
+  const catMap = {
+    "Bug Report":   { emoji: "🦠", color: 0xef4444, label: "BUG REPORT",       tag: "PRIORITY" },
+    "Saran Fitur":  { emoji: "💡", color: 0xf59e0b, label: "FEATURE REQUEST",  tag: "SUGGESTION" },
+    "Ide":          { emoji: "✨", color: 0x8b5cf6, label: "IDEA DROP",        tag: "CREATIVE" },
+    "Kritik":       { emoji: "📝", color: 0x6b7280, label: "CRITIQUE",         tag: "FEEDBACK" },
+    "Request Jasa": { emoji: "🎯", color: 0x06b6d4, label: "SERVICE REQUEST",  tag: "ORDER" },
+    "Kerja Sama":   { emoji: "🤝", color: 0x22c55e, label: "PARTNERSHIP",      tag: "COLLAB" },
+    "Lainnya":      { emoji: "📨", color: 0x6c7cff, label: "GENERAL MESSAGE",  tag: "MISC" }
+  };
+  const cat = catMap[payload.kategori] || catMap["Lainnya"];
+
+  const nama = (payload.nama || "Anonim").slice(0, 90);
+  const pesan = (payload.pesan || "").slice(0, 1000);
+  const pesanLen = pesan.length;
+
+  const body = {
+    username: "MSI ASTRA FORM",
+    avatar_url: LOGO,
+    allowed_mentions: { parse: [] },
+    embeds: [{
+      author: {
+        name: "◆  MSI ASTRA  ·  FEEDBACK SYSTEM",
+        icon_url: LOGO
+      },
+      title: `${cat.emoji}  ${cat.label}`,
+      description:
+        `\`\`\`yaml\n` +
+        `Pengirim : ${nama}\n` +
+        `Kategori : ${payload.kategori || "Lainnya"}\n` +
+        `Waktu    : ${tanggal}\n` +
+        `\`\`\``,
+      color: cat.color,
+      thumbnail: { url: LOGO },
+
+      fields: [
+        {
+          name: "❯  INFORMASI PENGIRIM",
+          value:
+            `**Nama**  ·  \`${nama}\`\n` +
+            `**ID Tag**  ·  \`${cat.tag}\`\n` +
+            `**Channel**  ·  \`MSI ASTRA\``,
+          inline: true
+        },
+        {
+          name: "❯  DETAIL PESAN",
+          value:
+            `**Tipe**  ·  \`${payload.kategori || "-"}\`\n` +
+            `**Panjang**  ·  \`${pesanLen} karakter\`\n` +
+            `**Status**  ·  🟢 \`Received\``,
+          inline: true
+        },
+        {
+          name: "❯  ISI PESAN",
+          value: `\`\`\`\n${pesan}\n\`\`\``,
+          inline: false
+        }
+      ],
+
+      footer: {
+        text: "MSI ASTRA  ✦  FORM  ✦  v5.3",
+        icon_url: LOGO
+      },
+      timestamp: now.toISOString()
+    }]
+  };
+
+  const jsonStr = JSON.stringify(body);
+  if(navigator.sendBeacon){
     try{
-      fetch(url, { method:"POST", mode:"no-cors", headers:{ "Content-Type":"text/plain" }, body: jsonStr }).catch(()=>{});
-      return true;
-    }catch(e){ return false; }
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      if(navigator.sendBeacon(url, blob)) return true;
+    }catch(e){}
   }
+  try{
+    fetch(url, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: jsonStr }).catch(()=>{});
+    return true;
+  }catch(e){ return false; }
+}
 })();
 </script>
