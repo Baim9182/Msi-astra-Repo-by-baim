@@ -1,0 +1,53 @@
+<div class="lapor-page">
+  <div class="lapor-header">
+    <div class="lapor-header-icon"><i class="fa-solid fa-comments"></i></div>
+    <div class="lapor-header-body">
+      <h2>Lapor Bug, Saran & Ide</h2>
+      <p>Kirim laporan atau masukan. Balasan admin muncul segera.</p>
+    </div>
+  </div>
+
+  <div class="lapor-info-grid">
+    <div class="lapor-info-card">
+      <div class="lapor-info-label">Nama / Username</div>
+      <div class="lapor-info-value" id="laporUserDisplay">@-</div>
+    </div>
+    <div class="lapor-info-card">
+      <div class="lapor-info-label">Sisa Pesan</div>
+      <div class="lapor-info-value" id="laporQuotaValue">-</div>
+    </div>
+  </div>
+
+  <div class="lapor-info-card lapor-reply-status">
+    <div class="lapor-info-label">Status Balasan</div>
+    <div class="lapor-info-value green"><span class="dot"></span> Balasan aktif</div>
+  </div>
+
+  <form id="laporForm" style="margin-top:14px">
+    <div class="field">
+      <label>Nama / Username *</label>
+      <input type="text" id="lfName" maxlength="40" placeholder="Tulis username lu...">
+    </div>
+    <div class="field" style="margin-top:10px">
+      <label>Kategori</label>
+      <select id="lfCategory">
+        <option value="Bug Report">Lapor Bug</option>
+        <option value="Saran Fitur">Saran Fitur Baru</option>
+        <option value="Ide">Ide / Masukan</option>
+        <option value="Kritik">Kritik</option>
+        <option value="Lainnya">Lainnya</option>
+      </select>
+    </div>
+  </form>
+
+  <div class="lapor-input-wrap" style="margin-top:14px">
+    <div class="lapor-input-row">
+      <textarea class="lapor-input" id="lfMessage" maxlength="500" placeholder="Tulis report bug, saran, atau ide..."></textarea>
+      <button class="lapor-send-btn" id="lfSubmit" type="button"><i class="fa-solid fa-paper-plane"></i></button>
+    </div>
+    <div class="lapor-input-meta">
+      <span id="laporSession">Sesi 00:00</span>
+      <span><span id="lfCount">0</span> / 500</span>
+    </div>
+  </div>
+</div>
