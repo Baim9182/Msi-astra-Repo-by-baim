@@ -1,5 +1,5 @@
 /* ==========================================================
-   MSI ASTRA v2.0
+   MSI ASTRA v2.0 — Multi-File Version
    ========================================================== */
 const CONFIG = {
   appName: "MSI ASTRA",
@@ -80,6 +80,35 @@ const DEFAULT_DATA = {
   },
   admin: { claimed: false, ownerId: null, claimedAt: null }
 };
+
+/* ==========================================================
+   FRAGMENT LOADER — auto-cache HTML pages
+   ========================================================== */
+const FRAGMENT_CACHE = {};
+
+async function loadFragment(name){
+  if(FRAGMENT_CACHE[name]) return FRAGMENT_CACHE[name];
+  try{
+    const r = await fetch(`pages/${name}.html?v=2`);
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    const html = await r.text();
+    FRAGMENT_CACHE[name] = html;
+    return html;
+  }catch(e){
+    console.error("[Fragment] load error:", name, e);
+    return `<div class="empty" style="margin-top:20px">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <p>Gagal memuat halaman "${esc(name)}".</p>
+    </div>`;
+  }
+}
+
+function loadingHTML(){
+  return `<div style="padding:60px 20px;text-align:center">
+    <i class="fa-solid fa-spinner fa-spin" style="font-size:26px;color:var(--primary)"></i>
+    <p style="margin-top:14px;color:var(--muted);font-size:12.5px">Memuat halaman...</p>
+  </div>`;
+}
 
 /* ==========================================================
    CLOUD via WORKER
@@ -192,30 +221,22 @@ function getTodayKey(){
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
-
 function getLaporHistory(){
   try{
     const raw = localStorage.getItem(LAPOR_KEY);
     if(!raw) return { date: getTodayKey(), count: 0, items: [] };
     const h = JSON.parse(raw);
-    if(h.date !== getTodayKey()){
-      return { date: getTodayKey(), count: 0, items: [] };
-    }
+    if(h.date !== getTodayKey()) return { date: getTodayKey(), count: 0, items: [] };
     return h;
-  }catch(e){
-    return { date: getTodayKey(), count: 0, items: [] };
-  }
+  }catch(e){ return { date: getTodayKey(), count: 0, items: [] }; }
 }
-
 function setLaporHistory(h){
   try{ localStorage.setItem(LAPOR_KEY, JSON.stringify(h)); }catch(e){}
 }
-
 function getRemainingLapor(){
   const h = getLaporHistory();
   return Math.max(0, CONFIG.dailyLimit - h.count);
 }
-
 function incrementLapor(data){
   const h = getLaporHistory();
   h.count += 1;
@@ -234,7 +255,6 @@ function renderBannerCarousel(){
   const list = CLOUD_DATA?.banners || [];
 
   if(!list.length){
-    // Banner default placeholder
     track.innerHTML = `
       <div class="banner-slide active">
         <div class="banner-slide-content">
@@ -261,8 +281,6 @@ function renderBannerCarousel(){
   ).join("");
 
   BANNER_INDEX = 0;
-
-  // Auto-rotate
   if(BANNER_TIMER) clearInterval(BANNER_TIMER);
   if(list.length > 1){
     BANNER_TIMER = setInterval(() => {
@@ -271,12 +289,11 @@ function renderBannerCarousel(){
     }, 4500);
   }
 
-  // Dots click
   dots.querySelectorAll("[data-dot]").forEach(d => {
     d.onclick = () => {
       BANNER_INDEX = Number(d.dataset.dot);
       updateBannerPosition();
-      if(BANNER_TIMER){ clearInterval(BANNER_TIMER); }
+      if(BANNER_TIMER) clearInterval(BANNER_TIMER);
       BANNER_TIMER = setInterval(() => {
         BANNER_INDEX = (BANNER_INDEX + 1) % list.length;
         updateBannerPosition();
@@ -296,7 +313,7 @@ function updateBannerPosition(){
 }
 
 /* ==========================================================
-   RENDER SERVICES / PRODUCTS / PAYMENT / CONTACT
+   RENDER MAIN PAGES
    ========================================================== */
 function cardHTML(item, idx, type){
   return `
@@ -418,12 +435,13 @@ function refreshAll(){
 }
 
 /* ==========================================================
-   MAINTENANCE / UPDATE / OPEN MODE
+   MAINTENANCE / CHANGELOG
    ========================================================== */
 function checkMaintenance(){
   const site = CLOUD_DATA?.site || {};
   const mode = (site.mode || "open").toLowerCase();
   const overlay = $("#userMaintOverlay");
+  if(!overlay) return;
 
   if(mode === "maintenance" && !IS_ADMIN){
     $("#userMaintMsg").textContent = site.maintenanceMessage || "Website lagi diperbaiki.";
@@ -444,21 +462,18 @@ function checkChangelog(){
 
   if(mode !== "update" || !list.length) return;
 
-  // Ambil changelog terbaru (paling atas di array)
   const latest = list[0];
   if(!latest || !latest.version) return;
 
-  // Cek apakah user udah lihat versi ini
   let seen = null;
   try{ seen = localStorage.getItem(SEEN_CHANGELOG_KEY); }catch(e){}
   if(seen === latest.version) return;
 
-  // Tampilkan
   const overlay = $("#changelogOverlay");
   $("#changelogVersion").textContent = "v" + latest.version;
   $("#changelogDate").textContent = latest.date || "";
 
-  const changes = Array.isArray(latest.changes) ? latest.changes : 
+  const changes = Array.isArray(latest.changes) ? latest.changes :
                   (typeof latest.changes === "string" ? latest.changes.split("\n").filter(Boolean) : []);
 
   $("#changelogList").innerHTML = changes.map(ch => `
@@ -479,7 +494,7 @@ function checkChangelog(){
 }
 
 /* ==========================================================
-   ADMIN AUTH — 1 KEY + CLAIM
+   ADMIN AUTH
    ========================================================== */
 function checkIsAdmin(){
   const a = CLOUD_DATA?.admin || {};
@@ -520,13 +535,10 @@ async function performAdminLogin(key){
   if(hash !== CONFIG.adminKeyHash){
     return { ok:false, reason:"Key salah." };
   }
-
   const a = CLOUD_DATA?.admin || {};
-
   if(a.claimed && a.ownerId && a.ownerId !== DEVICE_ID){
     return { ok:false, reason:"Key sudah dipakai di device lain." };
   }
-
   CLOUD_DATA.admin = CLOUD_DATA.admin || {};
   CLOUD_DATA.admin.claimed = true;
   CLOUD_DATA.admin.ownerId = DEVICE_ID;
@@ -539,15 +551,11 @@ async function performAdminLogin(key){
     CLOUD_DATA.admin.claimedAt = null;
     return { ok:false, reason:"Gagal simpan ke cloud. Cek Worker." };
   }
-
   setSession();
   IS_ADMIN = true;
   return { ok:true };
 }
 
-/* ==========================================================
-   ADMIN LOGIN UI
-   ========================================================== */
 function openAdminLogin(){
   $("#adminLoginModal").classList.add("show");
   setTimeout(()=>$("#adminKeyInput")?.focus(), 150);
@@ -611,17 +619,13 @@ function applyAdminMode(){
    SIDEBAR
    ========================================================== */
 function openSidebar(){
-  const sb = $("#sidebar");
-  const ov = $("#sidebarOverlay");
-  if(sb) sb.classList.add("show");
-  if(ov) ov.classList.add("show");
+  $("#sidebar")?.classList.add("show");
+  $("#sidebarOverlay")?.classList.add("show");
   document.body.classList.add("no-scroll");
 }
 function closeSidebar(){
-  const sb = $("#sidebar");
-  const ov = $("#sidebarOverlay");
-  if(sb) sb.classList.remove("show");
-  if(ov) ov.classList.remove("show");
+  $("#sidebar")?.classList.remove("show");
+  $("#sidebarOverlay")?.classList.remove("show");
   document.body.classList.remove("no-scroll");
 }
 
@@ -635,10 +639,8 @@ function initSidebar(){
       const target = el.dataset.sidebar;
       closeSidebar();
       setTimeout(()=>{
-        if(target === "about") openFullPage("about");
-        else if(target === "lapor") openFullPage("lapor");
-        else if(target === "order") openFullPage("order");
-        else if(target === "admin") openAdminPanel();
+        if(target === "admin") openAdminPanel();
+        else openFullPage(target);
       }, 250);
     });
   });
@@ -657,30 +659,37 @@ function initSidebar(){
 /* ==========================================================
    FULLPAGE — About / Lapor / Order
    ========================================================== */
-function openFullPage(type){
+const FULLPAGE_TITLES = {
+  about: "About Dev",
+  lapor: "Lapor Bug / Saran / Ide",
+  order: "Order APK / Web Auto"
+};
+
+const FULLPAGE_BINDERS = {
+  about: bindAboutPage,
+  lapor: bindLaporPage,
+  order: bindOrderPage
+};
+
+async function openFullPage(type){
+  if(!FULLPAGE_TITLES[type]) return;
+
   const fp = $("#fullpage");
   const title = $("#fullpageTitle");
   const body = $("#fullpageBody");
   if(!fp || !title || !body) return;
 
-  if(type === "about"){
-    title.textContent = "About Dev";
-    body.innerHTML = renderAboutPage();
-    bindAboutPage();
-  }
-  else if(type === "lapor"){
-    title.textContent = "Lapor Bug / Saran / Ide";
-    body.innerHTML = renderLaporPage();
-    bindLaporPage();
-  }
-  else if(type === "order"){
-    title.textContent = "Order APK / Web Auto";
-    body.innerHTML = renderOrderPage();
-    bindOrderPage();
-  }
+  title.textContent = FULLPAGE_TITLES[type];
+  body.innerHTML = loadingHTML();
 
   fp.classList.add("show");
   document.body.classList.add("no-scroll");
+
+  const html = await loadFragment(type);
+  body.innerHTML = html;
+
+  const binder = FULLPAGE_BINDERS[type];
+  if(typeof binder === "function") binder();
 }
 
 function closeFullPage(){
@@ -688,93 +697,12 @@ function closeFullPage(){
   document.body.classList.remove("no-scroll");
 }
 
-/* ---- ABOUT PAGE ---- */
-function renderAboutPage(){
-  const d = CONFIG.developer;
-  const c = CONFIG.contact;
-  return `
-    <div class="about-hero">
-      <div class="about-banner">
-        ${d.bannerImage ? `<img src="${esc(d.bannerImage)}" alt="Banner" onerror="this.style.display='none'">` : ''}
-      </div>
-      <div class="about-profile">
-        <img class="avatar" src="${esc(d.profileImage)}" alt="Avatar" onerror="this.style.opacity='0.15'">
-        <div class="about-name">${esc(d.name)}</div>
-        <div class="about-username">${esc(d.username)}</div>
-        <div class="about-role"><i class="fa-solid fa-bolt"></i> ${esc(d.role)}</div>
-        <p class="about-desc">${esc(d.description)}</p>
-        <div class="about-badges">
-          ${(d.badges||[]).map(b => `<span class="chip"><i class="${esc(b.icon)}"></i>${esc(b.label)}</span>`).join("")}
-        </div>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
-      <a class="btn btn-wa" href="${esc(c.whatsapp)}" target="_blank" rel="noopener">
-        <i class="fa-brands fa-whatsapp"></i> WhatsApp
-      </a>
-      <a class="btn btn-ghost" href="${esc(c.channel)}" target="_blank" rel="noopener">
-        <i class="fa-solid fa-bullhorn"></i> Saluran
-      </a>
-    </div>
-  `;
-}
-function bindAboutPage(){}
-
-/* ---- LAPOR PAGE ---- */
-function renderLaporPage(){
-  const remaining = getRemainingLapor();
-  const total = CONFIG.dailyLimit;
-  let cls = "ok";
-  if(remaining <= 0) cls = "danger";
-  else if(remaining <= 2) cls = "warn";
-
-  return `
-    <div class="lapor-info">
-      <div class="lapor-quota ${cls}">${remaining}/${total}</div>
-      <div class="lapor-info-body">
-        <h3>Sisa Pesan Hari Ini</h3>
-        <p>${remaining > 0 
-          ? `Lu masih bisa kirim ${remaining} pesan lagi hari ini. Reset tiap tengah malam.` 
-          : 'Kuota pesan hari ini habis. Coba lagi besok ya!'}</p>
-      </div>
-    </div>
-
-    <form class="suggest-form" id="laporForm" novalidate>
-      <div class="field">
-        <label><i class="fa-solid fa-user"></i> Nama / Username <span style="color:#f87171">*</span></label>
-        <input type="text" id="lfName" maxlength="40" placeholder="Nama lu / username" autocomplete="off" required>
-      </div>
-
-      <div class="field">
-        <label><i class="fa-solid fa-tag"></i> Kategori</label>
-        <select id="lfCategory">
-          <option value="Bug Report">Lapor Bug</option>
-          <option value="Saran Fitur">Saran Fitur Baru</option>
-          <option value="Ide">Ide / Masukan</option>
-          <option value="Kritik">Kritik</option>
-          <option value="Request Jasa">Request Jasa / Produk</option>
-          <option value="Kerja Sama">Kerja Sama</option>
-          <option value="Lainnya">Lainnya</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label><i class="fa-solid fa-pen"></i> Pesan <span style="color:#f87171">*</span></label>
-        <textarea id="lfMessage" maxlength="800" placeholder="Ceritain detailnya di sini... (min 5 karakter, maks 800)"></textarea>
-        <div class="char-count" id="lfCount">0 / 800</div>
-      </div>
-
-      <button type="submit" class="btn btn-discord btn-block" id="lfSubmit" ${remaining <= 0 ? 'disabled' : ''}>
-        <i class="fa-brands fa-discord"></i> ${remaining > 0 ? 'Kirim Pesan' : 'Kuota Habis'}
-      </button>
-      <p style="font-size:10.5px;color:var(--muted-2);text-align:center;margin-top:6px;line-height:1.5">
-        <i class="fa-solid fa-shield-halved" style="color:var(--primary)"></i>
-        Pesan langsung ke Discord admin. Nggak disimpan di server.
-      </p>
-    </form>
-  `;
+/* ---- ABOUT PAGE BINDER ---- */
+function bindAboutPage(){
+  // Tidak ada event khusus. Konten di-render dari HTML fragment.
 }
 
+/* ---- LAPOR PAGE BINDER ---- */
 function bindLaporPage(){
   const form = $("#laporForm");
   if(!form) return;
@@ -785,7 +713,6 @@ function bindLaporPage(){
   const countEl = $("#lfCount");
   const submitBtn = $("#lfSubmit");
 
-  // Auto-fill nama dari history
   try{
     const lastName = localStorage.getItem("msi_lapor_name") || "";
     if(lastName) nameEl.value = lastName;
@@ -808,14 +735,12 @@ function bindLaporPage(){
       toast("Kuota pesan hari ini habis.","error");
       return;
     }
-
     const nama = nameEl.value.trim();
     if(!nama){
       toast("Isi nama/username dulu ya.","error");
       nameEl.focus();
       return;
     }
-
     const pesan = msgEl.value.trim();
     if(pesan.length < 5){
       toast("Pesan minimal 5 karakter.","error");
@@ -825,10 +750,7 @@ function bindLaporPage(){
 
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Kirim...';
-
     const kategori = catEl.value;
-
-    // Save nama biar next time auto-fill
     try{ localStorage.setItem("msi_lapor_name", nama); }catch(e){}
 
     const ok = await sendLaporToDiscord({ nama, kategori, pesan });
@@ -839,12 +761,7 @@ function bindLaporPage(){
     if(ok){
       incrementLapor({ nama, kategori, pesan: pesan.slice(0,100) });
       toast("Pesan kekirim. Makasih!","success");
-      // Reload halaman lapor buat update quota
-      setTimeout(()=>{
-        const body = $("#fullpageBody");
-        body.innerHTML = renderLaporPage();
-        bindLaporPage();
-      }, 500);
+      setTimeout(()=>openFullPage("lapor"), 500);
     } else {
       toast("Gagal kirim pesan.","error");
     }
@@ -893,72 +810,30 @@ async function sendLaporToDiscord(payload){
   }catch(e){ return false; }
 }
 
-/* ---- ORDER PAGE ---- */
-function renderOrderPage(){
-  const wa = CONFIG.contact.whatsapp;
-  const orderMsg = encodeURIComponent("Halo, gw mau order APK/Web Auto. Bisa dijelasin detailnya?");
-  return `
-    <div class="order-card">
-      <div class="order-card-head">
-        <div class="order-card-icon"><i class="fa-solid fa-rocket"></i></div>
-        <div>
-          <h3>Order APK / Web Auto</h3>
-          <p>Bikin aplikasi atau website sesuai kebutuhan lu</p>
-        </div>
-      </div>
-
-      <div class="order-features">
-        <div class="order-feature"><i class="fa-solid fa-check"></i> Aplikasi Android (WebView / Native)</div>
-        <div class="order-feature"><i class="fa-solid fa-check"></i> Website custom (Portfolio, Toko, Landing Page)</div>
-        <div class="order-feature"><i class="fa-solid fa-check"></i> Backend API (Cloudflare Worker / Vercel)</div>
-        <div class="order-feature"><i class="fa-solid fa-check"></i> Database sync (GitHub Gist / Firebase)</div>
-        <div class="order-feature"><i class="fa-solid fa-check"></i> Desain modern & responsive</div>
-        <div class="order-feature"><i class="fa-solid fa-check"></i> Support & maintenance</div>
-      </div>
-
-      <a class="btn btn-wa btn-block" href="${esc(wa)}?text=${orderMsg}" target="_blank" rel="noopener">
-        <i class="fa-brands fa-whatsapp"></i> Order Sekarang
-      </a>
-    </div>
-
-    <div style="padding:16px;border-radius:16px;background:var(--surface);border:1px solid var(--border)">
-      <div style="font-size:13px;font-weight:700;margin-bottom:8px">
-        <i class="fa-solid fa-circle-info" style="color:var(--primary)"></i> Cara Order
-      </div>
-      <ol style="list-style:none;display:flex;flex-direction:column;gap:8px">
-        <li style="font-size:12.5px;color:var(--muted);line-height:1.6">
-          <b style="color:var(--text)">1.</b> Chat admin via WhatsApp
-        </li>
-        <li style="font-size:12.5px;color:var(--muted);line-height:1.6">
-          <b style="color:var(--text)">2.</b> Jelaskan konsep & fitur yang diinginkan
-        </li>
-        <li style="font-size:12.5px;color:var(--muted);line-height:1.6">
-          <b style="color:var(--text)">3.</b> Deal harga & timeline
-        </li>
-        <li style="font-size:12.5px;color:var(--muted);line-height:1.6">
-          <b style="color:var(--text)">4.</b> Pembayaran DP (jika diperlukan)
-        </li>
-        <li style="font-size:12.5px;color:var(--muted);line-height:1.6">
-          <b style="color:var(--text)">5.</b> Project dikerjakan
-        </li>
-        <li style="font-size:12.5px;color:var(--muted);line-height:1.6">
-          <b style="color:var(--text)">6.</b> Revisi & pelunasan
-        </li>
-      </ol>
-    </div>
-  `;
+/* ---- ORDER PAGE BINDER ---- */
+function bindOrderPage(){
+  // Static content — no events
 }
-function bindOrderPage(){}
 
 /* ==========================================================
-   ADMIN PANEL
+   ADMIN PANEL — Load dari fragment
    ========================================================== */
-function openAdminPanel(){
+async function openAdminPanel(){
   if(!IS_ADMIN){ toast("Akses ditolak.","error"); return; }
   ADMIN_EDITING = null;
-  $("#adminPanelModal").classList.add("show");
+  const modal = $("#adminPanelModal");
+  const box = $("#adminPanelBox");
+  if(!modal || !box) return;
+
+  modal.classList.add("show");
+  box.innerHTML = loadingHTML();
+
+  const html = await loadFragment("admin");
+  box.innerHTML = html;
+
   renderAdminPanel();
 }
+
 function closeAdminPanel(){
   $("#adminPanelModal").classList.remove("show");
   ADMIN_EDITING = null;
@@ -1014,205 +889,205 @@ function renderAdminPanel(){
   const box = $("#adminPanelBox");
   if(!box) return;
 
-  // ===== FORM EDIT/ADD =====
-  if(ADMIN_EDITING !== null){
-    const tab = ADMIN_EDITING.tab;
-    const fields = ADMIN_FIELDS[tab] || [];
-    const isNew = ADMIN_EDITING.idx < 0;
-    const item = isNew ? {} : (CLOUD_DATA[tab]?.[ADMIN_EDITING.idx] || {});
-
-    box.innerHTML = `
-      <button class="modal-close" data-act="cancel"><i class="fa-solid fa-xmark"></i></button>
-      <div class="modal-title" style="margin-bottom:14px">
-        ${isNew ? "Tambah" : "Edit"} ${ADMIN_LABELS[tab]}
-      </div>
-      <div style="display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;padding-right:4px">
-        ${fields.map(f => {
-          const v = item[f.k] ?? "";
-          if(f.type === "textarea"){
-            return `<div class="field"><label>${esc(f.l)}</label>
-              <textarea data-field="${f.k}" rows="3">${esc(Array.isArray(v)?v.join("\n"):v)}</textarea></div>`;
-          }
-          if(f.type === "select"){
-            return `<div class="field"><label>${esc(f.l)}</label>
-              <select data-field="${f.k}">
-                ${f.opts.map(o => `<option value="${esc(o)}" ${o===v?"selected":""}>${esc(o)}</option>`).join("")}
-              </select></div>`;
-          }
-          return `<div class="field"><label>${esc(f.l)}</label>
-            <input type="text" data-field="${f.k}" value="${esc(v)}"></div>`;
-        }).join("")}
-      </div>
-      <div style="display:flex;gap:8px;margin-top:16px">
-        <button class="btn btn-ghost" data-act="cancel" style="flex:1">Batal</button>
-        <button class="btn btn-primary" data-act="save" style="flex:2">
-          <i class="fa-solid fa-floppy-disk"></i> Simpan
-        </button>
-      </div>`;
-
-    box.querySelectorAll("[data-act='cancel']").forEach(b => b.onclick = () => {
+  // Render tabs
+  const tabsEl = box.querySelector("#adminTabs");
+  if(tabsEl){
+    tabsEl.innerHTML = Object.entries(ADMIN_LABELS).map(([k,v]) =>
+      `<button data-tab="${k}" class="${k===ADMIN_TAB?'active':''}">${v}</button>`
+    ).join("");
+    tabsEl.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => {
+      ADMIN_TAB = b.dataset.tab;
       ADMIN_EDITING = null;
       renderAdminPanel();
     });
-
-    box.querySelector("[data-act='save']").onclick = async () => {
-      const obj = {};
-      fields.forEach(f => {
-        const el = box.querySelector(`[data-field="${f.k}"]`);
-        let val = el ? el.value.trim() : "";
-        if(f.k === "changes" && val){
-          obj[f.k] = val.split("\n").map(x => x.trim()).filter(Boolean);
-        } else {
-          obj[f.k] = val;
-        }
-      });
-      if(!obj.name && !obj.title && !obj.version){ 
-        toast("Field wajib belum diisi.","error"); return; 
-      }
-
-      const btn = box.querySelector("[data-act='save']");
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Simpan...';
-
-      if(isNew) CLOUD_DATA[tab].push(obj);
-      else CLOUD_DATA[tab][ADMIN_EDITING.idx] = obj;
-
-      const ok = await persistCloud();
-      refreshAll();
-      ADMIN_EDITING = null;
-      renderAdminPanel();
-      toast(ok ? "Tersimpan." : "Gagal simpan ke cloud.", ok ? "success" : "error");
-    };
-    return;
   }
 
-  // ===== LIST VIEW =====
+  // Bind shell actions
+  const closeBtn = box.querySelector("[data-act='close']");
+  if(closeBtn) closeBtn.onclick = closeAdminPanel;
+
+  const logoutBtn = box.querySelector("[data-act='logout']");
+  if(logoutBtn){
+    logoutBtn.onclick = async () => {
+      if(!confirm("Logout admin? Device lain bakal bisa login lagi.")) return;
+      if(CLOUD_DATA?.admin){
+        CLOUD_DATA.admin.claimed = false;
+        CLOUD_DATA.admin.ownerId = null;
+        CLOUD_DATA.admin.claimedAt = null;
+        await persistCloud();
+      }
+      clearSession();
+      IS_ADMIN = false;
+      closeAdminPanel();
+      applyAdminMode();
+      checkMaintenance();
+      toast("Logout berhasil.","success");
+    };
+  }
+
+  const syncBtn = box.querySelector("[data-act='sync']");
+  if(syncBtn){
+    syncBtn.onclick = async () => {
+      const data = await cloudLoad();
+      if(!data){ toast("Gagal sync.","error"); return; }
+      CLOUD_DATA = ensureStructure(data);
+      refreshAll();
+      checkIsAdmin();
+      applyAdminMode();
+      checkMaintenance();
+      renderAdminPanel();
+      toast("Synced.","success");
+    };
+  }
+
+  const exportBtn = box.querySelector("[data-act='export']");
+  if(exportBtn){
+    exportBtn.onclick = () => {
+      const blob = new Blob([JSON.stringify(CLOUD_DATA, null, 2)], { type:"application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "msi-astra-data.json";
+      a.click();
+    };
+  }
+
+  // Render content
+  const content = box.querySelector("#adminContent");
+  if(!content) return;
+
+  if(ADMIN_EDITING !== null){
+    renderAdminForm(content);
+  } else {
+    renderAdminList(content);
+  }
+}
+
+function renderAdminList(content){
   const tab = ADMIN_TAB;
   const isWebsite = tab === "website";
   const list = isWebsite ? [] : (CLOUD_DATA[tab] || []);
 
-  box.innerHTML = `
-    <button class="modal-close" data-act="close"><i class="fa-solid fa-xmark"></i></button>
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;padding-right:36px">
-      <div class="modal-title"><i class="fa-solid fa-sliders" style="color:var(--primary)"></i> Admin Tools</div>
-      <button class="btn btn-ghost" data-act="logout" style="padding:6px 10px;font-size:10.5px">
-        <i class="fa-solid fa-right-from-bracket"></i> Logout
-      </button>
+  if(isWebsite){
+    content.innerHTML = renderWebsiteTabHTML();
+    bindWebsiteTab(content);
+    return;
+  }
+
+  content.innerHTML = `
+    <button class="btn btn-primary btn-block" data-act="add" style="margin-bottom:12px">
+      <i class="fa-solid fa-plus"></i> Tambah ${ADMIN_LABELS[tab]}
+    </button>
+    <div style="max-height:340px;overflow-y:auto;padding-right:4px">
+      ${list.length ? list.map((it, i) => `
+        <div class="admin-item">
+          <div class="admin-item-info">
+            <b>${esc(it.name || it.title || it.version || it.id || "-")}</b>
+            <small>${esc(it.status || it.price || it.date || it.description || "")}</small>
+          </div>
+          <div class="admin-item-btns">
+            <button data-edit="${i}"><i class="fa-solid fa-pen"></i></button>
+            <button class="del" data-del="${i}"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>`).join("")
+      : `<div class="empty" style="padding:24px"><p>Belum ada data</p></div>`}
     </div>
+  `;
 
-    <div class="admin-tabs">
-      ${Object.entries(ADMIN_LABELS).map(([k,v]) =>
-        `<button data-tab="${k}" class="${k===tab?'active':''}">${v}</button>`
-      ).join("")}
+  const addBtn = content.querySelector("[data-act='add']");
+  if(addBtn) addBtn.onclick = () => {
+    ADMIN_EDITING = { tab, idx: -1 };
+    renderAdminPanel();
+  };
+
+  content.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => {
+    ADMIN_EDITING = { tab, idx: Number(b.dataset.edit) };
+    renderAdminPanel();
+  });
+
+  content.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+    const i = Number(b.dataset.del);
+    const it = CLOUD_DATA[tab][i];
+    const name = it?.name || it?.title || it?.version || "item";
+    if(!confirm(`Hapus "${name}"?`)) return;
+    CLOUD_DATA[tab].splice(i, 1);
+    const ok = await persistCloud();
+    refreshAll();
+    renderAdminPanel();
+    toast(ok ? "Dihapus." : "Gagal hapus.", ok ? "success" : "error");
+  });
+}
+
+function renderAdminForm(content){
+  const tab = ADMIN_EDITING.tab;
+  const fields = ADMIN_FIELDS[tab] || [];
+  const isNew = ADMIN_EDITING.idx < 0;
+  const item = isNew ? {} : (CLOUD_DATA[tab]?.[ADMIN_EDITING.idx] || {});
+
+  content.innerHTML = `
+    <div class="modal-title" style="margin-bottom:14px">
+      ${isNew ? "Tambah" : "Edit"} ${ADMIN_LABELS[tab]}
     </div>
-
-    ${isWebsite ? renderWebsiteTab() : `
-      <button class="btn btn-primary btn-block" data-act="add" style="margin-bottom:12px">
-        <i class="fa-solid fa-plus"></i> Tambah ${ADMIN_LABELS[tab]}
-      </button>
-      <div style="max-height:320px;overflow-y:auto;padding-right:4px">
-        ${list.length ? list.map((it, i) => `
-          <div class="admin-item">
-            <div class="admin-item-info">
-              <b>${esc(it.name || it.title || it.version || it.id || "-")}</b>
-              <small>${esc(it.status || it.price || it.date || it.description || "")}</small>
-            </div>
-            <div class="admin-item-btns">
-              <button data-edit="${i}"><i class="fa-solid fa-pen"></i></button>
-              <button class="del" data-del="${i}"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          </div>`).join("")
-        : `<div class="empty" style="padding:24px"><p>Belum ada data</p></div>`}
-      </div>
-    `}
-
-    <div style="display:flex;gap:6px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
-      <button class="btn btn-ghost" data-act="sync" style="flex:1;font-size:11px;padding:9px">
-        <i class="fa-solid fa-rotate"></i> Sync
-      </button>
-      <button class="btn btn-ghost" data-act="export" style="flex:1;font-size:11px;padding:9px">
-        <i class="fa-solid fa-download"></i> Export
+    <div style="display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;padding-right:4px">
+      ${fields.map(f => {
+        const v = item[f.k] ?? "";
+        if(f.type === "textarea"){
+          return `<div class="field"><label>${esc(f.l)}</label>
+            <textarea data-field="${f.k}" rows="3">${esc(Array.isArray(v)?v.join("\n"):v)}</textarea></div>`;
+        }
+        if(f.type === "select"){
+          return `<div class="field"><label>${esc(f.l)}</label>
+            <select data-field="${f.k}">
+              ${f.opts.map(o => `<option value="${esc(o)}" ${o===v?"selected":""}>${esc(o)}</option>`).join("")}
+            </select></div>`;
+        }
+        return `<div class="field"><label>${esc(f.l)}</label>
+          <input type="text" data-field="${f.k}" value="${esc(v)}"></div>`;
+      }).join("")}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-ghost" data-act="cancel" style="flex:1">Batal</button>
+      <button class="btn btn-primary" data-act="save" style="flex:2">
+        <i class="fa-solid fa-floppy-disk"></i> Simpan
       </button>
     </div>
   `;
 
-  box.querySelector("[data-act='close']").onclick = closeAdminPanel;
-
-  box.querySelector("[data-act='logout']").onclick = async () => {
-    if(!confirm("Logout admin? Device lain bakal bisa login lagi.")) return;
-
-    if(CLOUD_DATA?.admin){
-      CLOUD_DATA.admin.claimed = false;
-      CLOUD_DATA.admin.ownerId = null;
-      CLOUD_DATA.admin.claimedAt = null;
-      await persistCloud();
-    }
-
-    clearSession();
-    IS_ADMIN = false;
-    closeAdminPanel();
-    applyAdminMode();
-    checkMaintenance();
-    toast("Logout berhasil.","success");
-  };
-
-  box.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => {
-    ADMIN_TAB = b.dataset.tab;
+  content.querySelectorAll("[data-act='cancel']").forEach(b => b.onclick = () => {
     ADMIN_EDITING = null;
     renderAdminPanel();
   });
 
-  if(!isWebsite){
-    const addBtn = box.querySelector("[data-act='add']");
-    if(addBtn) addBtn.onclick = () => {
-      ADMIN_EDITING = { tab, idx: -1 };
-      renderAdminPanel();
-    };
-    box.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => {
-      ADMIN_EDITING = { tab, idx: Number(b.dataset.edit) };
-      renderAdminPanel();
+  content.querySelector("[data-act='save']").onclick = async () => {
+    const obj = {};
+    fields.forEach(f => {
+      const el = content.querySelector(`[data-field="${f.k}"]`);
+      let val = el ? el.value.trim() : "";
+      if(f.k === "changes" && val){
+        obj[f.k] = val.split("\n").map(x => x.trim()).filter(Boolean);
+      } else {
+        obj[f.k] = val;
+      }
     });
-    box.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
-      const i = Number(b.dataset.del);
-      const it = CLOUD_DATA[tab][i];
-      const name = it?.name || it?.title || it?.version || "item";
-      if(!confirm(`Hapus "${name}"?`)) return;
-      CLOUD_DATA[tab].splice(i, 1);
-      const ok = await persistCloud();
-      refreshAll();
-      renderAdminPanel();
-      toast(ok ? "Dihapus." : "Gagal hapus.", ok ? "success" : "error");
-    });
-  }
+    if(!obj.name && !obj.title && !obj.version){
+      toast("Field wajib belum diisi.","error"); return;
+    }
 
-  box.querySelector("[data-act='sync']").onclick = async () => {
-    const data = await cloudLoad();
-    if(!data){ toast("Gagal sync.","error"); return; }
-    CLOUD_DATA = ensureStructure(data);
+    const btn = content.querySelector("[data-act='save']");
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Simpan...';
+
+    if(isNew) CLOUD_DATA[tab].push(obj);
+    else CLOUD_DATA[tab][ADMIN_EDITING.idx] = obj;
+
+    const ok = await persistCloud();
     refreshAll();
-    checkIsAdmin();
-    applyAdminMode();
-    checkMaintenance();
+    ADMIN_EDITING = null;
     renderAdminPanel();
-    toast("Synced.","success");
+    toast(ok ? "Tersimpan." : "Gagal simpan ke cloud.", ok ? "success" : "error");
   };
-
-  box.querySelector("[data-act='export']").onclick = () => {
-    const blob = new Blob([JSON.stringify(CLOUD_DATA, null, 2)], { type:"application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "msi-astra-data.json";
-    a.click();
-  };
-
-  // Bind website tab handlers
-  if(isWebsite){
-    setTimeout(() => bindWebsiteTab(), 50);
-  }
 }
 
-/* ---- WEBSITE TAB ---- */
-function renderWebsiteTab(){
+function renderWebsiteTabHTML(){
   const site = CLOUD_DATA?.site || {};
   const mode = (site.mode || "open").toLowerCase();
 
@@ -1259,13 +1134,8 @@ function renderWebsiteTab(){
   `;
 }
 
-function bindWebsiteTab(){
-  const box = $("#adminPanelBox");
-  if(!box) return;
-
-  const mode = (CLOUD_DATA?.site?.mode || "open").toLowerCase();
-
-  box.querySelectorAll("[data-mode]").forEach(b => {
+function bindWebsiteTab(content){
+  content.querySelectorAll("[data-mode]").forEach(b => {
     b.onclick = async () => {
       const target = b.dataset.mode;
       CLOUD_DATA.site = CLOUD_DATA.site || {};
@@ -1275,17 +1145,18 @@ function bindWebsiteTab(){
         toast("Mode: " + target.toUpperCase(), "success");
         renderAdminPanel();
         checkMaintenance();
+        checkChangelog();
       } else {
         toast("Gagal simpan.","error");
       }
     };
   });
 
-  const saveBtn = box.querySelector("#saveSiteBtn");
+  const saveBtn = content.querySelector("#saveSiteBtn");
   if(saveBtn){
     saveBtn.onclick = async () => {
-      const msg = box.querySelector("#maintMsgInput").value.trim();
-      const eta = box.querySelector("#maintEtaInput").value.trim();
+      const msg = content.querySelector("#maintMsgInput").value.trim();
+      const eta = content.querySelector("#maintEtaInput").value.trim();
       CLOUD_DATA.site = CLOUD_DATA.site || {};
       CLOUD_DATA.site.maintenanceMessage = msg || "Website lagi diperbaiki.";
       CLOUD_DATA.site.maintenanceEta = eta;
@@ -1406,30 +1277,20 @@ function createRotator(id, interval, outDur){
    GENERAL EVENTS
    ========================================================== */
 function initGeneralEvents(){
-  // Bottom nav
   $$(".nav-item").forEach(btn => btn.addEventListener("click", () => goTo(btn.dataset.page)));
 
-  // Fullpage back
-  $("#fullpageBack")?.addEventListener("click", closeFullPage);
-
-  // Global click delegate
   document.addEventListener("click", e => {
-    // Fullpage back button (inside body)
     if(e.target.closest("#fullpageBack")){ closeFullPage(); return; }
 
-    // Nav data-nav
     const nav = e.target.closest("[data-nav]");
     if(nav){ goTo(nav.dataset.nav); return; }
 
-    // Card detail
     const card = e.target.closest(".card[data-type]");
     if(card){ openDetail(card.dataset.type, Number(card.dataset.idx)); return; }
 
-    // Copy button
     const cp = e.target.closest("[data-copy]");
     if(cp){ e.stopPropagation(); copyText(cp.dataset.copy); return; }
 
-    // QRIS button
     const qris = e.target.closest('[data-pay="qris"]');
     if(qris){
       const img = $("#qrisImg");
@@ -1441,15 +1302,12 @@ function initGeneralEvents(){
     }
   });
 
-  // Modal close
   $("#modalClose")?.addEventListener("click", ()=>$("#detailModal").classList.remove("show"));
   $("#qrisClose")?.addEventListener("click", ()=>$("#qrisModal").classList.remove("show"));
   $("#detailModal")?.addEventListener("click", e=>{ if(e.target.id==="detailModal") e.target.classList.remove("show"); });
   $("#qrisModal")?.addEventListener("click", e=>{ if(e.target.id==="qrisModal") e.target.classList.remove("show"); });
-
   $("#adminPanelModal")?.addEventListener("click", e=>{ if(e.target.id==="adminPanelModal") closeAdminPanel(); });
 
-  // Maintenance refresh
   $("#userMaintRefresh")?.addEventListener("click", async () => {
     toast("Cek status...","info");
     const data = await cloudLoad();
@@ -1461,7 +1319,6 @@ function initGeneralEvents(){
     } else toast("Gagal cek.","error");
   });
 
-  // Escape
   document.addEventListener("keydown", e => {
     if(e.key === "Escape"){
       $("#detailModal")?.classList.remove("show");
@@ -1482,33 +1339,25 @@ function initGeneralEvents(){
   try{
     document.title = CONFIG.appName;
 
-    // Theme
     let savedTheme = "default";
     try{ savedTheme = localStorage.getItem(THEME_KEY) || "default"; }catch(e){}
     renderThemeGrid();
     applyTheme(savedTheme);
 
-    // Clock & rotators
     startClock();
     createRotator("welcomeRotate", 5400, 800);
 
-    // Init UI
     initSidebar();
     initAdminLogin();
     initGeneralEvents();
 
-    // Load cloud data
     const data = await cloudLoad();
     CLOUD_DATA = ensureStructure(data || DEFAULT_DATA);
 
-    // Check admin
     checkIsAdmin();
     applyAdminMode();
-
-    // Render everything
     refreshAll();
 
-    // Maintenance / changelog check
     checkMaintenance();
     checkChangelog();
 
