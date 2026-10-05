@@ -1,52 +1,190 @@
-<div class="order-page">
-  <div class="order-store-bar">
-    <div class="order-store-info">
-      <div class="order-store-name">Store<span class="sep">/</span>Digital</div>
-      <div class="order-store-status">online</div>
+<style>
+.or-wrap{max-width:720px;margin:0 auto;padding:4px 0 40px}
+.or-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);margin-bottom:20px}
+.or-name{font-size:18px;font-weight:800;letter-spacing:-.3px}
+.or-name .sep{color:var(--muted-2);font-weight:400;margin:0 5px}
+.or-status{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;color:#4ade80;margin-top:4px;font-family:var(--font-mono)}
+.or-status::before{content:"";width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80;animation:orPulse 1.5s ease infinite}
+@keyframes orPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.or-menu{width:38px;height:38px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;font-size:14px;color:var(--muted);flex-shrink:0}
+.or-badge{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:999px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:#4ade80;font-size:10.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px;font-family:var(--font-mono)}
+.or-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80}
+.or-head{font-size:clamp(24px,6.5vw,34px);font-weight:800;line-height:1.12;letter-spacing:-1px;margin-bottom:12px}
+.or-head .accent{background:linear-gradient(120deg,var(--primary),var(--secondary));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.or-sub{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;max-width:560px}
+.or-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px}
+.or-stat{padding:14px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.or-stat-icon{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:14px;flex-shrink:0}
+.or-stat-icon.green{background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3)}
+.or-stat-icon.purple{background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3)}
+.or-stat-icon.orange{background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3)}
+.or-stat-num{font-size:16px;font-weight:800;line-height:1;font-family:var(--font-mono);letter-spacing:-.5px}
+.or-stat-lbl{font-size:9px;font-weight:700;color:var(--muted-2);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px;font-family:var(--font-mono)}
+.or-search{position:relative;margin-bottom:14px}
+.or-search i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted-2);font-size:13px}
+.or-search input{width:100%;padding:13px 14px 13px 42px;border-radius:14px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:12.5px;outline:none}
+.or-search input::placeholder{color:var(--muted-2)}
+.or-search input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.or-cats{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;margin-bottom:20px;scrollbar-width:none}
+.or-cats::-webkit-scrollbar{display:none}
+.or-cat{flex-shrink:0;padding:9px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--border);font-size:11.5px;font-weight:600;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.or-cat.active{background:var(--primary-soft);color:var(--primary);border-color:var(--primary)}
+.or-cat i{font-size:11px}
+.or-section{font-size:18px;font-weight:700;letter-spacing:-.3px;margin-bottom:14px;display:flex;align-items:center;gap:8px;font-family:var(--font-mono)}
+.or-section::before{content:"";width:4px;height:18px;border-radius:2px;background:linear-gradient(180deg,var(--primary),var(--secondary))}
+.or-products{display:flex;flex-direction:column;gap:12px}
+.or-product{padding:16px;border-radius:16px;background:var(--surface);border:1px solid var(--border);position:relative;overflow:hidden}
+.or-product-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.or-product-icon{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:20px;flex-shrink:0;background:var(--surface-3);border:1px solid var(--border);color:var(--primary)}
+.or-product-badges{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.or-product-badge{padding:3px 9px;border-radius:999px;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;display:inline-flex;align-items:center;gap:4px;font-family:var(--font-mono);background:var(--primary-soft);color:var(--primary);border:1px solid var(--primary)}
+.or-product-badge i{font-size:8px}
+.or-product-title{font-size:15px;font-weight:700;letter-spacing:-.2px;margin-bottom:6px}
+.or-product-desc{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:12px}
+.or-product-features{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.or-product-feature{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}
+.or-product-feature i{color:#4ade80;font-size:11px}
+.or-product-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;border-top:1px solid var(--border)}
+.or-product-price{font-size:18px;font-weight:800;font-family:var(--font-mono);letter-spacing:-.5px}
+.or-product-cta{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:11px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#000;font-size:11px;font-weight:700;box-shadow:0 6px 14px var(--primary-glow);font-family:var(--font-mono);text-decoration:none}
+.or-product-cta:active{transform:scale(.94)}
+.or-empty{padding:30px;text-align:center;color:var(--muted);font-size:12.5px;border:1px dashed var(--border-strong);border-radius:12px}
+</style>
+
+<div class="or-wrap">
+  <div class="or-bar">
+    <div>
+      <div class="or-name">Store<span class="sep">/</span>Digital</div>
+      <div class="or-status">online</div>
     </div>
-    <div class="order-store-menu"><i class="fa-solid fa-bars"></i></div>
+    <div class="or-menu"><i class="fa-solid fa-bars"></i></div>
   </div>
 
-  <div class="order-badge">Premium Store</div>
+  <div class="or-badge">Premium Store</div>
 
-  <h1 class="order-headline">order <span class="accent">digital</span><br>cepat & otomatis</h1>
-  <p class="order-desc">Pilih produk, lihat detail harga & durasi, scan QR untuk bayar.</p>
+  <h1 class="or-head">order <span class="accent">digital</span><br>cepat & otomatis</h1>
+  <p class="or-sub">Pilih produk, lihat detail harga, scan QR untuk bayar.</p>
 
-  <div class="order-stats">
-    <div class="order-stat">
-      <div class="order-stat-icon green"><i class="fa-solid fa-box"></i></div>
+  <div class="or-stats">
+    <div class="or-stat">
+      <div class="or-stat-icon green"><i class="fa-solid fa-box"></i></div>
       <div>
-        <div class="order-stat-num" id="orderStatProducts">0</div>
-        <div class="order-stat-label">Produk</div>
+        <div class="or-stat-num" id="orStatProducts">0</div>
+        <div class="or-stat-lbl">Produk</div>
       </div>
     </div>
-    <div class="order-stat">
-      <div class="order-stat-icon purple"><i class="fa-solid fa-clock"></i></div>
+    <div class="or-stat">
+      <div class="or-stat-icon purple"><i class="fa-solid fa-clock"></i></div>
       <div>
-        <div class="order-stat-num">24/7</div>
-        <div class="order-stat-label">Store</div>
+        <div class="or-stat-num">24/7</div>
+        <div class="or-stat-lbl">Store</div>
       </div>
     </div>
-    <div class="order-stat">
-      <div class="order-stat-icon orange"><i class="fa-solid fa-qrcode"></i></div>
+    <div class="or-stat">
+      <div class="or-stat-icon orange"><i class="fa-solid fa-qrcode"></i></div>
       <div>
-        <div class="order-stat-num">QRIS</div>
-        <div class="order-stat-label">Bayar</div>
+        <div class="or-stat-num">QRIS</div>
+        <div class="or-stat-lbl">Bayar</div>
       </div>
     </div>
   </div>
 
-  <div class="order-search">
+  <div class="or-search">
     <i class="fa-solid fa-magnifying-glass"></i>
-    <input type="text" id="orderSearch" placeholder="Cari produk...">
+    <input type="text" id="orSearch" placeholder="Cari produk...">
   </div>
 
-  <div class="order-cats" id="orderCats">
-    <button class="order-cat active" data-cat="all"><i class="fa-solid fa-layer-group"></i> Semua</button>
-    <button class="order-cat" data-cat="jasa"><i class="fa-solid fa-screwdriver-wrench"></i> Jasa</button>
-    <button class="order-cat" data-cat="produk"><i class="fa-solid fa-box"></i> Produk</button>
+  <div class="or-cats" id="orCats">
+    <button class="or-cat active" data-cat="all"><i class="fa-solid fa-layer-group"></i> Semua</button>
+    <button class="or-cat" data-cat="jasa"><i class="fa-solid fa-screwdriver-wrench"></i> Jasa</button>
+    <button class="or-cat" data-cat="produk"><i class="fa-solid fa-box"></i> Produk</button>
   </div>
 
-  <div class="order-section-title">pilih produk</div>
-  <div class="order-products" id="orderProducts"></div>
+  <div class="or-section">pilih produk</div>
+  <div class="or-products" id="orProducts"></div>
 </div>
+
+<script>
+(function(){
+  const $ = window.$;
+  const esc = window.esc;
+  const getCloudData = window.getCloudData;
+
+  const data = getCloudData();
+  if(!data) return;
+
+  const wa = data.preferences?.contact?.whatsapp || "#";
+
+  const all = [
+    ...(data.services||[]).map(s => ({ ...s, _cat: "jasa", _catLabel: "Jasa" })),
+    ...(data.products||[]).map(p => ({ ...p, _cat: "produk", _catLabel: "Produk" }))
+  ];
+
+  const statEl = $("#orStatProducts");
+  if(statEl) statEl.textContent = all.length + "+";
+
+  let cat = "all";
+  let search = "";
+
+  const render = () => {
+    const c = $("#orProducts");
+    if(!c) return;
+
+    const filtered = all.filter(p => {
+      if(cat !== "all" && p._cat !== cat) return false;
+      if(search){
+        const hay = (p.name + " " + (p.description||"")).toLowerCase();
+        if(!hay.includes(search.toLowerCase())) return false;
+      }
+      return true;
+    });
+
+    if(!filtered.length){
+      c.innerHTML = '<div class="or-empty"><i class="fa-regular fa-folder-open" style="display:block;font-size:24px;margin-bottom:8px"></i>Belum ada produk.</div>';
+      return;
+    }
+
+    c.innerHTML = filtered.map(p => {
+      const msg = encodeURIComponent(`Halo, gw mau order "${p.name}". Bisa dijelasin detailnya?`);
+      const link = wa + (wa.includes("?")?"&":"?") + "text=" + msg;
+
+      return `<div class="or-product">
+        <div class="or-product-head">
+          <div class="or-product-icon"><i class="${esc(p.icon||'fa-solid fa-box')}"></i></div>
+          <div class="or-product-badges">
+            <span class="or-product-badge"><i class="fa-solid fa-tag"></i> ${esc(p._catLabel)}</span>
+          </div>
+        </div>
+        <div class="or-product-title">${esc(p.name)}</div>
+        <div class="or-product-desc">${esc(p.description||"")}</div>
+        <div class="or-product-features">
+          <div class="or-product-feature"><i class="fa-solid fa-check"></i> Harga terjangkau</div>
+          <div class="or-product-feature"><i class="fa-solid fa-check"></i> Proses cepat</div>
+        </div>
+        <div class="or-product-foot">
+          <div><div class="or-product-price">${esc(p.price||"-")}</div></div>
+          <a class="or-product-cta" href="${esc(link)}" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Order</a>
+        </div>
+      </div>`;
+    }).join("");
+  };
+  render();
+
+  document.querySelectorAll("#orCats .or-cat").forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll("#orCats .or-cat").forEach(x => x.classList.remove("active"));
+      b.classList.add("active");
+      cat = b.dataset.cat;
+      render();
+    };
+  });
+
+  const searchEl = $("#orSearch");
+  if(searchEl){
+    searchEl.addEventListener("input", e => {
+      search = e.target.value.trim();
+      render();
+    });
+  }
+})();
+</script>
