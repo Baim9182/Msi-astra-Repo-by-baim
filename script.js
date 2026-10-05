@@ -1,5 +1,19 @@
 /* ==========================================================
-   MSI ASTRA v2.0 — Multi-File Version
+   MSI ASTRA v3.2 — 2 Tema Edition
+   ========================================================== */
+
+/* ==========================================================
+   FEATURE REGISTRY
+   ========================================================== */
+const FEATURES = [
+  { id: "about",  label: "About Dev",              desc: "Kenalan dikit",   icon: "fa-user-astronaut", color: "",        adminOnly: false },
+  { id: "lapor",  label: "Lapor Bug / Saran / Ide", desc: "Kirim masukan lu", icon: "fa-bullhorn",       color: "orange",  adminOnly: false },
+  { id: "order",  label: "Order APK / Web Auto",   desc: "Bikin project lu", icon: "fa-rocket",         color: "green",   adminOnly: false },
+  { id: "admin",  label: "Admin Tools",            desc: "Kelola website",   icon: "fa-sliders",        color: "purple",  adminOnly: true  }
+];
+
+/* ==========================================================
+   CONFIG
    ========================================================== */
 const CONFIG = {
   appName: "MSI ASTRA",
@@ -20,14 +34,30 @@ const CONFIG = {
     role: "AI-Assisted Developer",
     profileImage: "https://i.ibb.co.com/twHc7kkk/Proyek-Baru-14-B060999.png",
     bannerImage:  "https://i.ibb.co.com/Wpfcnm91/a75a910e72dc11e3d0cab3b195729320.jpg",
-    description: "Gw suka minta bantuan AI buat ngoding, cari solusi, debugging, bikin desain, sampai nyari ide. Gw mungkin belum jago semuanya, tapi gw suka belajar sambil jalan.",
+    description: "Gw suka minta bantuan AI buat ngoding, cari solusi, debugging, bikin desain, sampai nyari ide. Gw masih belajar sambil jalan.",
+    quote: "code, create, repeat — digital realm",
+    currently: "building MSI ASTRA",
+    stats: [
+      { num: "3+",   label: "Years Exp" },
+      { num: "15+",  label: "Projects" },
+      { num: "24/7", label: "Creative" }
+    ],
+    toolkit: [
+      { name: "JavaScript", icon: "fa-brands fa-js",     cls: "t-js" },
+      { name: "React",      icon: "fa-brands fa-react",  cls: "t-react" },
+      { name: "Python",     icon: "fa-brands fa-python", cls: "t-py" },
+      { name: "Node.js",    icon: "fa-brands fa-node",   cls: "t-node" },
+      { name: "CSS3",       icon: "fa-brands fa-css3",   cls: "t-css" },
+      { name: "Android",    icon: "fa-brands fa-android",cls: "t-flutter" },
+      { name: "Linux",      icon: "fa-brands fa-linux",  cls: "t-linux" },
+      { name: "Git",        icon: "fa-brands fa-git",    cls: "t-git" }
+    ],
     badges: [
-      { label:"AI Assisted", icon:"fa-solid fa-robot" },
-      { label:"Logic",       icon:"fa-solid fa-brain" },
-      { label:"WebView",     icon:"fa-solid fa-globe" },
-      { label:"Android",     icon:"fa-brands fa-android" },
-      { label:"UI Design",   icon:"fa-solid fa-palette" },
-      { label:"Problem Solving", icon:"fa-solid fa-lightbulb" }
+      { label: "AI Assisted",     icon: "fa-solid fa-robot" },
+      { label: "Logic",           icon: "fa-solid fa-brain" },
+      { label: "WebView",         icon: "fa-solid fa-globe" },
+      { label: "UI Design",       icon: "fa-solid fa-palette" },
+      { label: "Problem Solving", icon: "fa-solid fa-lightbulb" }
     ]
   },
 
@@ -40,10 +70,10 @@ const CONFIG = {
 /* ==========================================================
    CONSTANTS
    ========================================================== */
-const DEVICE_KEY  = "msi_device";
+const DEVICE_KEY = "msi_device";
 const SESSION_KEY = "msi_session";
-const THEME_KEY   = "msi_theme";
-const LAPOR_KEY   = "msi_lapor_history";
+const THEME_KEY = "msi_theme_active";
+const LAPOR_KEY = "msi_lapor_history";
 const SEEN_CHANGELOG_KEY = "msi_seen_changelog";
 
 let DEVICE_ID = "";
@@ -59,8 +89,7 @@ let CLOUD_DATA = null;
 let IS_ADMIN = false;
 let ADMIN_TAB = "services";
 let ADMIN_EDITING = null;
-let BANNER_INDEX = 0;
-let BANNER_TIMER = null;
+let ACTIVE_THEME = "t1";
 
 const $  = (s,c=document)=>c.querySelector(s);
 const $$ = (s,c=document)=>[...c.querySelectorAll(s)];
@@ -70,26 +99,43 @@ const DEFAULT_DATA = {
   services: [],
   products: [],
   payment: [],
-  banners: [],
+  themes: {
+    active: "t1",
+    t1: {
+      name: "Monochrome",
+      primary: "#ffffff",
+      secondary: "#a1a1aa",
+      bgImage: "",
+      bgOpacity: 0.15,
+      banner: { image: "", title: "MSI ASTRA", desc: "Digital minimalis, clean & profesional" }
+    },
+    t2: {
+      name: "Ocean",
+      primary: "#06b6d4",
+      secondary: "#3b82f6",
+      bgImage: "",
+      bgOpacity: 0.25,
+      banner: { image: "", title: "MSI ASTRA", desc: "Deep ocean vibes" }
+    }
+  },
   changelog: [],
   site: {
     mode: "open",
     maintenanceMessage: "Kami sedang melakukan perbaikan. Balik lagi nanti ya!",
-    maintenanceEta: "",
-    changelogVersion: ""
+    maintenanceEta: ""
   },
   admin: { claimed: false, ownerId: null, claimedAt: null }
 };
 
 /* ==========================================================
-   FRAGMENT LOADER — auto-cache HTML pages
+   FRAGMENT LOADER
    ========================================================== */
 const FRAGMENT_CACHE = {};
 
 async function loadFragment(name){
   if(FRAGMENT_CACHE[name]) return FRAGMENT_CACHE[name];
   try{
-    const r = await fetch(`pages/${name}.html?v=2`);
+    const r = await fetch(`pages/${name}.html?v=4`);
     if(!r.ok) throw new Error("HTTP " + r.status);
     const html = await r.text();
     FRAGMENT_CACHE[name] = html;
@@ -106,12 +152,12 @@ async function loadFragment(name){
 function loadingHTML(){
   return `<div style="padding:60px 20px;text-align:center">
     <i class="fa-solid fa-spinner fa-spin" style="font-size:26px;color:var(--primary)"></i>
-    <p style="margin-top:14px;color:var(--muted);font-size:12.5px">Memuat halaman...</p>
+    <p style="margin-top:14px;color:var(--muted);font-size:12.5px;font-family:var(--font-mono)">LOADING...</p>
   </div>`;
 }
 
 /* ==========================================================
-   CLOUD via WORKER
+   CLOUD
    ========================================================== */
 async function cloudLoad(){
   if(!CONFIG.api?.baseUrl) return null;
@@ -152,10 +198,13 @@ function ensureStructure(data){
   data.services = Array.isArray(data.services) ? data.services : [];
   data.products = Array.isArray(data.products) ? data.products : [];
   data.payment  = Array.isArray(data.payment)  ? data.payment  : [];
-  data.banners  = Array.isArray(data.banners)  ? data.banners  : [];
   data.changelog= Array.isArray(data.changelog)? data.changelog: [];
-  data.site     = data.site || { mode: "open", maintenanceMessage: "Website lagi diperbaiki.", maintenanceEta: "", changelogVersion: "" };
+  data.site     = data.site || { mode: "open", maintenanceMessage: "Website lagi diperbaiki.", maintenanceEta: "" };
   data.admin    = data.admin || { claimed: false, ownerId: null, claimedAt: null };
+  data.themes   = data.themes || DEFAULT_DATA.themes;
+  if(!data.themes.t1) data.themes.t1 = DEFAULT_DATA.themes.t1;
+  if(!data.themes.t2) data.themes.t2 = DEFAULT_DATA.themes.t2;
+  if(!data.themes.active) data.themes.active = "t1";
   return data;
 }
 
@@ -194,6 +243,16 @@ function copyText(text){
   } else fallback();
 }
 
+function hexToRgba(hex, a){
+  if(!hex) return "rgba(255,255,255," + a + ")";
+  let h = hex.replace("#","");
+  if(h.length === 3) h = h.split("").map(c=>c+c).join("");
+  const r = parseInt(h.substring(0,2),16) || 255;
+  const g = parseInt(h.substring(2,4),16) || 255;
+  const b = parseInt(h.substring(4,6),16) || 255;
+  return `rgba(${r},${g},${b},${a})`;
+}
+
 function statusBadge(status){
   const s = (status||"").toLowerCase();
   let cls = "available";
@@ -213,6 +272,92 @@ window.hashAdminKey = async function(pass){
   catch(e){ prompt("Copy manual:", h); }
   return h;
 };
+
+/* ==========================================================
+   THEME SYSTEM — 2 tema, banner per tema
+   ========================================================== */
+function getActiveThemeKey(){
+  try{
+    const saved = localStorage.getItem(THEME_KEY);
+    if(saved && CLOUD_DATA?.themes?.[saved]) return saved;
+  }catch(e){}
+  return CLOUD_DATA?.themes?.active || "t1";
+}
+
+function applyTheme(key){
+  if(!CLOUD_DATA?.themes?.[key]) key = "t1";
+  ACTIVE_THEME = key;
+  const t = CLOUD_DATA.themes[key];
+
+  const root = document.documentElement;
+  root.style.setProperty("--primary", t.primary || "#ffffff");
+  root.style.setProperty("--secondary", t.secondary || "#a1a1aa");
+  root.style.setProperty("--primary-soft", hexToRgba(t.primary || "#ffffff", 0.1));
+  root.style.setProperty("--primary-glow", hexToRgba(t.primary || "#ffffff", 0.3));
+  root.style.setProperty("--bg-image", t.bgImage ? `url('${t.bgImage}')` : "none");
+  root.style.setProperty("--bg-opacity", t.bgOpacity || 0.15);
+
+  try{ localStorage.setItem(THEME_KEY, key); }catch(e){}
+
+  // Update banner
+  renderBanner(t.banner);
+
+  // Update swatch selection
+  $$(".theme-swatch").forEach(el => el.classList.toggle("selected", el.dataset.theme === key));
+}
+
+function renderBanner(banner){
+  const img = $("#bannerImg");
+  const title = $("#bannerTitle");
+  const desc = $("#bannerDesc");
+
+  if(!banner){
+    if(img) img.style.display = "none";
+    if(title) title.textContent = "MSI ASTRA";
+    if(desc) desc.textContent = "Digital project & jasa custom";
+    return;
+  }
+
+  if(banner.image){
+    if(img){
+      img.style.display = "block";
+      img.style.opacity = "0";
+      img.src = banner.image;
+      img.onload = () => { img.style.opacity = "1"; };
+    }
+  } else if(img){
+    img.style.display = "none";
+  }
+
+  if(title) title.textContent = banner.title || "MSI ASTRA";
+  if(desc) desc.textContent = banner.desc || "";
+}
+
+function renderThemeGrid(){
+  const grid = $("#themeGrid");
+  if(!grid) return;
+  const themes = CLOUD_DATA?.themes || DEFAULT_DATA.themes;
+  const active = getActiveThemeKey();
+
+  grid.innerHTML = ["t1","t2"].map(k => {
+    const t = themes[k];
+    if(!t) return "";
+    return `
+      <button class="theme-swatch ${k===active?'selected':''}" data-theme="${k}"
+        style="background:linear-gradient(135deg,${t.primary},${t.secondary})">
+        <i class="fa-solid fa-palette" style="color:${k==='t1'?'#000':'#fff'}"></i>
+        <span>${esc(t.name)}</span>
+      </button>
+    `;
+  }).join("");
+
+  grid.querySelectorAll("[data-theme]").forEach(b => {
+    b.onclick = () => {
+      applyTheme(b.dataset.theme);
+      toast("Tema: " + CLOUD_DATA.themes[b.dataset.theme].name, "success");
+    };
+  });
+}
 
 /* ==========================================================
    LAPOR — DAILY LIMIT
@@ -244,76 +389,11 @@ function incrementLapor(data){
   setLaporHistory(h);
 }
 
-/* ==========================================================
-   BANNER CAROUSEL
-   ========================================================== */
-function renderBannerCarousel(){
-  const track = $("#bannerTrack");
-  const dots = $("#bannerDots");
-  if(!track || !dots) return;
-
-  const list = CLOUD_DATA?.banners || [];
-
-  if(!list.length){
-    track.innerHTML = `
-      <div class="banner-slide active">
-        <div class="banner-slide-content">
-          <div class="banner-slide-title">Selamat Datang di MSI ASTRA</div>
-          <div class="banner-slide-desc">Jasa, produk digital, dan project custom</div>
-        </div>
-      </div>`;
-    dots.innerHTML = "";
-    return;
-  }
-
-  track.innerHTML = list.map((b, i) => `
-    <div class="banner-slide ${i===0?'active':''}">
-      ${b.image ? `<img src="${esc(b.image)}" alt="${esc(b.title||'')}" onerror="this.style.display='none'">` : ''}
-      <div class="banner-slide-content">
-        ${b.title ? `<div class="banner-slide-title">${esc(b.title)}</div>` : ''}
-        ${b.description ? `<div class="banner-slide-desc">${esc(b.description)}</div>` : ''}
-      </div>
-    </div>
-  `).join("");
-
-  dots.innerHTML = list.map((_, i) =>
-    `<div class="banner-dot ${i===0?'active':''}" data-dot="${i}"></div>`
-  ).join("");
-
-  BANNER_INDEX = 0;
-  if(BANNER_TIMER) clearInterval(BANNER_TIMER);
-  if(list.length > 1){
-    BANNER_TIMER = setInterval(() => {
-      BANNER_INDEX = (BANNER_INDEX + 1) % list.length;
-      updateBannerPosition();
-    }, 4500);
-  }
-
-  dots.querySelectorAll("[data-dot]").forEach(d => {
-    d.onclick = () => {
-      BANNER_INDEX = Number(d.dataset.dot);
-      updateBannerPosition();
-      if(BANNER_TIMER) clearInterval(BANNER_TIMER);
-      BANNER_TIMER = setInterval(() => {
-        BANNER_INDEX = (BANNER_INDEX + 1) % list.length;
-        updateBannerPosition();
-      }, 4500);
-    };
-  });
-}
-
-function updateBannerPosition(){
-  const track = $("#bannerTrack");
-  const dots = $$("#bannerDots .banner-dot");
-  const slides = $$("#bannerTrack .banner-slide");
-  if(!track) return;
-  track.style.transform = `translateX(-${BANNER_INDEX * 100}%)`;
-  slides.forEach((s, i) => s.classList.toggle("active", i === BANNER_INDEX));
-  dots.forEach((d, i) => d.classList.toggle("active", i === BANNER_INDEX));
-}
+window.getRemainingLapor = getRemainingLapor;
+window.incrementLapor = incrementLapor;
 
 /* ==========================================================
-   RENDER MAIN PAGES
+   RENDER MAIN
    ========================================================== */
 function cardHTML(item, idx, type){
   return `
@@ -427,7 +507,6 @@ function renderContact(){
 }
 
 function refreshAll(){
-  renderBannerCarousel();
   renderServices();
   renderProducts();
   renderPayment();
@@ -525,7 +604,6 @@ function setSession(){
     }));
   }catch(e){}
 }
-
 function clearSession(){
   try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
 }
@@ -618,6 +696,36 @@ function applyAdminMode(){
 /* ==========================================================
    SIDEBAR
    ========================================================== */
+function renderSidebarItems(){
+  const nav = $(".sidebar-nav");
+  if(!nav) return;
+
+  const userItems = FEATURES.filter(f => !f.adminOnly);
+  const adminItems = FEATURES.filter(f => f.adminOnly);
+
+  const renderItem = (f) => `
+    <button class="sidebar-item" data-sidebar="${esc(f.id)}"${f.adminOnly ? ' id="sidebarAdminBtn" style="display:none"' : ''}>
+      <div class="sidebar-item-icon ${f.color||''}">
+        <i class="fa-solid ${esc(f.icon)}"></i>
+      </div>
+      <div class="sidebar-item-body">
+        <span>${esc(f.label)}</span>
+        <small>${esc(f.desc)}</small>
+      </div>
+      <i class="fa-solid fa-chevron-right sidebar-chevron"></i>
+    </button>
+  `;
+
+  nav.innerHTML = `
+    <div class="sidebar-section-label">Menu</div>
+    ${userItems.map(renderItem).join("")}
+    ${adminItems.length ? `
+      <div class="sidebar-section-label" id="adminSectionLabel" style="display:none">Admin</div>
+      ${adminItems.map(renderItem).join("")}
+    ` : ''}
+  `;
+}
+
 function openSidebar(){
   $("#sidebar")?.classList.add("show");
   $("#sidebarOverlay")?.classList.add("show");
@@ -630,56 +738,38 @@ function closeSidebar(){
 }
 
 function initSidebar(){
+  renderSidebarItems();
   $("#sidebarToggle")?.addEventListener("click", openSidebar);
   $("#sidebarClose")?.addEventListener("click", closeSidebar);
   $("#sidebarOverlay")?.addEventListener("click", closeSidebar);
 
-  $$("[data-sidebar]").forEach(el => {
-    el.addEventListener("click", () => {
-      const target = el.dataset.sidebar;
-      closeSidebar();
-      setTimeout(()=>{
-        if(target === "admin") openAdminPanel();
-        else openFullPage(target);
-      }, 250);
-    });
-  });
-
-  $("#themeBtn")?.addEventListener("click", ()=>$("#themePanel").classList.add("show"));
+  // Theme button
+  $("#themeBtn")?.addEventListener("click", openThemePanel);
+  $("#themeQuickBtn")?.addEventListener("click", openThemePanel);
   $("#themeClose")?.addEventListener("click", ()=>$("#themePanel").classList.remove("show"));
   $("#themePanel")?.addEventListener("click", e=>{ if(e.target.id==="themePanel") e.target.classList.remove("show"); });
-  $("#themeGrid")?.addEventListener("click", e=>{
-    const sw = e.target.closest(".theme-swatch");
-    if(!sw) return;
-    applyTheme(sw.dataset.theme);
-    toast("Tema diubah.","success");
-  });
+}
+
+function openThemePanel(){
+  renderThemeGrid();
+  $("#themePanel").classList.add("show");
 }
 
 /* ==========================================================
-   FULLPAGE — About / Lapor / Order
+   FULLPAGE
    ========================================================== */
-const FULLPAGE_TITLES = {
-  about: "About Dev",
-  lapor: "Lapor Bug / Saran / Ide",
-  order: "Order APK / Web Auto"
-};
-
-const FULLPAGE_BINDERS = {
-  about: bindAboutPage,
-  lapor: bindLaporPage,
-  order: bindOrderPage
-};
-
 async function openFullPage(type){
-  if(!FULLPAGE_TITLES[type]) return;
+  const feature = FEATURES.find(f => f.id === type && !f.adminOnly);
+  if(!feature) return;
 
   const fp = $("#fullpage");
   const title = $("#fullpageTitle");
+  const subtitle = $("#fullpageSubtitle");
   const body = $("#fullpageBody");
   if(!fp || !title || !body) return;
 
-  title.textContent = FULLPAGE_TITLES[type];
+  title.textContent = feature.label;
+  if(subtitle) subtitle.textContent = "MSI ASTRA · " + feature.desc.toUpperCase();
   body.innerHTML = loadingHTML();
 
   fp.classList.add("show");
@@ -688,8 +778,11 @@ async function openFullPage(type){
   const html = await loadFragment(type);
   body.innerHTML = html;
 
-  const binder = FULLPAGE_BINDERS[type];
-  if(typeof binder === "function") binder();
+  const binderName = "bind" + type.charAt(0).toUpperCase() + type.slice(1) + "Page";
+  if(typeof window[binderName] === "function"){
+    try{ window[binderName](); }
+    catch(e){ console.error("[Binder] error:", e); }
+  }
 }
 
 function closeFullPage(){
@@ -697,77 +790,9 @@ function closeFullPage(){
   document.body.classList.remove("no-scroll");
 }
 
-/* ---- ABOUT PAGE BINDER ---- */
-function bindAboutPage(){
-  // Tidak ada event khusus. Konten di-render dari HTML fragment.
-}
-
-/* ---- LAPOR PAGE BINDER ---- */
-function bindLaporPage(){
-  const form = $("#laporForm");
-  if(!form) return;
-
-  const nameEl = $("#lfName");
-  const catEl = $("#lfCategory");
-  const msgEl = $("#lfMessage");
-  const countEl = $("#lfCount");
-  const submitBtn = $("#lfSubmit");
-
-  try{
-    const lastName = localStorage.getItem("msi_lapor_name") || "";
-    if(lastName) nameEl.value = lastName;
-  }catch(e){}
-
-  const updateCount = () => {
-    const len = msgEl.value.length;
-    countEl.textContent = len + " / 800";
-    countEl.classList.toggle("warn", len >= 600 && len < 750);
-    countEl.classList.toggle("danger", len >= 750);
-  };
-  msgEl.addEventListener("input", updateCount);
-  updateCount();
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const remaining = getRemainingLapor();
-    if(remaining <= 0){
-      toast("Kuota pesan hari ini habis.","error");
-      return;
-    }
-    const nama = nameEl.value.trim();
-    if(!nama){
-      toast("Isi nama/username dulu ya.","error");
-      nameEl.focus();
-      return;
-    }
-    const pesan = msgEl.value.trim();
-    if(pesan.length < 5){
-      toast("Pesan minimal 5 karakter.","error");
-      msgEl.focus();
-      return;
-    }
-
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Kirim...';
-    const kategori = catEl.value;
-    try{ localStorage.setItem("msi_lapor_name", nama); }catch(e){}
-
-    const ok = await sendLaporToDiscord({ nama, kategori, pesan });
-
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = '<i class="fa-brands fa-discord"></i> Kirim Pesan';
-
-    if(ok){
-      incrementLapor({ nama, kategori, pesan: pesan.slice(0,100) });
-      toast("Pesan kekirim. Makasih!","success");
-      setTimeout(()=>openFullPage("lapor"), 500);
-    } else {
-      toast("Gagal kirim pesan.","error");
-    }
-  });
-}
-
+/* ==========================================================
+   LAPOR SEND
+   ========================================================== */
 async function sendLaporToDiscord(payload){
   const url = (CONFIG.webhookSaran || "").trim();
   if(!url || !/^https:\/\/discord(app)?\.com\/api\/webhooks\//.test(url)) return false;
@@ -784,15 +809,15 @@ async function sendLaporToDiscord(payload){
     embeds: [{
       title: "Pesan Baru dari User",
       description: "Ada masukan baru masuk.",
-      color: 0x6c7cff,
+      color: 0x06b6d4,
       author: { name: "MSI ASTRA • Lapor", icon_url: d.profileImage },
       thumbnail: { url: d.profileImage },
       fields: [
-        { name: "Pengirim", value: "```" + payload.nama.slice(0,90) + "```", inline: true },
+        { name: "Pengirim", value: "```" + (payload.nama||"Anonim").slice(0,90) + "```", inline: true },
         { name: "Kategori", value: "```" + (payload.kategori||"-").slice(0,90) + "```", inline: true },
-        { name: "Isi Pesan", value: "```\n" + payload.pesan.slice(0,1000) + "\n```", inline: false }
+        { name: "Isi Pesan", value: "```\n" + (payload.pesan||"").slice(0,1000) + "\n```", inline: false }
       ],
-      footer: { text: `MSI ASTRA App • ${tanggal}`, icon_url: d.profileImage },
+      footer: { text: `MSI ASTRA · ${tanggal}`, icon_url: d.profileImage },
       timestamp: now.toISOString()
     }]
   };
@@ -810,13 +835,10 @@ async function sendLaporToDiscord(payload){
   }catch(e){ return false; }
 }
 
-/* ---- ORDER PAGE BINDER ---- */
-function bindOrderPage(){
-  // Static content — no events
-}
+window.sendLaporToDiscord = sendLaporToDiscord;
 
 /* ==========================================================
-   ADMIN PANEL — Load dari fragment
+   ADMIN PANEL
    ========================================================== */
 async function openAdminPanel(){
   if(!IS_ADMIN){ toast("Akses ditolak.","error"); return; }
@@ -843,8 +865,7 @@ const ADMIN_LABELS = {
   services: "Jasa",
   products: "Produk",
   payment:  "Payment",
-  banners:  "Banner",
-  changelog:"Changelog",
+  themes:   "Tema",
   website:  "Website"
 };
 
@@ -854,14 +875,14 @@ const ADMIN_FIELDS = {
     { k:"description", l:"Deskripsi", type:"textarea" },
     { k:"price", l:"Harga", type:"text" },
     { k:"status", l:"Status", type:"select", opts:["Tersedia","Tidak Tersedia","Pre-Order","Coming Soon"] },
-    { k:"icon", l:"Icon (Font Awesome class)", type:"text" }
+    { k:"icon", l:"Icon (Font Awesome)", type:"text" }
   ],
   products: [
     { k:"name", l:"Nama Produk", type:"text" },
     { k:"description", l:"Deskripsi", type:"textarea" },
     { k:"price", l:"Harga", type:"text" },
     { k:"status", l:"Status", type:"select", opts:["Tersedia","Tidak Tersedia","Pre-Order","Coming Soon"] },
-    { k:"icon", l:"Icon (Font Awesome class)", type:"text" }
+    { k:"icon", l:"Icon (Font Awesome)", type:"text" }
   ],
   payment: [
     { k:"id", l:"ID Unik", type:"text" },
@@ -871,17 +892,6 @@ const ADMIN_FIELDS = {
     { k:"type", l:"Tipe", type:"select", opts:["qris","phone","url"] },
     { k:"value", l:"Value", type:"textarea" },
     { k:"status", l:"Status", type:"select", opts:["available","unavailable","maintenance"] }
-  ],
-  banners: [
-    { k:"title", l:"Judul Banner", type:"text" },
-    { k:"description", l:"Deskripsi", type:"text" },
-    { k:"image", l:"URL Gambar", type:"text" },
-    { k:"link", l:"Link (opsional)", type:"text" }
-  ],
-  changelog: [
-    { k:"version", l:"Versi (contoh: 1.0.1)", type:"text" },
-    { k:"date", l:"Tanggal (contoh: 5 Okt 2026)", type:"text" },
-    { k:"changes", l:"Perubahan (pisahkan dengan enter)", type:"textarea" }
   ]
 };
 
@@ -889,7 +899,6 @@ function renderAdminPanel(){
   const box = $("#adminPanelBox");
   if(!box) return;
 
-  // Render tabs
   const tabsEl = box.querySelector("#adminTabs");
   if(tabsEl){
     tabsEl.innerHTML = Object.entries(ADMIN_LABELS).map(([k,v]) =>
@@ -902,7 +911,6 @@ function renderAdminPanel(){
     });
   }
 
-  // Bind shell actions
   const closeBtn = box.querySelector("[data-act='close']");
   if(closeBtn) closeBtn.onclick = closeAdminPanel;
 
@@ -931,6 +939,7 @@ function renderAdminPanel(){
       const data = await cloudLoad();
       if(!data){ toast("Gagal sync.","error"); return; }
       CLOUD_DATA = ensureStructure(data);
+      applyTheme(getActiveThemeKey());
       refreshAll();
       checkIsAdmin();
       applyAdminMode();
@@ -951,7 +960,6 @@ function renderAdminPanel(){
     };
   }
 
-  // Render content
   const content = box.querySelector("#adminContent");
   if(!content) return;
 
@@ -964,14 +972,11 @@ function renderAdminPanel(){
 
 function renderAdminList(content){
   const tab = ADMIN_TAB;
-  const isWebsite = tab === "website";
-  const list = isWebsite ? [] : (CLOUD_DATA[tab] || []);
 
-  if(isWebsite){
-    content.innerHTML = renderWebsiteTabHTML();
-    bindWebsiteTab(content);
-    return;
-  }
+  if(tab === "themes"){ renderThemesTab(content); return; }
+  if(tab === "website"){ renderWebsiteTab(content); return; }
+
+  const list = CLOUD_DATA[tab] || [];
 
   content.innerHTML = `
     <button class="btn btn-primary btn-block" data-act="add" style="margin-bottom:12px">
@@ -981,8 +986,8 @@ function renderAdminList(content){
       ${list.length ? list.map((it, i) => `
         <div class="admin-item">
           <div class="admin-item-info">
-            <b>${esc(it.name || it.title || it.version || it.id || "-")}</b>
-            <small>${esc(it.status || it.price || it.date || it.description || "")}</small>
+            <b>${esc(it.name || it.id || "-")}</b>
+            <small>${esc(it.status || it.price || it.value || "")}</small>
           </div>
           <div class="admin-item-btns">
             <button data-edit="${i}"><i class="fa-solid fa-pen"></i></button>
@@ -1007,7 +1012,7 @@ function renderAdminList(content){
   content.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
     const i = Number(b.dataset.del);
     const it = CLOUD_DATA[tab][i];
-    const name = it?.name || it?.title || it?.version || "item";
+    const name = it?.name || "item";
     if(!confirm(`Hapus "${name}"?`)) return;
     CLOUD_DATA[tab].splice(i, 1);
     const ok = await persistCloud();
@@ -1027,12 +1032,12 @@ function renderAdminForm(content){
     <div class="modal-title" style="margin-bottom:14px">
       ${isNew ? "Tambah" : "Edit"} ${ADMIN_LABELS[tab]}
     </div>
-    <div style="display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;padding-right:4px">
+    <div class="field-group">
       ${fields.map(f => {
         const v = item[f.k] ?? "";
         if(f.type === "textarea"){
           return `<div class="field"><label>${esc(f.l)}</label>
-            <textarea data-field="${f.k}" rows="3">${esc(Array.isArray(v)?v.join("\n"):v)}</textarea></div>`;
+            <textarea data-field="${f.k}" rows="3">${esc(v)}</textarea></div>`;
         }
         if(f.type === "select"){
           return `<div class="field"><label>${esc(f.l)}</label>
@@ -1061,16 +1066,9 @@ function renderAdminForm(content){
     const obj = {};
     fields.forEach(f => {
       const el = content.querySelector(`[data-field="${f.k}"]`);
-      let val = el ? el.value.trim() : "";
-      if(f.k === "changes" && val){
-        obj[f.k] = val.split("\n").map(x => x.trim()).filter(Boolean);
-      } else {
-        obj[f.k] = val;
-      }
+      obj[f.k] = el ? el.value.trim() : "";
     });
-    if(!obj.name && !obj.title && !obj.version){
-      toast("Field wajib belum diisi.","error"); return;
-    }
+    if(!obj.name){ toast("Nama wajib diisi.","error"); return; }
 
     const btn = content.querySelector("[data-act='save']");
     btn.disabled = true;
@@ -1087,25 +1085,164 @@ function renderAdminForm(content){
   };
 }
 
-function renderWebsiteTabHTML(){
+/* ---- THEMES TAB ---- */
+function renderThemesTab(content){
+  const themes = CLOUD_DATA.themes;
+  const active = themes.active || "t1";
+
+  content.innerHTML = `
+    <div class="maint-banner" style="background:var(--primary-soft);border-color:var(--primary);color:var(--primary);font-family:var(--font-mono)">
+      <i class="fa-solid fa-info-circle"></i>
+      Atur warna, background & banner per tema
+    </div>
+
+    <div style="font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;font-family:var(--font-mono)">
+      Tema Default Aktif
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      ${["t1","t2"].map(k => `
+        <button class="btn ${active===k?'btn-primary':'btn-ghost'}" data-default="${k}" style="flex:1;font-size:11.5px;padding:10px">
+          <i class="fa-solid fa-palette"></i> ${esc(themes[k].name)}
+        </button>
+      `).join("")}
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+      ${["t1","t2"].map(k => renderThemeEditor(k, themes[k])).join("")}
+    </div>
+  `;
+
+  content.querySelectorAll("[data-default]").forEach(b => b.onclick = async () => {
+    CLOUD_DATA.themes.active = b.dataset.default;
+    const ok = await persistCloud();
+    if(ok){ toast("Default: " + CLOUD_DATA.themes[b.dataset.default].name, "success"); renderAdminPanel(); }
+    else toast("Gagal simpan.","error");
+  });
+
+  // Bind per theme
+  ["t1","t2"].forEach(k => bindThemeEditor(content, k));
+}
+
+function renderThemeEditor(key, t){
+  return `
+    <div style="padding:14px;border-radius:14px;background:var(--surface-3);border:1px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,${t.primary},${t.secondary})"></div>
+          <b style="font-size:13px">${esc(t.name)}</b>
+        </div>
+        <button class="btn btn-ghost btn-sm" data-preview="${key}">
+          <i class="fa-solid fa-eye"></i> Preview
+        </button>
+      </div>
+
+      <div class="field" style="margin-bottom:10px">
+        <label>Nama Tema</label>
+        <input type="text" data-theme-name="${key}" value="${esc(t.name)}">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div class="field">
+          <label>Warna Primary</label>
+          <input type="text" data-theme-primary="${key}" value="${esc(t.primary)}" placeholder="#ffffff">
+        </div>
+        <div class="field">
+          <label>Warna Secondary</label>
+          <input type="text" data-theme-secondary="${key}" value="${esc(t.secondary)}" placeholder="#a1a1aa">
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:10px">
+        <label>Background Image URL</label>
+        <input type="text" data-theme-bg="${key}" value="${esc(t.bgImage||"")}" placeholder="https://...">
+      </div>
+
+      <div class="field" style="margin-bottom:12px">
+        <label>Background Opacity (0 - 1)</label>
+        <input type="number" step="0.05" min="0" max="1" data-theme-opacity="${key}" value="${t.bgOpacity||0.15}">
+      </div>
+
+      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;font-family:var(--font-mono)">
+        Banner Tema
+      </div>
+
+      <div class="field" style="margin-bottom:8px">
+        <label>Judul Banner</label>
+        <input type="text" data-banner-title="${key}" value="${esc(t.banner?.title||"")}">
+      </div>
+      <div class="field" style="margin-bottom:8px">
+        <label>Deskripsi Banner</label>
+        <input type="text" data-banner-desc="${key}" value="${esc(t.banner?.desc||"")}">
+      </div>
+      <div class="field" style="margin-bottom:12px">
+        <label>URL Gambar Banner</label>
+        <input type="text" data-banner-image="${key}" value="${esc(t.banner?.image||"")}" placeholder="https://...">
+      </div>
+
+      <button class="btn btn-primary btn-block" data-save-theme="${key}">
+        <i class="fa-solid fa-floppy-disk"></i> Simpan Tema ${esc(t.name)}
+      </button>
+    </div>
+  `;
+}
+
+function bindThemeEditor(content, key){
+  const preview = content.querySelector(`[data-preview="${key}"]`);
+  if(preview) preview.onclick = () => {
+    applyTheme(key);
+    toast("Preview: " + CLOUD_DATA.themes[key].name, "success");
+  };
+
+  const saveBtn = content.querySelector(`[data-save-theme="${key}"]`);
+  if(saveBtn) saveBtn.onclick = async () => {
+    const t = CLOUD_DATA.themes[key];
+    t.name = content.querySelector(`[data-theme-name="${key}"]`).value.trim() || t.name;
+    t.primary = content.querySelector(`[data-theme-primary="${key}"]`).value.trim() || t.primary;
+    t.secondary = content.querySelector(`[data-theme-secondary="${key}"]`).value.trim() || t.secondary;
+    t.bgImage = content.querySelector(`[data-theme-bg="${key}"]`).value.trim();
+    t.bgOpacity = parseFloat(content.querySelector(`[data-theme-opacity="${key}"]`).value) || 0.15;
+    t.banner = {
+      title: content.querySelector(`[data-banner-title="${key}"]`).value.trim(),
+      desc: content.querySelector(`[data-banner-desc="${key}"]`).value.trim(),
+      image: content.querySelector(`[data-banner-image="${key}"]`).value.trim()
+    };
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Simpan...';
+    const ok = await persistCloud();
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Tema ' + esc(t.name);
+
+    if(ok){
+      toast("Tema tersimpan.","success");
+      if(ACTIVE_THEME === key) applyTheme(key);
+      renderAdminPanel();
+    } else {
+      toast("Gagal simpan.","error");
+    }
+  };
+}
+
+/* ---- WEBSITE TAB ---- */
+function renderWebsiteTab(content){
   const site = CLOUD_DATA?.site || {};
   const mode = (site.mode || "open").toLowerCase();
 
   const modeInfo = {
-    open: { label: "ONLINE", color: "#4ade80", icon: "fa-circle-check", desc: "Website bisa diakses semua orang" },
-    maintenance: { label: "MAINTENANCE", color: "#fbbf24", icon: "fa-screwdriver-wrench", desc: "User lihat popup maintenance, admin bypass" },
-    update: { label: "UPDATE", color: "#6c7cff", icon: "fa-rocket", desc: "User lihat popup changelog, admin normal" }
+    open:        { label: "ONLINE",      color: "#4ade80", icon: "fa-circle-check",         desc: "Website bisa diakses semua orang" },
+    maintenance: { label: "MAINTENANCE", color: "#fbbf24", icon: "fa-screwdriver-wrench",   desc: "User lihat popup maintenance, admin bypass" },
+    update:      { label: "UPDATE",      color: "#6c7cff", icon: "fa-rocket",               desc: "User lihat popup changelog, admin normal" }
   };
   const info = modeInfo[mode] || modeInfo.open;
 
-  return `
+  content.innerHTML = `
     <div class="maint-banner" style="background:${info.color}15;border-color:${info.color}40;color:${info.color}">
       <i class="fa-solid ${info.icon}"></i>
       Status: <b style="margin-left:4px">${info.label}</b>
     </div>
     <p style="font-size:11.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">${esc(info.desc)}</p>
 
-    <div style="font-size:11.5px;font-weight:600;margin-bottom:8px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase">
+    <div style="font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;font-family:var(--font-mono)">
       Mode Website
     </div>
     <div style="display:flex;gap:6px;margin-bottom:16px">
@@ -1132,43 +1269,30 @@ function renderWebsiteTabHTML(){
       <i class="fa-solid fa-floppy-disk"></i> Simpan
     </button>
   `;
-}
 
-function bindWebsiteTab(content){
   content.querySelectorAll("[data-mode]").forEach(b => {
     b.onclick = async () => {
-      const target = b.dataset.mode;
       CLOUD_DATA.site = CLOUD_DATA.site || {};
-      CLOUD_DATA.site.mode = target;
+      CLOUD_DATA.site.mode = b.dataset.mode;
       const ok = await persistCloud();
-      if(ok){
-        toast("Mode: " + target.toUpperCase(), "success");
-        renderAdminPanel();
-        checkMaintenance();
-        checkChangelog();
-      } else {
-        toast("Gagal simpan.","error");
-      }
+      if(ok){ toast("Mode: " + b.dataset.mode.toUpperCase(), "success"); renderAdminPanel(); checkMaintenance(); checkChangelog(); }
+      else toast("Gagal simpan.","error");
     };
   });
 
   const saveBtn = content.querySelector("#saveSiteBtn");
-  if(saveBtn){
-    saveBtn.onclick = async () => {
-      const msg = content.querySelector("#maintMsgInput").value.trim();
-      const eta = content.querySelector("#maintEtaInput").value.trim();
-      CLOUD_DATA.site = CLOUD_DATA.site || {};
-      CLOUD_DATA.site.maintenanceMessage = msg || "Website lagi diperbaiki.";
-      CLOUD_DATA.site.maintenanceEta = eta;
-      saveBtn.disabled = true;
-      saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Simpan...';
-      const ok = await persistCloud();
-      saveBtn.disabled = false;
-      saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan';
-      toast(ok ? "Pesan disimpan." : "Gagal simpan.", ok ? "success" : "error");
-      checkMaintenance();
-    };
-  }
+  if(saveBtn) saveBtn.onclick = async () => {
+    CLOUD_DATA.site = CLOUD_DATA.site || {};
+    CLOUD_DATA.site.maintenanceMessage = content.querySelector("#maintMsgInput").value.trim() || "Website lagi diperbaiki.";
+    CLOUD_DATA.site.maintenanceEta = content.querySelector("#maintEtaInput").value.trim();
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Simpan...';
+    const ok = await persistCloud();
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan';
+    toast(ok ? "Pesan disimpan." : "Gagal simpan.", ok ? "success" : "error");
+    checkMaintenance();
+  };
 }
 
 /* ==========================================================
@@ -1190,47 +1314,7 @@ function openDetail(type, idx){
 }
 
 /* ==========================================================
-   THEME
-   ========================================================== */
-const THEMES = {
-  default:{ name:"Default", primary:"#6c7cff", secondary:"#8b5cf6" },
-  blue:   { name:"Blue",    primary:"#3b82f6", secondary:"#06b6d4" },
-  purple: { name:"Purple",  primary:"#a855f7", secondary:"#8b5cf6" },
-  red:    { name:"Red",     primary:"#ef4444", secondary:"#f97316" },
-  green:  { name:"Green",   primary:"#10b981", secondary:"#22c55e" },
-  gold:   { name:"Gold",    primary:"#d4a72c", secondary:"#b8860b" }
-};
-
-function hexToRgba(hex, a){
-  const h = hex.replace("#","");
-  const r = parseInt(h.substring(0,2),16);
-  const g = parseInt(h.substring(2,4),16);
-  const b = parseInt(h.substring(4,6),16);
-  return `rgba(${r},${g},${b},${a})`;
-}
-
-function applyTheme(key){
-  const t = THEMES[key] || THEMES.default;
-  const root = document.documentElement;
-  root.style.setProperty("--primary", t.primary);
-  root.style.setProperty("--secondary", t.secondary);
-  root.style.setProperty("--primary-soft", hexToRgba(t.primary, 0.14));
-  root.style.setProperty("--primary-glow", hexToRgba(t.primary, 0.4));
-  try{ localStorage.setItem(THEME_KEY, key); }catch(e){}
-  $$(".theme-swatch").forEach(el => el.classList.toggle("selected", el.dataset.theme === key));
-}
-
-function renderThemeGrid(){
-  const grid = $("#themeGrid");
-  if(!grid) return;
-  grid.innerHTML = Object.entries(THEMES).map(([k,t]) => `
-    <button class="theme-swatch" data-theme="${k}"
-      style="background:linear-gradient(135deg,${t.primary},${t.secondary})">${esc(t.name)}</button>
-  `).join("");
-}
-
-/* ==========================================================
-   NAVIGATION
+   NAV
    ========================================================== */
 const PAGE_TITLES = { home:1, services:1, payment:1, contact:1 };
 function goTo(page){
@@ -1282,6 +1366,14 @@ function initGeneralEvents(){
   document.addEventListener("click", e => {
     if(e.target.closest("#fullpageBack")){ closeFullPage(); return; }
 
+    const sidebarTrigger = e.target.closest("[data-sidebar]");
+    if(sidebarTrigger && !sidebarTrigger.closest(".sidebar")){
+      const target = sidebarTrigger.dataset.sidebar;
+      if(target === "admin"){ if(IS_ADMIN) openAdminPanel(); }
+      else openFullPage(target);
+      return;
+    }
+
     const nav = e.target.closest("[data-nav]");
     if(nav){ goTo(nav.dataset.nav); return; }
 
@@ -1302,6 +1394,17 @@ function initGeneralEvents(){
     }
   });
 
+  document.addEventListener("click", e => {
+    const item = e.target.closest(".sidebar .sidebar-item[data-sidebar]");
+    if(!item) return;
+    const target = item.dataset.sidebar;
+    closeSidebar();
+    setTimeout(()=>{
+      if(target === "admin") openAdminPanel();
+      else openFullPage(target);
+    }, 250);
+  });
+
   $("#modalClose")?.addEventListener("click", ()=>$("#detailModal").classList.remove("show"));
   $("#qrisClose")?.addEventListener("click", ()=>$("#qrisModal").classList.remove("show"));
   $("#detailModal")?.addEventListener("click", e=>{ if(e.target.id==="detailModal") e.target.classList.remove("show"); });
@@ -1313,6 +1416,7 @@ function initGeneralEvents(){
     const data = await cloudLoad();
     if(data){
       CLOUD_DATA = ensureStructure(data);
+      applyTheme(getActiveThemeKey());
       refreshAll();
       checkMaintenance();
       checkChangelog();
@@ -1339,11 +1443,6 @@ function initGeneralEvents(){
   try{
     document.title = CONFIG.appName;
 
-    let savedTheme = "default";
-    try{ savedTheme = localStorage.getItem(THEME_KEY) || "default"; }catch(e){}
-    renderThemeGrid();
-    applyTheme(savedTheme);
-
     startClock();
     createRotator("welcomeRotate", 5400, 800);
 
@@ -1356,6 +1455,10 @@ function initGeneralEvents(){
 
     checkIsAdmin();
     applyAdminMode();
+
+    // Apply theme AFTER data loaded
+    applyTheme(getActiveThemeKey());
+
     refreshAll();
 
     checkMaintenance();
