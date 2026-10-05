@@ -1,19 +1,18 @@
 /* ==========================================================
-   CONFIG
+   MSI ASTRA v2.0
    ========================================================== */
 const CONFIG = {
   appName: "MSI ASTRA",
 
-  // Worker URL
   api: {
     baseUrl: "https://msi-astra-worker.muhammadbaimab.workers.dev"
   },
 
-  // Password admin (SHA-256 hash)
-  // Default "admin123" = 240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9
   adminKeyHash: "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
 
   webhookSaran: "https://discord.com/api/webhooks/1556123893679525918/CzaMKFNp4eRiVHAGCy9Jzsyfry86SecT40jbwywIuVP15kOB8gBug__MfDcPiVye7iLF",
+
+  dailyLimit: 5,
 
   developer: {
     name: "Baim",
@@ -21,36 +20,31 @@ const CONFIG = {
     role: "AI-Assisted Developer",
     profileImage: "https://i.ibb.co.com/twHc7kkk/Proyek-Baru-14-B060999.png",
     bannerImage:  "https://i.ibb.co.com/Wpfcnm91/a75a910e72dc11e3d0cab3b195729320.jpg",
-    description: "Gw suka minta bantuan AI buat ngoding, cari solusi, debugging, bikin desain, sampai nyari ide.",
+    description: "Gw suka minta bantuan AI buat ngoding, cari solusi, debugging, bikin desain, sampai nyari ide. Gw mungkin belum jago semuanya, tapi gw suka belajar sambil jalan.",
     badges: [
       { label:"AI Assisted", icon:"fa-solid fa-robot" },
       { label:"Logic",       icon:"fa-solid fa-brain" },
       { label:"WebView",     icon:"fa-solid fa-globe" },
       { label:"Android",     icon:"fa-brands fa-android" },
-      { label:"UI Design",   icon:"fa-solid fa-palette" }
+      { label:"UI Design",   icon:"fa-solid fa-palette" },
+      { label:"Problem Solving", icon:"fa-solid fa-lightbulb" }
     ]
   },
 
   contact: {
     whatsapp: "https://wa.me/6281358070254",
     channel:  "https://whatsapp.com/channel/0029VbDBt0sG8l5L7EEaW614"
-  },
-
-  quotes: [
-    'Jangan takut salah, <span class="qa">takut itu ilusi</span> yang kita bikin sendiri.',
-    '<span class="qa">Skill</span> itu bukan bakat, tapi hasil dari ngulik terus-terusan.',
-    'Kalau capek, <span class="qa">istirahat</span>, bukan berhenti.',
-    'Yang penting <span class="qa">jalan dulu</span>, sempurna mah nanti aja.'
-  ]
+  }
 };
 
 /* ==========================================================
    CONSTANTS
    ========================================================== */
-const DEVICE_KEY = "msi_device";
+const DEVICE_KEY  = "msi_device";
 const SESSION_KEY = "msi_session";
-const VISITED_KEY = "msi_visited";
-const THEME_KEY = "msi_theme";
+const THEME_KEY   = "msi_theme";
+const LAPOR_KEY   = "msi_lapor_history";
+const SEEN_CHANGELOG_KEY = "msi_seen_changelog";
 
 let DEVICE_ID = "";
 try{
@@ -65,10 +59,27 @@ let CLOUD_DATA = null;
 let IS_ADMIN = false;
 let ADMIN_TAB = "services";
 let ADMIN_EDITING = null;
+let BANNER_INDEX = 0;
+let BANNER_TIMER = null;
 
 const $  = (s,c=document)=>c.querySelector(s);
 const $$ = (s,c=document)=>[...c.querySelectorAll(s)];
 const esc = (s="") => String(s).replace(/[&<>"']/g,x=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[x]));
+
+const DEFAULT_DATA = {
+  services: [],
+  products: [],
+  payment: [],
+  banners: [],
+  changelog: [],
+  site: {
+    mode: "open",
+    maintenanceMessage: "Kami sedang melakukan perbaikan. Balik lagi nanti ya!",
+    maintenanceEta: "",
+    changelogVersion: ""
+  },
+  admin: { claimed: false, ownerId: null, claimedAt: null }
+};
 
 /* ==========================================================
    CLOUD via WORKER
@@ -107,6 +118,18 @@ async function persistCloud(){
   return await cloudSave(CLOUD_DATA);
 }
 
+function ensureStructure(data){
+  if(!data) data = {};
+  data.services = Array.isArray(data.services) ? data.services : [];
+  data.products = Array.isArray(data.products) ? data.products : [];
+  data.payment  = Array.isArray(data.payment)  ? data.payment  : [];
+  data.banners  = Array.isArray(data.banners)  ? data.banners  : [];
+  data.changelog= Array.isArray(data.changelog)? data.changelog: [];
+  data.site     = data.site || { mode: "open", maintenanceMessage: "Website lagi diperbaiki.", maintenanceEta: "", changelogVersion: "" };
+  data.admin    = data.admin || { claimed: false, ownerId: null, claimedAt: null };
+  return data;
+}
+
 /* ==========================================================
    HELPERS
    ========================================================== */
@@ -121,14 +144,10 @@ function toast(msg, type="info"){
   if(!wrap) return;
   const el = document.createElement("div");
   el.className = "toast " + type;
-  const iconMap = {
-    success:"fa-solid fa-circle-check",
-    error:"fa-solid fa-circle-exclamation",
-    info:"fa-solid fa-circle-info"
-  };
-  el.innerHTML = `<i class="${iconMap[type]||iconMap.info}"></i><span>${esc(msg)}</span>`;
+  const icons = { success:"fa-solid fa-circle-check", error:"fa-solid fa-circle-exclamation", info:"fa-solid fa-circle-info" };
+  el.innerHTML = `<i class="${icons[type]||icons.info}"></i><span>${esc(msg)}</span>`;
   wrap.appendChild(el);
-  setTimeout(() => { el.classList.add("out"); setTimeout(()=>el.remove(), 280); }, 2600);
+  setTimeout(() => { el.classList.add("out"); setTimeout(()=>el.remove(), 300); }, 2800);
 }
 
 function copyText(text){
@@ -167,7 +186,117 @@ window.hashAdminKey = async function(pass){
 };
 
 /* ==========================================================
-   RENDER
+   LAPOR — DAILY LIMIT
+   ========================================================== */
+function getTodayKey(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function getLaporHistory(){
+  try{
+    const raw = localStorage.getItem(LAPOR_KEY);
+    if(!raw) return { date: getTodayKey(), count: 0, items: [] };
+    const h = JSON.parse(raw);
+    if(h.date !== getTodayKey()){
+      return { date: getTodayKey(), count: 0, items: [] };
+    }
+    return h;
+  }catch(e){
+    return { date: getTodayKey(), count: 0, items: [] };
+  }
+}
+
+function setLaporHistory(h){
+  try{ localStorage.setItem(LAPOR_KEY, JSON.stringify(h)); }catch(e){}
+}
+
+function getRemainingLapor(){
+  const h = getLaporHistory();
+  return Math.max(0, CONFIG.dailyLimit - h.count);
+}
+
+function incrementLapor(data){
+  const h = getLaporHistory();
+  h.count += 1;
+  h.items.push({ t: Date.now(), ...data });
+  setLaporHistory(h);
+}
+
+/* ==========================================================
+   BANNER CAROUSEL
+   ========================================================== */
+function renderBannerCarousel(){
+  const track = $("#bannerTrack");
+  const dots = $("#bannerDots");
+  if(!track || !dots) return;
+
+  const list = CLOUD_DATA?.banners || [];
+
+  if(!list.length){
+    // Banner default placeholder
+    track.innerHTML = `
+      <div class="banner-slide active">
+        <div class="banner-slide-content">
+          <div class="banner-slide-title">Selamat Datang di MSI ASTRA</div>
+          <div class="banner-slide-desc">Jasa, produk digital, dan project custom</div>
+        </div>
+      </div>`;
+    dots.innerHTML = "";
+    return;
+  }
+
+  track.innerHTML = list.map((b, i) => `
+    <div class="banner-slide ${i===0?'active':''}">
+      ${b.image ? `<img src="${esc(b.image)}" alt="${esc(b.title||'')}" onerror="this.style.display='none'">` : ''}
+      <div class="banner-slide-content">
+        ${b.title ? `<div class="banner-slide-title">${esc(b.title)}</div>` : ''}
+        ${b.description ? `<div class="banner-slide-desc">${esc(b.description)}</div>` : ''}
+      </div>
+    </div>
+  `).join("");
+
+  dots.innerHTML = list.map((_, i) =>
+    `<div class="banner-dot ${i===0?'active':''}" data-dot="${i}"></div>`
+  ).join("");
+
+  BANNER_INDEX = 0;
+
+  // Auto-rotate
+  if(BANNER_TIMER) clearInterval(BANNER_TIMER);
+  if(list.length > 1){
+    BANNER_TIMER = setInterval(() => {
+      BANNER_INDEX = (BANNER_INDEX + 1) % list.length;
+      updateBannerPosition();
+    }, 4500);
+  }
+
+  // Dots click
+  dots.querySelectorAll("[data-dot]").forEach(d => {
+    d.onclick = () => {
+      BANNER_INDEX = Number(d.dataset.dot);
+      updateBannerPosition();
+      if(BANNER_TIMER){ clearInterval(BANNER_TIMER); }
+      BANNER_TIMER = setInterval(() => {
+        BANNER_INDEX = (BANNER_INDEX + 1) % list.length;
+        updateBannerPosition();
+      }, 4500);
+    };
+  });
+}
+
+function updateBannerPosition(){
+  const track = $("#bannerTrack");
+  const dots = $$("#bannerDots .banner-dot");
+  const slides = $$("#bannerTrack .banner-slide");
+  if(!track) return;
+  track.style.transform = `translateX(-${BANNER_INDEX * 100}%)`;
+  slides.forEach((s, i) => s.classList.toggle("active", i === BANNER_INDEX));
+  dots.forEach((d, i) => d.classList.toggle("active", i === BANNER_INDEX));
+}
+
+/* ==========================================================
+   RENDER SERVICES / PRODUCTS / PAYMENT / CONTACT
    ========================================================== */
 function cardHTML(item, idx, type){
   return `
@@ -263,89 +392,105 @@ function renderPayment(){
   }).join("");
 }
 
-function renderAbout(){
+function renderContact(){
   const d = CONFIG.developer;
   const c = CONFIG.contact;
   const setSrc = (id,val)=>{ const el=$(id); if(el) el.src=val||""; };
   const setTxt = (id,val)=>{ const el=$(id); if(el) el.textContent=val; };
   const setHref = (id,val)=>{ const el=$(id); if(el) el.href=val; };
 
-  setSrc("#devBanner", d.bannerImage);
-  setSrc("#devAvatar", d.profileImage);
-  setTxt("#devName", d.name);
-  setTxt("#devUsername", d.username);
-  setTxt("#devRole", d.role);
-  setTxt("#devDesc", d.description);
-
-  const badgesEl = $("#devBadges");
-  if(badgesEl){
-    badgesEl.innerHTML = (d.badges||[])
-      .map(b=>`<span class="chip"><i class="${esc(b.icon)}"></i>${esc(b.label)}</span>`).join("");
-  }
-  setHref("#devWaBtn", c.whatsapp);
-  setHref("#devChannelBtn", c.channel);
+  setSrc("#contactAvatar", d.profileImage);
+  setTxt("#contactName", d.name);
+  setTxt("#contactRole", d.role);
+  setHref("#contactWa", c.whatsapp);
+  setHref("#contactChannel", c.channel);
   setHref("#homeWaBtn", c.whatsapp);
   setHref("#payConfirmBtn", c.whatsapp + (c.whatsapp.includes("?")?"&":"?") +
     "text=" + encodeURIComponent("Halo, gw udah bayar. Ini bukti transfernya."));
 }
 
-function renderQuotes(){
-  const wrap = $("#quoteRotator");
-  if(!wrap) return;
-  const quotes = CONFIG.quotes || [];
-  if(!quotes.length){ wrap.innerHTML = ""; return; }
-  wrap.innerHTML = quotes.map((q,i)=>`
-    <div class="quote-item${i===0?' active':''}">
-      <i class="fa-solid fa-quote-left qi"></i><p>${q}</p>
-    </div>
-  `).join("");
-  const items = $$(".quote-item", wrap);
-  if(items.length < 2) return;
-  let idx = 0, prev = 0;
-  setInterval(()=>{
-    const cur = items[prev]; if(!cur) return;
-    cur.classList.remove("active"); cur.classList.add("leaving");
-    setTimeout(()=>cur.classList.remove("leaving"), 800);
-    idx = (idx+1) % items.length;
-    items[idx].classList.add("active"); prev = idx;
-  }, 5500);
-}
-
 function refreshAll(){
+  renderBannerCarousel();
   renderServices();
   renderProducts();
   renderPayment();
-  renderAbout();
+  renderContact();
 }
 
 /* ==========================================================
-   MAINTENANCE
+   MAINTENANCE / UPDATE / OPEN MODE
    ========================================================== */
 function checkMaintenance(){
   const site = CLOUD_DATA?.site || {};
   const mode = (site.mode || "open").toLowerCase();
   const overlay = $("#userMaintOverlay");
-  if(!overlay) return;
 
   if(mode === "maintenance" && !IS_ADMIN){
     $("#userMaintMsg").textContent = site.maintenanceMessage || "Website lagi diperbaiki.";
     const eta = $("#userMaintEta");
     if(eta) eta.textContent = site.maintenanceEta ? "Estimasi: " + site.maintenanceEta : "";
     overlay.classList.add("show");
-    document.body.style.overflow = "hidden";
+    document.body.classList.add("no-scroll");
   } else {
     overlay.classList.remove("show");
-    document.body.style.overflow = "";
+    document.body.classList.remove("no-scroll");
   }
 }
 
+function checkChangelog(){
+  const site = CLOUD_DATA?.site || {};
+  const mode = (site.mode || "open").toLowerCase();
+  const list = CLOUD_DATA?.changelog || [];
+
+  if(mode !== "update" || !list.length) return;
+
+  // Ambil changelog terbaru (paling atas di array)
+  const latest = list[0];
+  if(!latest || !latest.version) return;
+
+  // Cek apakah user udah lihat versi ini
+  let seen = null;
+  try{ seen = localStorage.getItem(SEEN_CHANGELOG_KEY); }catch(e){}
+  if(seen === latest.version) return;
+
+  // Tampilkan
+  const overlay = $("#changelogOverlay");
+  $("#changelogVersion").textContent = "v" + latest.version;
+  $("#changelogDate").textContent = latest.date || "";
+
+  const changes = Array.isArray(latest.changes) ? latest.changes : 
+                  (typeof latest.changes === "string" ? latest.changes.split("\n").filter(Boolean) : []);
+
+  $("#changelogList").innerHTML = changes.map(ch => `
+    <div class="changelog-item">
+      <i class="fa-solid fa-circle-check"></i>
+      <span>${esc(ch)}</span>
+    </div>
+  `).join("") || "<p style='font-size:12px;color:var(--muted)'>Tidak ada detail.</p>";
+
+  overlay.classList.add("show");
+  document.body.classList.add("no-scroll");
+
+  $("#changelogClose").onclick = () => {
+    try{ localStorage.setItem(SEEN_CHANGELOG_KEY, latest.version); }catch(e){}
+    overlay.classList.remove("show");
+    document.body.classList.remove("no-scroll");
+  };
+}
+
 /* ==========================================================
-   ADMIN AUTH — SIMPLE 1 KEY
+   ADMIN AUTH — 1 KEY + CLAIM
    ========================================================== */
 function checkIsAdmin(){
+  const a = CLOUD_DATA?.admin || {};
   try{
     const s = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
     if(!s || s.deviceId !== DEVICE_ID || Date.now() >= s.exp){
+      IS_ADMIN = false;
+      return false;
+    }
+    if(!a.claimed || a.ownerId !== DEVICE_ID){
+      try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
       IS_ADMIN = false;
       return false;
     }
@@ -375,6 +520,26 @@ async function performAdminLogin(key){
   if(hash !== CONFIG.adminKeyHash){
     return { ok:false, reason:"Key salah." };
   }
+
+  const a = CLOUD_DATA?.admin || {};
+
+  if(a.claimed && a.ownerId && a.ownerId !== DEVICE_ID){
+    return { ok:false, reason:"Key sudah dipakai di device lain." };
+  }
+
+  CLOUD_DATA.admin = CLOUD_DATA.admin || {};
+  CLOUD_DATA.admin.claimed = true;
+  CLOUD_DATA.admin.ownerId = DEVICE_ID;
+  CLOUD_DATA.admin.claimedAt = new Date().toISOString();
+
+  const saved = await persistCloud();
+  if(!saved){
+    CLOUD_DATA.admin.claimed = false;
+    CLOUD_DATA.admin.ownerId = null;
+    CLOUD_DATA.admin.claimedAt = null;
+    return { ok:false, reason:"Gagal simpan ke cloud. Cek Worker." };
+  }
+
   setSession();
   IS_ADMIN = true;
   return { ok:true };
@@ -385,7 +550,7 @@ async function performAdminLogin(key){
    ========================================================== */
 function openAdminLogin(){
   $("#adminLoginModal").classList.add("show");
-  setTimeout(()=>$("#adminKeyInput")?.focus(), 100);
+  setTimeout(()=>$("#adminKeyInput")?.focus(), 150);
 }
 function closeAdminLogin(){
   $("#adminLoginModal").classList.remove("show");
@@ -421,6 +586,7 @@ function initAdminLogin(){
       toast("Welcome, Admin!","success");
       applyAdminMode();
       checkMaintenance();
+      checkChangelog();
       setTimeout(()=>openAdminPanel(), 300);
     } else {
       err.textContent = res.reason || "Gagal login.";
@@ -430,15 +596,359 @@ function initAdminLogin(){
 }
 
 function applyAdminMode(){
-  const fab = $("#adminFab");
+  const adminBtn = $("#sidebarAdminBtn");
+  const adminLabel = $("#adminSectionLabel");
   if(IS_ADMIN){
-    if(fab) fab.style.display = "grid";
-    const wBtn = $("#welcomeAdminBtn");
-    if(wBtn) wBtn.style.display = "none";
+    if(adminBtn) adminBtn.style.display = "flex";
+    if(adminLabel) adminLabel.style.display = "block";
   } else {
-    if(fab) fab.style.display = "none";
+    if(adminBtn) adminBtn.style.display = "none";
+    if(adminLabel) adminLabel.style.display = "none";
   }
 }
+
+/* ==========================================================
+   SIDEBAR
+   ========================================================== */
+function openSidebar(){
+  const sb = $("#sidebar");
+  const ov = $("#sidebarOverlay");
+  if(sb) sb.classList.add("show");
+  if(ov) ov.classList.add("show");
+  document.body.classList.add("no-scroll");
+}
+function closeSidebar(){
+  const sb = $("#sidebar");
+  const ov = $("#sidebarOverlay");
+  if(sb) sb.classList.remove("show");
+  if(ov) ov.classList.remove("show");
+  document.body.classList.remove("no-scroll");
+}
+
+function initSidebar(){
+  $("#sidebarToggle")?.addEventListener("click", openSidebar);
+  $("#sidebarClose")?.addEventListener("click", closeSidebar);
+  $("#sidebarOverlay")?.addEventListener("click", closeSidebar);
+
+  $$("[data-sidebar]").forEach(el => {
+    el.addEventListener("click", () => {
+      const target = el.dataset.sidebar;
+      closeSidebar();
+      setTimeout(()=>{
+        if(target === "about") openFullPage("about");
+        else if(target === "lapor") openFullPage("lapor");
+        else if(target === "order") openFullPage("order");
+        else if(target === "admin") openAdminPanel();
+      }, 250);
+    });
+  });
+
+  $("#themeBtn")?.addEventListener("click", ()=>$("#themePanel").classList.add("show"));
+  $("#themeClose")?.addEventListener("click", ()=>$("#themePanel").classList.remove("show"));
+  $("#themePanel")?.addEventListener("click", e=>{ if(e.target.id==="themePanel") e.target.classList.remove("show"); });
+  $("#themeGrid")?.addEventListener("click", e=>{
+    const sw = e.target.closest(".theme-swatch");
+    if(!sw) return;
+    applyTheme(sw.dataset.theme);
+    toast("Tema diubah.","success");
+  });
+}
+
+/* ==========================================================
+   FULLPAGE — About / Lapor / Order
+   ========================================================== */
+function openFullPage(type){
+  const fp = $("#fullpage");
+  const title = $("#fullpageTitle");
+  const body = $("#fullpageBody");
+  if(!fp || !title || !body) return;
+
+  if(type === "about"){
+    title.textContent = "About Dev";
+    body.innerHTML = renderAboutPage();
+    bindAboutPage();
+  }
+  else if(type === "lapor"){
+    title.textContent = "Lapor Bug / Saran / Ide";
+    body.innerHTML = renderLaporPage();
+    bindLaporPage();
+  }
+  else if(type === "order"){
+    title.textContent = "Order APK / Web Auto";
+    body.innerHTML = renderOrderPage();
+    bindOrderPage();
+  }
+
+  fp.classList.add("show");
+  document.body.classList.add("no-scroll");
+}
+
+function closeFullPage(){
+  $("#fullpage")?.classList.remove("show");
+  document.body.classList.remove("no-scroll");
+}
+
+/* ---- ABOUT PAGE ---- */
+function renderAboutPage(){
+  const d = CONFIG.developer;
+  const c = CONFIG.contact;
+  return `
+    <div class="about-hero">
+      <div class="about-banner">
+        ${d.bannerImage ? `<img src="${esc(d.bannerImage)}" alt="Banner" onerror="this.style.display='none'">` : ''}
+      </div>
+      <div class="about-profile">
+        <img class="avatar" src="${esc(d.profileImage)}" alt="Avatar" onerror="this.style.opacity='0.15'">
+        <div class="about-name">${esc(d.name)}</div>
+        <div class="about-username">${esc(d.username)}</div>
+        <div class="about-role"><i class="fa-solid fa-bolt"></i> ${esc(d.role)}</div>
+        <p class="about-desc">${esc(d.description)}</p>
+        <div class="about-badges">
+          ${(d.badges||[]).map(b => `<span class="chip"><i class="${esc(b.icon)}"></i>${esc(b.label)}</span>`).join("")}
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+      <a class="btn btn-wa" href="${esc(c.whatsapp)}" target="_blank" rel="noopener">
+        <i class="fa-brands fa-whatsapp"></i> WhatsApp
+      </a>
+      <a class="btn btn-ghost" href="${esc(c.channel)}" target="_blank" rel="noopener">
+        <i class="fa-solid fa-bullhorn"></i> Saluran
+      </a>
+    </div>
+  `;
+}
+function bindAboutPage(){}
+
+/* ---- LAPOR PAGE ---- */
+function renderLaporPage(){
+  const remaining = getRemainingLapor();
+  const total = CONFIG.dailyLimit;
+  let cls = "ok";
+  if(remaining <= 0) cls = "danger";
+  else if(remaining <= 2) cls = "warn";
+
+  return `
+    <div class="lapor-info">
+      <div class="lapor-quota ${cls}">${remaining}/${total}</div>
+      <div class="lapor-info-body">
+        <h3>Sisa Pesan Hari Ini</h3>
+        <p>${remaining > 0 
+          ? `Lu masih bisa kirim ${remaining} pesan lagi hari ini. Reset tiap tengah malam.` 
+          : 'Kuota pesan hari ini habis. Coba lagi besok ya!'}</p>
+      </div>
+    </div>
+
+    <form class="suggest-form" id="laporForm" novalidate>
+      <div class="field">
+        <label><i class="fa-solid fa-user"></i> Nama / Username <span style="color:#f87171">*</span></label>
+        <input type="text" id="lfName" maxlength="40" placeholder="Nama lu / username" autocomplete="off" required>
+      </div>
+
+      <div class="field">
+        <label><i class="fa-solid fa-tag"></i> Kategori</label>
+        <select id="lfCategory">
+          <option value="Bug Report">Lapor Bug</option>
+          <option value="Saran Fitur">Saran Fitur Baru</option>
+          <option value="Ide">Ide / Masukan</option>
+          <option value="Kritik">Kritik</option>
+          <option value="Request Jasa">Request Jasa / Produk</option>
+          <option value="Kerja Sama">Kerja Sama</option>
+          <option value="Lainnya">Lainnya</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label><i class="fa-solid fa-pen"></i> Pesan <span style="color:#f87171">*</span></label>
+        <textarea id="lfMessage" maxlength="800" placeholder="Ceritain detailnya di sini... (min 5 karakter, maks 800)"></textarea>
+        <div class="char-count" id="lfCount">0 / 800</div>
+      </div>
+
+      <button type="submit" class="btn btn-discord btn-block" id="lfSubmit" ${remaining <= 0 ? 'disabled' : ''}>
+        <i class="fa-brands fa-discord"></i> ${remaining > 0 ? 'Kirim Pesan' : 'Kuota Habis'}
+      </button>
+      <p style="font-size:10.5px;color:var(--muted-2);text-align:center;margin-top:6px;line-height:1.5">
+        <i class="fa-solid fa-shield-halved" style="color:var(--primary)"></i>
+        Pesan langsung ke Discord admin. Nggak disimpan di server.
+      </p>
+    </form>
+  `;
+}
+
+function bindLaporPage(){
+  const form = $("#laporForm");
+  if(!form) return;
+
+  const nameEl = $("#lfName");
+  const catEl = $("#lfCategory");
+  const msgEl = $("#lfMessage");
+  const countEl = $("#lfCount");
+  const submitBtn = $("#lfSubmit");
+
+  // Auto-fill nama dari history
+  try{
+    const lastName = localStorage.getItem("msi_lapor_name") || "";
+    if(lastName) nameEl.value = lastName;
+  }catch(e){}
+
+  const updateCount = () => {
+    const len = msgEl.value.length;
+    countEl.textContent = len + " / 800";
+    countEl.classList.toggle("warn", len >= 600 && len < 750);
+    countEl.classList.toggle("danger", len >= 750);
+  };
+  msgEl.addEventListener("input", updateCount);
+  updateCount();
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const remaining = getRemainingLapor();
+    if(remaining <= 0){
+      toast("Kuota pesan hari ini habis.","error");
+      return;
+    }
+
+    const nama = nameEl.value.trim();
+    if(!nama){
+      toast("Isi nama/username dulu ya.","error");
+      nameEl.focus();
+      return;
+    }
+
+    const pesan = msgEl.value.trim();
+    if(pesan.length < 5){
+      toast("Pesan minimal 5 karakter.","error");
+      msgEl.focus();
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Kirim...';
+
+    const kategori = catEl.value;
+
+    // Save nama biar next time auto-fill
+    try{ localStorage.setItem("msi_lapor_name", nama); }catch(e){}
+
+    const ok = await sendLaporToDiscord({ nama, kategori, pesan });
+
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fa-brands fa-discord"></i> Kirim Pesan';
+
+    if(ok){
+      incrementLapor({ nama, kategori, pesan: pesan.slice(0,100) });
+      toast("Pesan kekirim. Makasih!","success");
+      // Reload halaman lapor buat update quota
+      setTimeout(()=>{
+        const body = $("#fullpageBody");
+        body.innerHTML = renderLaporPage();
+        bindLaporPage();
+      }, 500);
+    } else {
+      toast("Gagal kirim pesan.","error");
+    }
+  });
+}
+
+async function sendLaporToDiscord(payload){
+  const url = (CONFIG.webhookSaran || "").trim();
+  if(!url || !/^https:\/\/discord(app)?\.com\/api\/webhooks\//.test(url)) return false;
+
+  const d = CONFIG.developer;
+  const now = new Date();
+  const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+  const tanggal = `${String(now.getDate()).padStart(2,"0")} ${months[now.getMonth()]} ${now.getFullYear()}, ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+
+  const body = {
+    username: (d.name || "MSI ASTRA").slice(0, 80),
+    avatar_url: d.profileImage,
+    allowed_mentions: { parse: [] },
+    embeds: [{
+      title: "Pesan Baru dari User",
+      description: "Ada masukan baru masuk.",
+      color: 0x6c7cff,
+      author: { name: "MSI ASTRA • Lapor", icon_url: d.profileImage },
+      thumbnail: { url: d.profileImage },
+      fields: [
+        { name: "Pengirim", value: "```" + payload.nama.slice(0,90) + "```", inline: true },
+        { name: "Kategori", value: "```" + (payload.kategori||"-").slice(0,90) + "```", inline: true },
+        { name: "Isi Pesan", value: "```\n" + payload.pesan.slice(0,1000) + "\n```", inline: false }
+      ],
+      footer: { text: `MSI ASTRA App • ${tanggal}`, icon_url: d.profileImage },
+      timestamp: now.toISOString()
+    }]
+  };
+
+  const jsonStr = JSON.stringify(body);
+  if(navigator.sendBeacon){
+    try{
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      if(navigator.sendBeacon(url, blob)) return true;
+    }catch(e){}
+  }
+  try{
+    fetch(url, { method:"POST", mode:"no-cors", headers:{ "Content-Type":"text/plain" }, body: jsonStr }).catch(()=>{});
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ---- ORDER PAGE ---- */
+function renderOrderPage(){
+  const wa = CONFIG.contact.whatsapp;
+  const orderMsg = encodeURIComponent("Halo, gw mau order APK/Web Auto. Bisa dijelasin detailnya?");
+  return `
+    <div class="order-card">
+      <div class="order-card-head">
+        <div class="order-card-icon"><i class="fa-solid fa-rocket"></i></div>
+        <div>
+          <h3>Order APK / Web Auto</h3>
+          <p>Bikin aplikasi atau website sesuai kebutuhan lu</p>
+        </div>
+      </div>
+
+      <div class="order-features">
+        <div class="order-feature"><i class="fa-solid fa-check"></i> Aplikasi Android (WebView / Native)</div>
+        <div class="order-feature"><i class="fa-solid fa-check"></i> Website custom (Portfolio, Toko, Landing Page)</div>
+        <div class="order-feature"><i class="fa-solid fa-check"></i> Backend API (Cloudflare Worker / Vercel)</div>
+        <div class="order-feature"><i class="fa-solid fa-check"></i> Database sync (GitHub Gist / Firebase)</div>
+        <div class="order-feature"><i class="fa-solid fa-check"></i> Desain modern & responsive</div>
+        <div class="order-feature"><i class="fa-solid fa-check"></i> Support & maintenance</div>
+      </div>
+
+      <a class="btn btn-wa btn-block" href="${esc(wa)}?text=${orderMsg}" target="_blank" rel="noopener">
+        <i class="fa-brands fa-whatsapp"></i> Order Sekarang
+      </a>
+    </div>
+
+    <div style="padding:16px;border-radius:16px;background:var(--surface);border:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">
+        <i class="fa-solid fa-circle-info" style="color:var(--primary)"></i> Cara Order
+      </div>
+      <ol style="list-style:none;display:flex;flex-direction:column;gap:8px">
+        <li style="font-size:12.5px;color:var(--muted);line-height:1.6">
+          <b style="color:var(--text)">1.</b> Chat admin via WhatsApp
+        </li>
+        <li style="font-size:12.5px;color:var(--muted);line-height:1.6">
+          <b style="color:var(--text)">2.</b> Jelaskan konsep & fitur yang diinginkan
+        </li>
+        <li style="font-size:12.5px;color:var(--muted);line-height:1.6">
+          <b style="color:var(--text)">3.</b> Deal harga & timeline
+        </li>
+        <li style="font-size:12.5px;color:var(--muted);line-height:1.6">
+          <b style="color:var(--text)">4.</b> Pembayaran DP (jika diperlukan)
+        </li>
+        <li style="font-size:12.5px;color:var(--muted);line-height:1.6">
+          <b style="color:var(--text)">5.</b> Project dikerjakan
+        </li>
+        <li style="font-size:12.5px;color:var(--muted);line-height:1.6">
+          <b style="color:var(--text)">6.</b> Revisi & pelunasan
+        </li>
+      </ol>
+    </div>
+  `;
+}
+function bindOrderPage(){}
 
 /* ==========================================================
    ADMIN PANEL
@@ -458,6 +968,8 @@ const ADMIN_LABELS = {
   services: "Jasa",
   products: "Produk",
   payment:  "Payment",
+  banners:  "Banner",
+  changelog:"Changelog",
   website:  "Website"
 };
 
@@ -484,6 +996,17 @@ const ADMIN_FIELDS = {
     { k:"type", l:"Tipe", type:"select", opts:["qris","phone","url"] },
     { k:"value", l:"Value", type:"textarea" },
     { k:"status", l:"Status", type:"select", opts:["available","unavailable","maintenance"] }
+  ],
+  banners: [
+    { k:"title", l:"Judul Banner", type:"text" },
+    { k:"description", l:"Deskripsi", type:"text" },
+    { k:"image", l:"URL Gambar", type:"text" },
+    { k:"link", l:"Link (opsional)", type:"text" }
+  ],
+  changelog: [
+    { k:"version", l:"Versi (contoh: 1.0.1)", type:"text" },
+    { k:"date", l:"Tanggal (contoh: 5 Okt 2026)", type:"text" },
+    { k:"changes", l:"Perubahan (pisahkan dengan enter)", type:"textarea" }
   ]
 };
 
@@ -491,10 +1014,9 @@ function renderAdminPanel(){
   const box = $("#adminPanelBox");
   if(!box) return;
 
+  // ===== FORM EDIT/ADD =====
   if(ADMIN_EDITING !== null){
     const tab = ADMIN_EDITING.tab;
-    if(tab === "website"){ renderWebsiteForm(box); return; }
-
     const fields = ADMIN_FIELDS[tab] || [];
     const isNew = ADMIN_EDITING.idx < 0;
     const item = isNew ? {} : (CLOUD_DATA[tab]?.[ADMIN_EDITING.idx] || {});
@@ -509,7 +1031,7 @@ function renderAdminPanel(){
           const v = item[f.k] ?? "";
           if(f.type === "textarea"){
             return `<div class="field"><label>${esc(f.l)}</label>
-              <textarea data-field="${f.k}" rows="2">${esc(v)}</textarea></div>`;
+              <textarea data-field="${f.k}" rows="3">${esc(Array.isArray(v)?v.join("\n"):v)}</textarea></div>`;
           }
           if(f.type === "select"){
             return `<div class="field"><label>${esc(f.l)}</label>
@@ -537,9 +1059,16 @@ function renderAdminPanel(){
       const obj = {};
       fields.forEach(f => {
         const el = box.querySelector(`[data-field="${f.k}"]`);
-        obj[f.k] = el ? el.value.trim() : "";
+        let val = el ? el.value.trim() : "";
+        if(f.k === "changes" && val){
+          obj[f.k] = val.split("\n").map(x => x.trim()).filter(Boolean);
+        } else {
+          obj[f.k] = val;
+        }
       });
-      if(!obj.name){ toast("Nama wajib diisi.","error"); return; }
+      if(!obj.name && !obj.title && !obj.version){ 
+        toast("Field wajib belum diisi.","error"); return; 
+      }
 
       const btn = box.querySelector("[data-act='save']");
       btn.disabled = true;
@@ -557,6 +1086,7 @@ function renderAdminPanel(){
     return;
   }
 
+  // ===== LIST VIEW =====
   const tab = ADMIN_TAB;
   const isWebsite = tab === "website";
   const list = isWebsite ? [] : (CLOUD_DATA[tab] || []);
@@ -564,7 +1094,7 @@ function renderAdminPanel(){
   box.innerHTML = `
     <button class="modal-close" data-act="close"><i class="fa-solid fa-xmark"></i></button>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;padding-right:36px">
-      <div class="modal-title"><i class="fa-solid fa-sliders" style="color:var(--primary)"></i> Admin Panel</div>
+      <div class="modal-title"><i class="fa-solid fa-sliders" style="color:var(--primary)"></i> Admin Tools</div>
       <button class="btn btn-ghost" data-act="logout" style="padding:6px 10px;font-size:10.5px">
         <i class="fa-solid fa-right-from-bracket"></i> Logout
       </button>
@@ -580,12 +1110,12 @@ function renderAdminPanel(){
       <button class="btn btn-primary btn-block" data-act="add" style="margin-bottom:12px">
         <i class="fa-solid fa-plus"></i> Tambah ${ADMIN_LABELS[tab]}
       </button>
-      <div style="max-height:280px;overflow-y:auto;padding-right:4px">
+      <div style="max-height:320px;overflow-y:auto;padding-right:4px">
         ${list.length ? list.map((it, i) => `
           <div class="admin-item">
             <div class="admin-item-info">
-              <b>${esc(it.name || it.id || "-")}</b>
-              <small>${esc(it.status || it.price || it.value || "")}</small>
+              <b>${esc(it.name || it.title || it.version || it.id || "-")}</b>
+              <small>${esc(it.status || it.price || it.date || it.description || "")}</small>
             </div>
             <div class="admin-item-btns">
               <button data-edit="${i}"><i class="fa-solid fa-pen"></i></button>
@@ -600,12 +1130,24 @@ function renderAdminPanel(){
       <button class="btn btn-ghost" data-act="sync" style="flex:1;font-size:11px;padding:9px">
         <i class="fa-solid fa-rotate"></i> Sync
       </button>
+      <button class="btn btn-ghost" data-act="export" style="flex:1;font-size:11px;padding:9px">
+        <i class="fa-solid fa-download"></i> Export
+      </button>
     </div>
   `;
 
   box.querySelector("[data-act='close']").onclick = closeAdminPanel;
-  box.querySelector("[data-act='logout']").onclick = () => {
-    if(!confirm("Logout admin?")) return;
+
+  box.querySelector("[data-act='logout']").onclick = async () => {
+    if(!confirm("Logout admin? Device lain bakal bisa login lagi.")) return;
+
+    if(CLOUD_DATA?.admin){
+      CLOUD_DATA.admin.claimed = false;
+      CLOUD_DATA.admin.ownerId = null;
+      CLOUD_DATA.admin.claimedAt = null;
+      await persistCloud();
+    }
+
     clearSession();
     IS_ADMIN = false;
     closeAdminPanel();
@@ -632,7 +1174,8 @@ function renderAdminPanel(){
     });
     box.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
       const i = Number(b.dataset.del);
-      const name = CLOUD_DATA[tab][i]?.name || "item";
+      const it = CLOUD_DATA[tab][i];
+      const name = it?.name || it?.title || it?.version || "item";
       if(!confirm(`Hapus "${name}"?`)) return;
       CLOUD_DATA[tab].splice(i, 1);
       const ok = await persistCloud();
@@ -645,7 +1188,7 @@ function renderAdminPanel(){
   box.querySelector("[data-act='sync']").onclick = async () => {
     const data = await cloudLoad();
     if(!data){ toast("Gagal sync.","error"); return; }
-    CLOUD_DATA = data;
+    CLOUD_DATA = ensureStructure(data);
     refreshAll();
     checkIsAdmin();
     applyAdminMode();
@@ -653,140 +1196,108 @@ function renderAdminPanel(){
     renderAdminPanel();
     toast("Synced.","success");
   };
+
+  box.querySelector("[data-act='export']").onclick = () => {
+    const blob = new Blob([JSON.stringify(CLOUD_DATA, null, 2)], { type:"application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "msi-astra-data.json";
+    a.click();
+  };
+
+  // Bind website tab handlers
+  if(isWebsite){
+    setTimeout(() => bindWebsiteTab(), 50);
+  }
 }
 
+/* ---- WEBSITE TAB ---- */
 function renderWebsiteTab(){
   const site = CLOUD_DATA?.site || {};
   const mode = (site.mode || "open").toLowerCase();
-  const isM = mode === "maintenance";
 
-  setTimeout(() => {
-    const toggleBtn = document.querySelector("#maintToggle");
-    if(toggleBtn){
-      toggleBtn.onclick = async () => {
-        const target = isM ? "open" : "maintenance";
-        CLOUD_DATA.site = CLOUD_DATA.site || {};
-        CLOUD_DATA.site.mode = target;
-        toggleBtn.disabled = true;
-        toggleBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>...';
-        const ok = await persistCloud();
-        toast(ok ? (target === "maintenance" ? "Maintenance AKTIF" : "Website ONLINE") : "Gagal simpan.", ok ? "success" : "error");
-        renderAdminPanel();
-        checkMaintenance();
-      };
-    }
-  }, 0);
+  const modeInfo = {
+    open: { label: "ONLINE", color: "#4ade80", icon: "fa-circle-check", desc: "Website bisa diakses semua orang" },
+    maintenance: { label: "MAINTENANCE", color: "#fbbf24", icon: "fa-screwdriver-wrench", desc: "User lihat popup maintenance, admin bypass" },
+    update: { label: "UPDATE", color: "#6c7cff", icon: "fa-rocket", desc: "User lihat popup changelog, admin normal" }
+  };
+  const info = modeInfo[mode] || modeInfo.open;
 
   return `
-    <div class="maint-banner">
-      <i class="fa-solid fa-circle"></i>
-      Status: <b style="margin-left:4px">${isM ? "MAINTENANCE" : "ONLINE"}</b>
+    <div class="maint-banner" style="background:${info.color}15;border-color:${info.color}40;color:${info.color}">
+      <i class="fa-solid ${info.icon}"></i>
+      Status: <b style="margin-left:4px">${info.label}</b>
     </div>
-    <button class="btn ${isM ? 'btn-wa' : 'btn-primary'} btn-block" id="maintToggle">
-      ${isM ? '<i class="fa-solid fa-power-off"></i> Kembalikan ONLINE' 
-            : '<i class="fa-solid fa-screwdriver-wrench"></i> Aktifkan Maintenance'}
+    <p style="font-size:11.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">${esc(info.desc)}</p>
+
+    <div style="font-size:11.5px;font-weight:600;margin-bottom:8px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase">
+      Mode Website
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      <button class="btn ${mode==='open'?'btn-primary':'btn-ghost'}" data-mode="open" style="flex:1;font-size:11px;padding:10px 6px">
+        <i class="fa-solid fa-circle-check"></i> Open
+      </button>
+      <button class="btn ${mode==='maintenance'?'btn-wa':'btn-ghost'}" data-mode="maintenance" style="flex:1;font-size:11px;padding:10px 6px">
+        <i class="fa-solid fa-screwdriver-wrench"></i> Maint
+      </button>
+      <button class="btn ${mode==='update'?'btn-primary':'btn-ghost'}" data-mode="update" style="flex:1;font-size:11px;padding:10px 6px">
+        <i class="fa-solid fa-rocket"></i> Update
+      </button>
+    </div>
+
+    <div class="field">
+      <label><i class="fa-solid fa-comment"></i> Pesan Maintenance</label>
+      <textarea id="maintMsgInput" rows="3" placeholder="Pesan yang muncul buat user...">${esc(site.maintenanceMessage || "")}</textarea>
+    </div>
+    <div class="field" style="margin-top:10px">
+      <label><i class="fa-solid fa-clock"></i> Estimasi (opsional)</label>
+      <input type="text" id="maintEtaInput" value="${esc(site.maintenanceEta || "")}" placeholder="Contoh: 30 menit">
+    </div>
+    <button class="btn btn-primary btn-block" id="saveSiteBtn" style="margin-top:14px">
+      <i class="fa-solid fa-floppy-disk"></i> Simpan
     </button>
   `;
 }
 
-function renderWebsiteForm(box){
-  box.innerHTML = `
-    <button class="modal-close" data-act="cancel"><i class="fa-solid fa-xmark"></i></button>
-    <div class="modal-title" style="margin-bottom:14px">Pengaturan Website</div>
-    <p style="font-size:12px;color:var(--muted)">Tab Website gak butuh form edit.</p>
-    <button class="btn btn-ghost btn-block" data-act="cancel" style="margin-top:14px">Tutup</button>
-  `;
-  box.querySelectorAll("[data-act='cancel']").forEach(b => b.onclick = () => {
-    ADMIN_EDITING = null;
-    renderAdminPanel();
-  });
-}
+function bindWebsiteTab(){
+  const box = $("#adminPanelBox");
+  if(!box) return;
 
-/* ==========================================================
-   WELCOME
-   ========================================================== */
-function showWelcome(){
-  const adminBtn = $("#welcomeAdminBtn");
-  if(adminBtn) adminBtn.style.display = "flex";
-  const ov = $("#welcomeOverlay");
-  if(ov){ ov.classList.add("show"); document.body.style.overflow = "hidden"; }
-}
+  const mode = (CLOUD_DATA?.site?.mode || "open").toLowerCase();
 
-function hideWelcome(){
-  const ov = $("#welcomeOverlay");
-  if(ov) ov.classList.remove("show");
-  document.body.style.overflow = "";
-  try{ localStorage.setItem(VISITED_KEY, "1"); }catch(e){}
-}
-
-function initWelcome(){
-  const enter = $("#welcomeEnter");
-  if(enter) enter.onclick = () => { hideWelcome(); checkMaintenance(); };
-  const adminBtn = $("#welcomeAdminBtn");
-  if(adminBtn) adminBtn.onclick = () => { hideWelcome(); openAdminLogin(); };
-}
-
-/* ==========================================================
-   GENERAL EVENTS
-   ========================================================== */
-function initGeneralEvents(){
-  $$(".nav-item").forEach(btn => btn.addEventListener("click", () => goTo(btn.dataset.page)));
-
-  document.addEventListener("click", e => {
-    const nav = e.target.closest("[data-nav]");
-    if(nav){ goTo(nav.dataset.nav); return; }
-
-    const card = e.target.closest(".card[data-type]");
-    if(card){ openDetail(card.dataset.type, Number(card.dataset.idx)); return; }
-
-    const cp = e.target.closest("[data-copy]");
-    if(cp){ e.stopPropagation(); copyText(cp.dataset.copy); return; }
-
-    const qris = e.target.closest('[data-pay="qris"]');
-    if(qris){
-      const img = $("#qrisImg");
-      const id = qris.dataset.id || "qris";
-      const pay = (CLOUD_DATA?.payment||[]).find(p => p.id === id);
-      if(img && pay){ img.src = pay.value; img.style.display = "block"; }
-      $("#qrisModal").classList.add("show");
-      return;
-    }
+  box.querySelectorAll("[data-mode]").forEach(b => {
+    b.onclick = async () => {
+      const target = b.dataset.mode;
+      CLOUD_DATA.site = CLOUD_DATA.site || {};
+      CLOUD_DATA.site.mode = target;
+      const ok = await persistCloud();
+      if(ok){
+        toast("Mode: " + target.toUpperCase(), "success");
+        renderAdminPanel();
+        checkMaintenance();
+      } else {
+        toast("Gagal simpan.","error");
+      }
+    };
   });
 
-  $("#modalClose")?.addEventListener("click", ()=>$("#detailModal").classList.remove("show"));
-  $("#qrisClose")?.addEventListener("click", ()=>$("#qrisModal").classList.remove("show"));
-  $("#detailModal")?.addEventListener("click", e=>{ if(e.target.id==="detailModal") e.target.classList.remove("show"); });
-  $("#qrisModal")?.addEventListener("click", e=>{ if(e.target.id==="qrisModal") e.target.classList.remove("show"); });
-
-  $("#adminFab")?.addEventListener("click", openAdminPanel);
-  $("#adminPanelModal")?.addEventListener("click", e=>{ if(e.target.id==="adminPanelModal") closeAdminPanel(); });
-
-  $("#userMaintRefresh")?.addEventListener("click", async () => {
-    toast("Cek status...","info");
-    const data = await cloudLoad();
-    if(data){ CLOUD_DATA = data; refreshAll(); checkMaintenance(); }
-    else toast("Gagal cek.","error");
-  });
-
-  $("#themeBtn")?.addEventListener("click", ()=>$("#themePanel").classList.add("show"));
-  $("#themeClose")?.addEventListener("click", ()=>$("#themePanel").classList.remove("show"));
-  $("#themePanel")?.addEventListener("click", e=>{ if(e.target.id==="themePanel") e.target.classList.remove("show"); });
-  $("#themeGrid")?.addEventListener("click", e=>{
-    const sw = e.target.closest(".theme-swatch");
-    if(!sw) return;
-    applyTheme(sw.dataset.theme);
-    toast("Tema diubah.","success");
-  });
-
-  document.addEventListener("keydown", e => {
-    if(e.key === "Escape"){
-      $("#detailModal")?.classList.remove("show");
-      $("#qrisModal")?.classList.remove("show");
-      $("#themePanel")?.classList.remove("show");
-      closeAdminLogin();
-      closeAdminPanel();
-    }
-  });
+  const saveBtn = box.querySelector("#saveSiteBtn");
+  if(saveBtn){
+    saveBtn.onclick = async () => {
+      const msg = box.querySelector("#maintMsgInput").value.trim();
+      const eta = box.querySelector("#maintEtaInput").value.trim();
+      CLOUD_DATA.site = CLOUD_DATA.site || {};
+      CLOUD_DATA.site.maintenanceMessage = msg || "Website lagi diperbaiki.";
+      CLOUD_DATA.site.maintenanceEta = eta;
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Simpan...';
+      const ok = await persistCloud();
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan';
+      toast(ok ? "Pesan disimpan." : "Gagal simpan.", ok ? "success" : "error");
+      checkMaintenance();
+    };
+  }
 }
 
 /* ==========================================================
@@ -833,7 +1344,7 @@ function applyTheme(key){
   root.style.setProperty("--primary", t.primary);
   root.style.setProperty("--secondary", t.secondary);
   root.style.setProperty("--primary-soft", hexToRgba(t.primary, 0.14));
-  root.style.setProperty("--primary-glow", hexToRgba(t.primary, 0.35));
+  root.style.setProperty("--primary-glow", hexToRgba(t.primary, 0.4));
   try{ localStorage.setItem(THEME_KEY, key); }catch(e){}
   $$(".theme-swatch").forEach(el => el.classList.toggle("selected", el.dataset.theme === key));
 }
@@ -848,9 +1359,9 @@ function renderThemeGrid(){
 }
 
 /* ==========================================================
-   NAV
+   NAVIGATION
    ========================================================== */
-const PAGE_TITLES = { home:1, services:1, payment:1, about:1 };
+const PAGE_TITLES = { home:1, services:1, payment:1, contact:1 };
 function goTo(page){
   if(!PAGE_TITLES[page]) return;
   $$(".page").forEach(p => p.classList.remove("active"));
@@ -892,131 +1403,76 @@ function createRotator(id, interval, outDur){
 }
 
 /* ==========================================================
-   SUGGEST FORM
+   GENERAL EVENTS
    ========================================================== */
-function initSuggest(){
-  const form = $("#suggestForm");
-  if(!form) return;
+function initGeneralEvents(){
+  // Bottom nav
+  $$(".nav-item").forEach(btn => btn.addEventListener("click", () => goTo(btn.dataset.page)));
 
-  const nameEl = $("#sfName");
-  const catEl = $("#sfCategory");
-  const msgEl = $("#sfMessage");
-  const countEl = $("#sfCount");
-  const tagsEl = $("#quickTags");
-  const resetBtn = $("#sfReset");
-  const submitBtn = $("#sfSubmit");
+  // Fullpage back
+  $("#fullpageBack")?.addEventListener("click", closeFullPage);
 
-  let selectedTag = "";
+  // Global click delegate
+  document.addEventListener("click", e => {
+    // Fullpage back button (inside body)
+    if(e.target.closest("#fullpageBack")){ closeFullPage(); return; }
 
-  const updateCount = ()=>{
-    const len = msgEl.value.length;
-    countEl.textContent = len + " / 500";
-    countEl.classList.toggle("warn", len >= 400 && len < 480);
-    countEl.classList.toggle("danger", len >= 480);
-  };
-  msgEl.addEventListener("input", updateCount);
-  updateCount();
+    // Nav data-nav
+    const nav = e.target.closest("[data-nav]");
+    if(nav){ goTo(nav.dataset.nav); return; }
 
-  tagsEl.addEventListener("click", e=>{
-    const tag = e.target.closest(".quick-tag");
-    if(!tag) return;
-    if(tag.classList.contains("active")){
-      tag.classList.remove("active");
-      selectedTag = "";
-    } else {
-      $$(".quick-tag", tagsEl).forEach(t=>t.classList.remove("active"));
-      tag.classList.add("active");
-      selectedTag = tag.dataset.tag;
+    // Card detail
+    const card = e.target.closest(".card[data-type]");
+    if(card){ openDetail(card.dataset.type, Number(card.dataset.idx)); return; }
+
+    // Copy button
+    const cp = e.target.closest("[data-copy]");
+    if(cp){ e.stopPropagation(); copyText(cp.dataset.copy); return; }
+
+    // QRIS button
+    const qris = e.target.closest('[data-pay="qris"]');
+    if(qris){
+      const img = $("#qrisImg");
+      const id = qris.dataset.id || "qris";
+      const pay = (CLOUD_DATA?.payment||[]).find(p => p.id === id);
+      if(img && pay){ img.src = pay.value; img.style.display = "block"; }
+      $("#qrisModal").classList.add("show");
+      return;
     }
   });
 
-  resetBtn.addEventListener("click", ()=>{
-    nameEl.value = "";
-    catEl.selectedIndex = 0;
-    msgEl.value = "";
-    selectedTag = "";
-    $$(".quick-tag", tagsEl).forEach(t=>t.classList.remove("active"));
-    updateCount();
-    toast("Form direset.","info");
+  // Modal close
+  $("#modalClose")?.addEventListener("click", ()=>$("#detailModal").classList.remove("show"));
+  $("#qrisClose")?.addEventListener("click", ()=>$("#qrisModal").classList.remove("show"));
+  $("#detailModal")?.addEventListener("click", e=>{ if(e.target.id==="detailModal") e.target.classList.remove("show"); });
+  $("#qrisModal")?.addEventListener("click", e=>{ if(e.target.id==="qrisModal") e.target.classList.remove("show"); });
+
+  $("#adminPanelModal")?.addEventListener("click", e=>{ if(e.target.id==="adminPanelModal") closeAdminPanel(); });
+
+  // Maintenance refresh
+  $("#userMaintRefresh")?.addEventListener("click", async () => {
+    toast("Cek status...","info");
+    const data = await cloudLoad();
+    if(data){
+      CLOUD_DATA = ensureStructure(data);
+      refreshAll();
+      checkMaintenance();
+      checkChangelog();
+    } else toast("Gagal cek.","error");
   });
 
-  form.addEventListener("submit", async (e)=>{
-    e.preventDefault();
-    const nama = (nameEl.value || "").trim() || "Anonim";
-    const kategori = catEl.value;
-    const pesan = (msgEl.value || "").trim();
-    if(pesan.length < 3){ toast("Pesan minimal 3 karakter.","error"); msgEl.focus(); return; }
-
-    submitBtn.disabled = true;
-    const original = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Kirim...';
-
-    const ok = await sendSaranToDiscord({ nama, kategori, tag: selectedTag, pesan });
-
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = original;
-
-    if(ok){
-      toast("Saran kekirim. Makasih!","success");
-      setTimeout(()=>resetBtn.click(), 800);
+  // Escape
+  document.addEventListener("keydown", e => {
+    if(e.key === "Escape"){
+      $("#detailModal")?.classList.remove("show");
+      $("#qrisModal")?.classList.remove("show");
+      $("#themePanel")?.classList.remove("show");
+      closeAdminLogin();
+      closeAdminPanel();
+      closeFullPage();
+      closeSidebar();
     }
   });
-}
-
-async function sendSaranToDiscord(payload){
-  const url = (CONFIG.webhookSaran || "").trim();
-  if(!url || !/^https:\/\/discord(app)?\.com\/api\/webhooks\//.test(url)) return false;
-
-  const d = CONFIG.developer;
-  const now = new Date();
-  const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
-  const tanggal = `${String(now.getDate()).padStart(2,"0")} ${months[now.getMonth()]} ${now.getFullYear()}, ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
-
-  const body = {
-    username: (d.name || "MSI ASTRA").slice(0, 80),
-    avatar_url: d.profileImage,
-    allowed_mentions: { parse: [] },
-    embeds: [{
-      title: "Saran Baru Masuk",
-      description: "Ada masukan baru dari user.",
-      color: 0x6c7cff,
-      author: { name: "MSI ASTRA • Form Saran", icon_url: d.profileImage },
-      thumbnail: { url: d.profileImage },
-      fields: [
-        { name: "Pengirim", value: "```" + (payload.nama || "Anonim").slice(0,90) + "```", inline: true },
-        { name: "Kategori", value: "```" + (payload.kategori || "-").slice(0,90) + "```", inline: true },
-        { name: "Quick Tag", value: payload.tag ? `> **${payload.tag}**` : "> _Tidak ada tag_", inline: false },
-        { name: "Isi Pesan", value: "```\n" + (payload.pesan || "").slice(0,1000) + "\n```", inline: false }
-      ],
-      footer: { text: `MSI ASTRA App • ${tanggal}`, icon_url: d.profileImage },
-      timestamp: now.toISOString()
-    }]
-  };
-
-  const jsonStr = JSON.stringify(body);
-  if(navigator.sendBeacon){
-    try{
-      const blob = new Blob([jsonStr], { type: "application/json" });
-      if(navigator.sendBeacon(url, blob)) return true;
-    }catch(e){}
-  }
-  try{
-    fetch(url, { method:"POST", mode:"no-cors", headers:{ "Content-Type":"text/plain" }, body: jsonStr }).catch(()=>{});
-    return true;
-  }catch(e){ return false; }
-}
-
-/* ==========================================================
-   RELOCATE SUGGEST
-   ========================================================== */
-function relocateSuggest(){
-  const isLandscape = window.matchMedia('(orientation: landscape) and (max-height: 600px)').matches;
-  const card = document.getElementById('suggestCard');
-  const slotP = document.getElementById('suggestSlotPortrait');
-  const slotL = document.getElementById('sideSuggestSlot');
-  if(!card || !slotP || !slotL) return;
-  const target = isLandscape ? slotL : slotP;
-  if(card.parentElement !== target) target.appendChild(card);
 }
 
 /* ==========================================================
@@ -1026,51 +1482,35 @@ function relocateSuggest(){
   try{
     document.title = CONFIG.appName;
 
+    // Theme
     let savedTheme = "default";
     try{ savedTheme = localStorage.getItem(THEME_KEY) || "default"; }catch(e){}
     renderThemeGrid();
     applyTheme(savedTheme);
 
+    // Clock & rotators
     startClock();
-    renderQuotes();
     createRotator("welcomeRotate", 5400, 800);
-    createRotator("heroDescRotate", 5400, 700);
-    initWelcome();
+
+    // Init UI
+    initSidebar();
     initAdminLogin();
     initGeneralEvents();
-    initSuggest();
-    relocateSuggest();
-    window.addEventListener('resize', relocateSuggest);
-    window.addEventListener('orientationchange', () => setTimeout(relocateSuggest, 100));
 
+    // Load cloud data
     const data = await cloudLoad();
-    if(data){
-      CLOUD_DATA = data;
-    } else {
-      CLOUD_DATA = {
-        services: [],
-        products: [],
-        payment: [],
-        site: { mode: "open" }
-      };
-    }
+    CLOUD_DATA = ensureStructure(data || DEFAULT_DATA);
 
-    CLOUD_DATA.services = CLOUD_DATA.services || [];
-    CLOUD_DATA.products = CLOUD_DATA.products || [];
-    CLOUD_DATA.payment  = CLOUD_DATA.payment  || [];
-    CLOUD_DATA.site     = CLOUD_DATA.site     || { mode: "open" };
-
+    // Check admin
     checkIsAdmin();
     applyAdminMode();
+
+    // Render everything
     refreshAll();
 
-    const visited = (()=>{ try{ return localStorage.getItem(VISITED_KEY) === "1"; }catch(e){ return false; } })();
-
-    if(!visited){
-      showWelcome();
-    } else {
-      checkMaintenance();
-    }
+    // Maintenance / changelog check
+    checkMaintenance();
+    checkChangelog();
 
   }catch(err){
     console.error("[MSI ASTRA] Init error:", err);
