@@ -5,7 +5,7 @@
 .ad-logout{padding:6px 10px;font-size:10.5px}
 .ad-tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
 .ad-tabs::-webkit-scrollbar{display:none}
-.ad-tabs button{flex-shrink:0;padding:9px 14px;border-radius:12px;font-size:11.5px;font-weight:600;white-space:nowrap;background:var(--surface-3);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:var(--font-mono)}
+.ad-tabs button{flex-shrink:0;padding:9px 14px;border-radius:12px;font-size:11.5px;font-weight:600;white-space:nowrap;background:var(--surface-3);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:var(--font-mono);transition:all .25s}
 .ad-tabs button.active{background:var(--primary);color:#000;border-color:var(--primary)}
 .ad-list-btn{width:100%;margin-bottom:12px}
 .ad-list{max-height:340px;overflow-y:auto;padding-right:4px}
@@ -19,7 +19,7 @@
 .ad-empty{padding:24px;text-align:center;color:var(--muted);font-size:12.5px;border:1px dashed var(--border-strong);border-radius:12px}
 .ad-footer{display:flex;gap:6px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
 .ad-footer .btn{flex:1;font-size:11px;padding:9px}
-.ad-banner{padding:12px 16px;border-radius:13px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:14px;font-family:var(--font-mono)}
+.ad-banner{padding:12px 16px;border-radius:13px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);color:#fbbf24;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:14px;font-family:var(--font-mono)}
 .ad-label{font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;font-family:var(--font-mono)}
 .ad-mode{display:flex;gap:6px;margin-bottom:16px}
 .ad-mode .btn{flex:1;font-size:11px;padding:10px 6px}
@@ -68,6 +68,7 @@
     services: "Jasa",
     products: "Produk",
     payment:  "Payment",
+    projects: "Project",
     themes:   "Tema",
     sidebar:  "Sidebar",
     navbar:   "Navbar",
@@ -99,6 +100,15 @@
       { k:"type", l:"Tipe", t:"select", o:["qris","phone","url"] },
       { k:"value", l:"Value", t:"textarea" },
       { k:"status", l:"Status", t:"select", o:["available","unavailable","maintenance"] }
+    ],
+    projects: [
+      { k:"name", l:"Nama Project", t:"text" },
+      { k:"description", l:"Deskripsi", t:"textarea" },
+      { k:"icon", l:"Icon (fa-xxx)", t:"text" },
+      { k:"tech", l:"Tech Stack (pisah pakai koma)", t:"text" },
+      { k:"status", l:"Status", t:"select", o:["live","beta","coming-soon","development","archived"] },
+      { k:"type", l:"Tipe", t:"select", o:["web","app","other"] },
+      { k:"url", l:"Link (kosongin kalau gak ada)", t:"text" }
     ],
     sidebar: [
       { k:"id", l:"ID", t:"text" },
@@ -162,7 +172,7 @@
           <div class="ad-item">
             <div class="ad-item-info">
               <b>${esc(it.name || it.label || it.id || "-")}</b>
-              <small>${esc(it.status || it.price || it.value || it.desc || "")}</small>
+              <small>${esc(it.status || it.price || it.value || it.desc || it.tech || "")}</small>
             </div>
             <div class="ad-item-btns">
               <button data-edit="${i}"><i class="fa-solid fa-pen"></i></button>
@@ -362,8 +372,6 @@
       <div class="ad-field"><label>Role</label><input data-p="devRole" value="${esc(d.role)}"></div>
       <div class="ad-field"><label>Avatar URL</label><input data-p="devProfile" value="${esc(d.profileImage)}"></div>
       <div class="ad-field"><label>Description</label><textarea data-p="devDesc" rows="3">${esc(d.description)}</textarea></div>
-      <div class="ad-field"><label>Quote</label><input data-p="devQuote" value="${esc(d.quote)}"></div>
-      <div class="ad-field"><label>Currently</label><input data-p="devCurrent" value="${esc(d.currently)}"></div>
       <div class="ad-field"><label>WhatsApp URL</label><input data-p="wa" value="${esc(p.contact.whatsapp)}"></div>
       <div class="ad-field"><label>Channel URL</label><input data-p="channel" value="${esc(p.contact.channel)}"></div>
       <div class="ad-field"><label>Daily Limit Lapor</label><input type="number" data-p="dailyLimit" value="${p.dailyLimit||5}"></div>
@@ -382,8 +390,6 @@
       d.role = g("devRole");
       d.profileImage = g("devProfile");
       d.description = g("devDesc");
-      d.quote = g("devQuote");
-      d.currently = g("devCurrent");
       p.contact.whatsapp = g("wa");
       p.contact.channel = g("channel");
       p.dailyLimit = parseInt(g("dailyLimit")) || 5;
@@ -439,7 +445,6 @@
     if(window.applyAdminMode) window.applyAdminMode();
   }
 
-  // Top actions
   document.querySelector("[data-ad-act='close']").onclick = closeAdminPanel;
   document.querySelector("[data-ad-act='logout']").onclick = async () => {
     if(!confirm("Logout admin?")) return;
