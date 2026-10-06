@@ -43,6 +43,7 @@
 .ab-sec-1{animation-delay:.9s}
 .ab-sec-2{animation-delay:1s}
 .ab-sec-3{animation-delay:1.1s}
+.ab-sec-4{animation-delay:1.2s}
 .ab-section-title{font-size:18px;font-weight:700;letter-spacing:-.3px;margin-bottom:16px;display:flex;align-items:center;gap:8px;font-family:var(--font-mono)}
 .ab-section-title::before{content:"";width:4px;height:20px;border-radius:2px;background:linear-gradient(180deg,var(--primary),var(--secondary))}
 .ab-toolkit{display:flex;flex-wrap:wrap;gap:8px}
@@ -72,6 +73,44 @@
 .ab-playlist-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#1db954,#1ed760);display:grid;place-items:center;font-size:22px;color:#fff;flex-shrink:0}
 .ab-playlist-body h4{font-size:13px;font-weight:700;margin-bottom:2px}
 .ab-playlist-body p{font-size:11px;color:var(--muted)}
+
+/* PROJECTS */
+.ab-projects{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:640px){.ab-projects{grid-template-columns:1fr 1fr}}
+.ab-project{position:relative;padding:16px;border-radius:16px;background:var(--surface);border:1px solid var(--border);display:flex;flex-direction:column;gap:10px;transition:all .3s var(--ease-out);text-decoration:none;color:inherit;overflow:hidden;animation:abProjIn .5s var(--ease-out) both}
+.ab-project:nth-child(1){animation-delay:1.3s}
+.ab-project:nth-child(2){animation-delay:1.37s}
+.ab-project:nth-child(3){animation-delay:1.44s}
+.ab-project:nth-child(4){animation-delay:1.51s}
+.ab-project:nth-child(5){animation-delay:1.58s}
+.ab-project:nth-child(6){animation-delay:1.65s}
+@keyframes abProjIn{from{opacity:0;transform:translateY(15px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.ab-project.clickable{cursor:pointer}
+.ab-project.clickable:hover{transform:translateY(-3px);border-color:var(--primary);box-shadow:0 12px 32px rgba(0,0,0,.4)}
+.ab-project.clickable::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--secondary));opacity:0;transition:opacity .3s}
+.ab-project.clickable:hover::before{opacity:1}
+.ab-proj-head{display:flex;align-items:flex-start;gap:12px}
+.ab-proj-icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--primary-soft),rgba(139,92,246,.08));border:1px solid var(--border);display:grid;place-items:center;font-size:18px;color:var(--primary);flex-shrink:0}
+.ab-proj-info{flex:1;min-width:0}
+.ab-proj-title{font-size:13.5px;font-weight:700;letter-spacing:-.2px;margin-bottom:5px;line-height:1.3}
+.ab-proj-status{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;font-family:var(--font-mono);padding:2px 8px;border-radius:999px;white-space:nowrap}
+.ab-proj-status .dot{width:5px;height:5px;border-radius:50%}
+.ab-proj-status.green{background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
+.ab-proj-status.green .dot{background:#4ade80;box-shadow:0 0 6px #4ade80}
+.ab-proj-status.yellow{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}
+.ab-proj-status.yellow .dot{background:#fbbf24;box-shadow:0 0 6px #fbbf24}
+.ab-proj-status.blue{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.3)}
+.ab-proj-status.blue .dot{background:#60a5fa;box-shadow:0 0 6px #60a5fa}
+.ab-proj-status.gray{background:rgba(113,113,122,.12);color:#a1a1aa;border:1px solid rgba(113,113,122,.3)}
+.ab-proj-status.gray .dot{background:#a1a1aa}
+.ab-proj-arrow{width:28px;height:28px;border-radius:9px;background:var(--surface-3);border:1px solid var(--border);display:grid;place-items:center;font-size:11px;color:var(--muted-2);transition:all .3s;flex-shrink:0}
+.ab-project.clickable:hover .ab-proj-arrow{background:var(--primary);color:#000;transform:translate(2px,-2px);border-color:var(--primary)}
+.ab-proj-lock{width:28px;height:28px;border-radius:9px;background:var(--surface-3);border:1px solid var(--border);display:grid;place-items:center;font-size:11px;color:var(--muted-2);flex-shrink:0}
+.ab-proj-desc{font-size:11.5px;color:var(--muted);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.ab-proj-tech{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto}
+.ab-proj-tech span{padding:3px 8px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);font-size:9.5px;font-weight:600;color:var(--muted-2);font-family:var(--font-mono);letter-spacing:.2px}
+.ab-project.clickable:hover .ab-proj-tech span{border-color:var(--border-strong);color:var(--muted)}
+.ab-empty{padding:32px 20px;text-align:center;border:1px dashed var(--border-strong);border-radius:14px;color:var(--muted);font-size:12.5px;animation:abFadeUp .5s var(--ease-out) 1.3s both}
 </style>
 
 <div class="ab-wrap">
@@ -87,7 +126,7 @@
   <div class="ab-tabs">
     <button class="ab-tab active"><i class="fa-solid fa-user"></i> Siapa gw</button>
     <button class="ab-tab"><i class="fa-solid fa-code"></i> Tools</button>
-    <button class="ab-tab"><i class="fa-solid fa-headphones"></i> Lagu</button>
+    <button class="ab-tab"><i class="fa-solid fa-cube"></i> Project</button>
   </div>
 
   <div class="ab-hero">
@@ -119,6 +158,11 @@
   </div>
 
   <div class="ab-section ab-sec-2">
+    <div class="ab-section-title">project yang pernah digarap</div>
+    <div class="ab-projects" id="abProjects"></div>
+  </div>
+
+  <div class="ab-section ab-sec-3">
     <div class="ab-section-title">lagi diputer</div>
     <div class="ab-playlist">
       <div class="ab-playlist-icon"><i class="fa-brands fa-spotify"></i></div>
@@ -129,7 +173,7 @@
     </div>
   </div>
 
-  <div class="ab-section ab-sec-3">
+  <div class="ab-section ab-sec-4">
     <div class="ab-section-title">ngobrol yuk</div>
     <div class="ab-reach">
       <a class="btn btn-wa" id="abWa" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Chat WA</a>
@@ -150,13 +194,13 @@
     ? d.currently
     : (typeof d.currently === "string" && d.currently.includes("|"))
       ? d.currently.split("|").map(s => s.trim()).filter(Boolean)
-      : [d.currently || "lagi ngulik sesuatu", "oprek code terus", "belajar dari error"];
+      : [d.currently || "lagi ngulik sesuatu"];
 
   const quoteList = Array.isArray(d.quote)
     ? d.quote
     : (typeof d.quote === "string" && d.quote.includes("|"))
       ? d.quote.split("|").map(s => s.trim()).filter(Boolean)
-      : [d.quote || "yang penting jalan dulu", "error itu guru paling jujur", "ngulik terus, paham pelan-pelan"];
+      : [d.quote || "yang penting jalan dulu"];
 
   const setTxt = (id, v) => { const el = $(id); if(el) el.textContent = v || ""; };
   const setSrc = (id, v) => { const el = $(id); if(el) el.src = v || ""; };
@@ -181,6 +225,49 @@
   if(tkEl) tkEl.innerHTML = (d.toolkit||[]).map(t =>
     `<div class="ab-tool ${esc(t.cls)}"><i class="${esc(t.icon)}"></i> ${esc(t.name)}</div>`
   ).join("");
+
+  const projEl = $("#abProjects");
+  if(projEl){
+    const projects = Array.isArray(d.projects) ? d.projects : [];
+    const statusMap = {
+      "live":        { cls:"green",  label:"Live" },
+      "beta":        { cls:"yellow", label:"Beta" },
+      "coming-soon": { cls:"blue",   label:"Soon" },
+      "development": { cls:"yellow", label:"In Dev" },
+      "archived":    { cls:"gray",   label:"Archived" }
+    };
+
+    if(!projects.length){
+      projEl.innerHTML = `<div class="ab-empty">Belum ada project yang di-publish.</div>`;
+    } else {
+      projEl.innerHTML = projects.map(p => {
+        const url = (p.url || "").trim();
+        const hasUrl = url.length > 0;
+        const st = statusMap[(p.status || "live").toLowerCase()] || statusMap.live;
+        const techArr = (p.tech || "").split(",").map(t => t.trim()).filter(Boolean);
+
+        const inner = `
+          <div class="ab-proj-head">
+            <div class="ab-proj-icon"><i class="${esc(p.icon || "fa-solid fa-cube")}"></i></div>
+            <div class="ab-proj-info">
+              <div class="ab-proj-title">${esc(p.name || "Untitled")}</div>
+              <div class="ab-proj-status ${st.cls}"><span class="dot"></span>${st.label}</div>
+            </div>
+            ${hasUrl 
+              ? `<div class="ab-proj-arrow"><i class="fa-solid fa-arrow-up-right-from-square"></i></div>` 
+              : `<div class="ab-proj-lock"><i class="fa-solid fa-lock"></i></div>`}
+          </div>
+          <div class="ab-proj-desc">${esc(p.description || "")}</div>
+          ${techArr.length ? `<div class="ab-proj-tech">${techArr.map(t => `<span>${esc(t)}</span>`).join("")}</div>` : ""}
+        `;
+
+        if(hasUrl){
+          return `<a class="ab-project clickable" href="${esc(url)}" target="_blank" rel="noopener">${inner}</a>`;
+        }
+        return `<div class="ab-project">${inner}</div>`;
+      }).join("");
+    }
+  }
 
   setHref("#abWa", c.whatsapp);
   setHref("#abChannel", c.channel);
