@@ -34,46 +34,19 @@
 .ct-feature-body h4{font-size:13.5px;font-weight:700;margin-bottom:4px}
 .ct-feature-body p{font-size:11.5px;color:var(--muted);line-height:1.55}
 
-/* ===== FOOTER BIASA ===== */
-.ct-foot{
-  margin-top:24px;
-  padding:20px 16px;
-  border-radius:16px;
-  background:var(--surface);
-  border:1px solid var(--border);
-  display:flex;flex-direction:column;align-items:center;gap:8px;
-  text-align:center;
-}
-.ct-foot-top{
-  display:flex;align-items:center;gap:8px;
-  font-size:12px;color:var(--muted);
-  font-family:var(--font-mono);
-  letter-spacing:.3px;
-}
+/* FOOTER BIASA */
+.ct-foot{margin-top:24px;padding:20px 16px;border-radius:16px;background:var(--surface);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.ct-foot-top{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);font-family:var(--font-mono);letter-spacing:.3px}
 .ct-foot-top i{color:var(--primary);font-size:12px}
 .ct-foot-top b{color:var(--text);font-weight:600}
-.ct-foot-bottom{
-  display:flex;align-items:center;gap:6px;
-  font-size:10px;color:var(--muted-2);
-  font-family:var(--font-mono);
-  letter-spacing:.4px;
-}
-.ct-foot-bottom .dot{
-  width:5px;height:5px;border-radius:50%;
-  background:#22c55e;
-  box-shadow:0 0 6px #22c55e;
-  animation:ctPulse 1.5s ease infinite;
-}
-.ct-foot-sep{
-  width:32px;height:2px;border-radius:2px;
-  background:linear-gradient(90deg,transparent,var(--primary),transparent);
-  opacity:.4;margin:4px 0;
-}
+.ct-foot-bottom{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted-2);font-family:var(--font-mono);letter-spacing:.4px}
+.ct-foot-bottom .dot{width:5px;height:5px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;animation:ctPulse 1.5s ease infinite}
+.ct-foot-sep{width:32px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--primary),transparent);opacity:.4;margin:4px 0}
 </style>
 
 <div class="ct-wrap">
   <div class="ct-head">
-    <i class="fa-solid fa-address-book"></i> Hubungi Gw
+    <i class="fa-solid fa-address-book"></i> Chat gw yuk
   </div>
 
   <div class="ct-hero">
@@ -81,20 +54,20 @@
       <img class="ct-avatar" id="ctAvatar" alt="Avatar" onerror="this.style.display='none'">
       <div class="ct-info">
         <h2 id="ctName">-</h2>
-        <div class="ct-role"><i class="fa-solid fa-bolt"></i> <span id="ctRole">Developer</span></div>
-        <div class="ct-status">Available</div>
+        <div class="ct-role"><i class="fa-solid fa-bolt"></i> <span id="ctRole">Ngoding sambil ngulik</span></div>
+        <div class="ct-status">Online terus</div>
       </div>
     </div>
     <p class="ct-bio" id="ctBio">-</p>
   </div>
 
-  <div class="ct-label">Hubungi Via</div>
+  <div class="ct-label">Hubungi gw lewat</div>
   <div class="ct-grid">
     <a class="ct-item" id="ctWa" target="_blank" rel="noopener" style="--ct-color:#25d366">
       <div class="ct-icon"><i class="fa-brands fa-whatsapp"></i></div>
       <div class="ct-body">
-        <span>WhatsApp</span>
-        <small>Chat langsung</small>
+        <span>Chat WA</span>
+        <small>paling cepet bales</small>
       </div>
       <div class="ct-arrow"><i class="fa-solid fa-arrow-up-right-from-square"></i></div>
     </a>
@@ -102,23 +75,23 @@
       <div class="ct-icon"><i class="fa-solid fa-bullhorn"></i></div>
       <div class="ct-body">
         <span>Saluran</span>
-        <small>Info & update</small>
+        <small>update & info</small>
       </div>
       <div class="ct-arrow"><i class="fa-solid fa-arrow-up-right-from-square"></i></div>
     </a>
     <button class="ct-item" data-sidebar="about" style="--ct-color:#6c7cff">
       <div class="ct-icon"><i class="fa-solid fa-user-astronaut"></i></div>
       <div class="ct-body">
-        <span>About Dev</span>
-        <small>Profil lengkap</small>
+        <span>Kenalan dulu</span>
+        <small>siapa sih gw?</small>
       </div>
       <div class="ct-arrow"><i class="fa-solid fa-chevron-right"></i></div>
     </button>
     <button class="ct-item" data-sidebar="lapor" style="--ct-color:#f59e0b">
       <div class="ct-icon"><i class="fa-solid fa-bullhorn"></i></div>
       <div class="ct-body">
-        <span>Lapor Bug</span>
-        <small>Kirim masukan</small>
+        <span>Lapor / Saran</span>
+        <small>curhat juga boleh</small>
       </div>
       <div class="ct-arrow"><i class="fa-solid fa-chevron-right"></i></div>
     </button>
@@ -127,12 +100,11 @@
   <div class="ct-feature">
     <div class="ct-feature-icon"><i class="fa-solid fa-comments"></i></div>
     <div class="ct-feature-body">
-      <h4>Fast Response</h4>
-      <p>Biasanya admin balas dalam 1×24 jam. Buat respon cepat, kirim pesan via WhatsApp.</p>
+      <h4>Santai aja, gak usah formal</h4>
+      <p>Mau tanya, order, kolab, atau cuma pengen nyapa — gaskeun chat aja. Biasanya gw bales dalam 24 jam, sering lebih cepet sih 😁</p>
     </div>
   </div>
 
-  <!-- FOOTER BIASA -->
   <div class="ct-foot">
     <div class="ct-foot-top">
       <i class="fa-solid fa-bolt"></i>
@@ -141,7 +113,7 @@
     <div class="ct-foot-sep"></div>
     <div class="ct-foot-bottom">
       <span class="dot"></span>
-      <span>All systems operational</span>
+      <span>semua aman, gaskeun</span>
     </div>
   </div>
 </div>
@@ -161,17 +133,15 @@
   const setHref = (id, v) => { const el = $(id); if(el) el.href = v || "#"; };
 
   setSrc("#ctAvatar", d.profileImage);
-  setTxt("#ctName", d.name || "Developer");
-  setTxt("#ctRole", d.role || "Developer");
-  setTxt("#ctBio", d.description || "Hubungi gw buat kerjasama atau tanya-tanya.");
+  setTxt("#ctName", d.name || "Baim");
+  setTxt("#ctRole", d.role || "Ngoding sambil ngulik");
+  setTxt("#ctBio", d.description || "Sehari-hari ngoding dibantu AI. Mau tanya, order, kolab, atau cuma nyapa — chat aja santai, gw fast respon kok 😄");
   setHref("#ctWa", c.whatsapp || "#");
   setHref("#ctChannel", c.channel || "#");
 
-  /* Footer year & name */
   setTxt("#ctFootYear", new Date().getFullYear());
   setTxt("#ctFootName", p.appName || "MSI ASTRA");
 
-  /* Sidebar triggers */
   document.querySelectorAll("[data-sidebar]").forEach(el => {
     el.onclick = () => {
       const target = el.dataset.sidebar;
