@@ -111,6 +111,24 @@
 .ab-proj-tech span{padding:3px 8px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);font-size:9.5px;font-weight:600;color:var(--muted-2);font-family:var(--font-mono);letter-spacing:.2px}
 .ab-project.clickable:hover .ab-proj-tech span{border-color:var(--border-strong);color:var(--muted)}
 .ab-empty{padding:32px 20px;text-align:center;border:1px dashed var(--border-strong);border-radius:14px;color:var(--muted);font-size:12.5px;animation:abFadeUp .5s var(--ease-out) 1.3s both}
+  .proj-image {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.proj-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s var(--ease-out);
+}
+.ab-project.clickable:hover .proj-image img {
+  transform: scale(1.05);
+}
 </style>
 
 <div class="ab-wrap">
@@ -246,8 +264,16 @@
         const st = statusMap[(p.status || "live").toLowerCase()] || statusMap.live;
         const techArr = (p.tech || "").split(",").map(t => t.trim()).filter(Boolean);
 
-        const inner = `
-          <div class="ab-proj-head">
+const imgUrl = (p.image || "").trim();
+const imgHTML = imgUrl ? `
+  <div class="proj-image">
+    <img src="${esc(imgUrl)}" alt="${esc(p.name)}" onerror="this.parentElement.style.display='none'">
+  </div>
+` : "";
+
+const inner = `
+  ${imgHTML}
+  <div class="ab-proj-head">
             <div class="ab-proj-icon"><i class="${esc(p.icon || "fa-solid fa-cube")}"></i></div>
             <div class="ab-proj-info">
               <div class="ab-proj-title">${esc(p.name || "Untitled")}</div>
