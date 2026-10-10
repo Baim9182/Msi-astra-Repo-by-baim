@@ -35,6 +35,13 @@
 .ad-theme-title b{font-size:13px}
 .ad-color-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ad-form-actions{display:flex;gap:8px;margin-top:16px}
+.ad-img-input{display:flex;gap:6px;align-items:stretch}
+.ad-img-input input[type="text"]{flex:1;padding:12px 14px;border-radius:12px;background:var(--surface-3);border:1px solid var(--border-strong);color:var(--text);font-family:inherit;font-size:12.5px;outline:none}
+.ad-img-input input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.ad-img-btn{flex-shrink:0;padding:0 14px;border-radius:12px;background:var(--primary);color:#000;font-size:11.5px;font-weight:700;font-family:var(--font-mono);cursor:pointer;border:1px solid var(--primary);display:inline-flex;align-items:center;gap:6px;transition:all .25s}
+.ad-img-btn:active{transform:scale(.95)}
+.ad-img-preview{margin-top:8px;padding:8px;border-radius:12px;background:var(--surface-3);border:1px solid var(--border);text-align:center}
+.ad-img-preview img{max-width:100%;max-height:160px;border-radius:8px;object-fit:cover}
 </style>
 
 <button class="modal-close" data-ad-act="close"><i class="fa-solid fa-xmark"></i></button>
@@ -81,6 +88,7 @@
     services: [
       { k:"name", l:"Nama Jasa", t:"text" },
       { k:"description", l:"Deskripsi", t:"textarea" },
+      { k:"image", l:"Gambar Jasa", t:"text" },
       { k:"price", l:"Harga", t:"text" },
       { k:"status", l:"Status", t:"select", o:["Tersedia","Tidak Tersedia","Pre-Order","Coming Soon"] },
       { k:"icon", l:"Icon (fa-xxx)", t:"text" }
@@ -88,6 +96,7 @@
     products: [
       { k:"name", l:"Nama Produk", t:"text" },
       { k:"description", l:"Deskripsi", t:"textarea" },
+      { k:"image", l:"Gambar Produk", t:"text" },
       { k:"price", l:"Harga", t:"text" },
       { k:"status", l:"Status", t:"select", o:["Tersedia","Tidak Tersedia","Pre-Order","Coming Soon"] },
       { k:"icon", l:"Icon (fa-xxx)", t:"text" }
@@ -105,6 +114,7 @@
       { k:"name", l:"Nama Project", t:"text" },
       { k:"description", l:"Deskripsi", t:"textarea" },
       { k:"icon", l:"Icon (fa-xxx)", t:"text" },
+      { k:"image", l:"Screenshot Project", t:"text" },
       { k:"tech", l:"Tech Stack (pisah pakai koma)", t:"text" },
       { k:"status", l:"Status", t:"select", o:["live","beta","coming-soon","development","archived"] },
       { k:"type", l:"Tipe", t:"select", o:["web","app","other"] },
@@ -131,6 +141,15 @@
   let currentTab = "services";
   let editing = null;
 
+  try {
+    const savedTab = sessionStorage.getItem("msi_admin_tab");
+    if(savedTab && TABS[savedTab]) currentTab = savedTab;
+  } catch(e) {}
+
+  function saveTabState() {
+    try { sessionStorage.setItem("msi_admin_tab", currentTab); } catch(e) {}
+  }
+
   const saveBtn = async (btn, label) => {
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
@@ -151,6 +170,7 @@
     tabsEl.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => {
       currentTab = b.dataset.tab;
       editing = null;
+      saveTabState();
       render();
     });
 
@@ -202,10 +222,33 @@
     const isNew = editing.idx < 0;
     const item = isNew ? {} : (data[currentTab][editing.idx] || {});
 
+    const isImageField = (k) => {
+      const key = (k || "").toLowerCase();
+      return key === "image" || key === "bimg" || key === "avatar" || key === "screenshot";
+    };
+
     content.innerHTML = `
       <div class="ad-label">${isNew ? "Tambah" : "Edit"} ${TABS[currentTab]}</div>
       ${fields.map(f => {
         const v = item[f.k] ?? "";
+
+        if(isImageField(f.k) && f.t !== "textarea"){
+          return `
+            <div class="ad-field">
+              <label>${esc(f.l)}</label>
+              <div class="ad-img-input">
+                <input type="text" data-f="${f.k}" value="${esc(v)}" placeholder="Paste URL atau upload...">
+                <button type="button" class="ad-img-btn" data-upload="${f.k}">
+                  <i class="fa-solid fa-image"></i> Galeri
+                </button>
+              </div>
+              <input type="file" accept="image/*" data-file="${f.k}" style="display:none">
+              <div class="ad-img-preview" data-preview="${f.k}" style="display:${v ? 'block' : 'none'}">
+                <img src="${esc(v)}" alt="Preview" onerror="this.parentElement.style.display='none'">
+              </div>
+            </div>`;
+        }
+
         if(f.t === "textarea") return `<div class="ad-field"><label>${esc(f.l)}</label><textarea data-f="${f.k}" rows="3">${esc(v)}</textarea></div>`;
         if(f.t === "select") return `<div class="ad-field"><label>${esc(f.l)}</label><select data-f="${f.k}">${f.o.map(o => `<option value="${esc(o)}" ${String(o)==String(v)?"selected":""}>${esc(o)}</option>`).join("")}</select></div>`;
         return `<div class="ad-field"><label>${esc(f.l)}</label><input type="text" data-f="${f.k}" value="${esc(v)}"></div>`;
@@ -214,6 +257,60 @@
         <button class="btn btn-ghost" data-cancel style="flex:1">Batal</button>
         <button class="btn btn-primary" data-save style="flex:2"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
       </div>`;
+
+    content.querySelectorAll("[data-upload]").forEach(btn => {
+      btn.onclick = () => {
+        const fieldName = btn.dataset.upload;
+        const fileInput = content.querySelector(`[data-file="${fieldName}"]`);
+        if(fileInput) fileInput.click();
+      };
+    });
+
+    content.querySelectorAll("[data-file]").forEach(input => {
+      input.onchange = (e) => {
+        const file = e.target.files?.[0];
+        if(!file) return;
+
+        if(file.size > 2 * 1024 * 1024){
+          toast("Gambar max 2MB. Kompres dulu.","error");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const base64 = ev.target.result;
+          const fieldName = input.dataset.file;
+          const textInput = content.querySelector(`[data-f="${fieldName}"]`);
+          const preview = content.querySelector(`[data-preview="${fieldName}"]`);
+
+          if(textInput) textInput.value = base64;
+          if(preview){
+            preview.style.display = "block";
+            const img = preview.querySelector("img");
+            if(img) img.src = base64;
+          }
+          toast("Gambar ke-load.","success");
+        };
+        reader.readAsDataURL(file);
+      };
+    });
+
+    content.querySelectorAll("input[data-f]").forEach(input => {
+      if(!isImageField(input.dataset.f)) return;
+      input.oninput = () => {
+        const val = input.value.trim();
+        const preview = content.querySelector(`[data-preview="${input.dataset.f}"]`);
+        if(preview){
+          if(val && (val.startsWith("http") || val.startsWith("data:"))){
+            preview.style.display = "block";
+            const img = preview.querySelector("img");
+            if(img) img.src = val;
+          } else {
+            preview.style.display = "none";
+          }
+        }
+      };
+    });
 
     content.querySelector("[data-cancel]").onclick = () => { editing = null; render(); };
     content.querySelector("[data-save]").onclick = async (e) => {
@@ -280,14 +377,79 @@
           <div class="ad-field"><label>Primary</label><input data-th="${k}-primary" value="${esc(t.primary)}"></div>
           <div class="ad-field"><label>Secondary</label><input data-th="${k}-secondary" value="${esc(t.secondary)}"></div>
         </div>
-        <div class="ad-field"><label>Background URL</label><input data-th="${k}-bg" value="${esc(t.bgImage||"")}"></div>
+        <div class="ad-field">
+          <label>Background URL</label>
+          <div class="ad-img-input">
+            <input type="text" data-th="${k}-bg" value="${esc(t.bgImage||"")}" placeholder="Paste URL atau upload...">
+            <button type="button" class="ad-img-btn" data-th-upload="${k}"><i class="fa-solid fa-image"></i></button>
+          </div>
+          <input type="file" accept="image/*" data-th-file="${k}" style="display:none">
+          <div class="ad-img-preview" data-th-preview="${k}" style="display:${t.bgImage ? 'block' : 'none'};margin-top:8px">
+            <img src="${esc(t.bgImage||"")}" onerror="this.parentElement.style.display='none'">
+          </div>
+        </div>
         <div class="ad-field"><label>BG Opacity (0-1)</label><input type="number" step="0.05" min="0" max="1" data-th="${k}-opacity" value="${t.bgOpacity||0.15}"></div>
         <div class="ad-label" style="margin-top:10px">Banner</div>
         <div class="ad-field"><label>Judul</label><input data-th="${k}-btitle" value="${esc(t.banner?.title||"")}"></div>
         <div class="ad-field"><label>Deskripsi</label><input data-th="${k}-bdesc" value="${esc(t.banner?.desc||"")}"></div>
-        <div class="ad-field"><label>URL Gambar</label><input data-th="${k}-bimg" value="${esc(t.banner?.image||"")}"></div>
+        <div class="ad-field">
+          <label>URL Gambar Banner</label>
+          <div class="ad-img-input">
+            <input type="text" data-th="${k}-bimg" value="${esc(t.banner?.image||"")}" placeholder="Paste URL atau upload...">
+            <button type="button" class="ad-img-btn" data-th-upload-banner="${k}"><i class="fa-solid fa-image"></i></button>
+          </div>
+          <input type="file" accept="image/*" data-th-file-banner="${k}" style="display:none">
+          <div class="ad-img-preview" data-th-preview-banner="${k}" style="display:${t.banner?.image ? 'block' : 'none'};margin-top:8px">
+            <img src="${esc(t.banner?.image||"")}" onerror="this.parentElement.style.display='none'">
+          </div>
+        </div>
         <button class="btn btn-primary btn-block" data-th-save="${k}"><i class="fa-solid fa-floppy-disk"></i> Simpan Tema</button>
       </div>`;
+  }
+
+  // Bind upload untuk themes
+  function bindThemeUpload(content, k){
+    // BG upload
+    const bgBtn = content.querySelector(`[data-th-upload="${k}"]`);
+    const bgFile = content.querySelector(`[data-th-file="${k}"]`);
+    if(bgBtn && bgFile){
+      bgBtn.onclick = () => bgFile.click();
+      bgFile.onchange = (e) => {
+        const file = e.target.files?.[0];
+        if(!file) return;
+        if(file.size > 2 * 1024 * 1024){ toast("Max 2MB.","error"); return; }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const b64 = ev.target.result;
+          content.querySelector(`[data-th="${k}-bg"]`).value = b64;
+          const prev = content.querySelector(`[data-th-preview="${k}"]`);
+          if(prev){ prev.style.display = "block"; prev.querySelector("img").src = b64; }
+          toast("BG ke-load.","success");
+        };
+        reader.readAsDataURL(file);
+      };
+    }
+
+    // Banner upload
+    const bBtn = content.querySelector(`[data-th-upload-banner="${k}"]`);
+    const bFile = content.querySelector(`[data-th-file-banner="${k}"]`);
+    if(bBtn && bFile){
+      bBtn.onclick = () => bFile.click();
+      bFile.onchange = (e) => {
+        const file = e.target.files?.[0];
+        if(!file) return;
+        if(file.size > 2 * 1024 * 1024){ toast("Max 2MB.","error"); return; }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const b64 = ev.target.result;
+          content.querySelector(`[data-th="${k}-bimg"]`).value = b64;
+          const prev = content.querySelector(`[data-th-preview-banner="${k}"]`);
+          if(prev){ prev.style.display = "block"; prev.querySelector("img").src = b64; }
+          toast("Banner ke-load.","success");
+        };
+        reader.readAsDataURL(file);
+      };
+    }
   }
 
   function renderPages(content){
@@ -370,13 +532,38 @@
       <div class="ad-field"><label>Developer Name</label><input data-p="devName" value="${esc(d.name)}"></div>
       <div class="ad-field"><label>Username</label><input data-p="devUser" value="${esc(d.username)}"></div>
       <div class="ad-field"><label>Role</label><input data-p="devRole" value="${esc(d.role)}"></div>
-      <div class="ad-field"><label>Avatar URL</label><input data-p="devProfile" value="${esc(d.profileImage)}"></div>
+      <div class="ad-field">
+        <label>Avatar URL</label>
+        <div class="ad-img-input">
+          <input type="text" data-p="devProfile" value="${esc(d.profileImage)}" placeholder="Paste URL atau upload...">
+          <button type="button" class="ad-img-btn" data-p-upload="devProfile"><i class="fa-solid fa-image"></i></button>
+        </div>
+        <input type="file" accept="image/*" data-p-file="devProfile" style="display:none">
+      </div>
       <div class="ad-field"><label>Description</label><textarea data-p="devDesc" rows="3">${esc(d.description)}</textarea></div>
       <div class="ad-field"><label>WhatsApp URL</label><input data-p="wa" value="${esc(p.contact.whatsapp)}"></div>
       <div class="ad-field"><label>Channel URL</label><input data-p="channel" value="${esc(p.contact.channel)}"></div>
       <div class="ad-field"><label>Daily Limit Lapor</label><input type="number" data-p="dailyLimit" value="${p.dailyLimit||5}"></div>
       <div class="ad-field"><label>Discord Webhook URL</label><input data-p="webhook" value="${esc(p.webhookSaran||"")}"></div>
       <button class="btn btn-primary btn-block" data-save-prefs><i class="fa-solid fa-floppy-disk"></i> Simpan</button>`;
+
+    // Upload avatar
+    const upBtn = content.querySelector("[data-p-upload='devProfile']");
+    const upFile = content.querySelector("[data-p-file='devProfile']");
+    if(upBtn && upFile){
+      upBtn.onclick = () => upFile.click();
+      upFile.onchange = (e) => {
+        const file = e.target.files?.[0];
+        if(!file) return;
+        if(file.size > 2 * 1024 * 1024){ toast("Max 2MB.","error"); return; }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          content.querySelector("[data-p='devProfile']").value = ev.target.result;
+          toast("Avatar ke-load.","success");
+        };
+        reader.readAsDataURL(file);
+      };
+    }
 
     content.querySelector("[data-save-prefs]").onclick = async (e) => {
       const g = (k) => content.querySelector(`[data-p="${k}"]`).value.trim();
@@ -445,6 +632,16 @@
     if(window.applyAdminMode) window.applyAdminMode();
   }
 
+  // Override save button untuk themes — pakai binding manual
+  const originalRender = render;
+  render = function(){
+    originalRender();
+    if(currentTab === "themes" && !editing){
+      const content = $("#adContent");
+      ["t1","t2"].forEach(k => bindThemeUpload(content, k));
+    }
+  };
+
   document.querySelector("[data-ad-act='close']").onclick = closeAdminPanel;
   document.querySelector("[data-ad-act='logout']").onclick = async () => {
     if(!confirm("Logout admin?")) return;
@@ -455,7 +652,8 @@
       data.admin.claimedAt = null;
       await persistCloud();
     }
-    localStorage.removeItem("msi_session");
+    try{ localStorage.removeItem("msi_session"); }catch(e){}
+    try{ sessionStorage.removeItem("msi_session"); }catch(e){}
     if(window.applyAdminMode) window.applyAdminMode();
     closeAdminPanel();
     toast("Logout.","success");
