@@ -60,7 +60,7 @@
 </div>
 
 <script>
-(function(){
+(function () {
   const $ = window.$;
   const esc = window.esc;
   const toast = window.toast;
@@ -74,67 +74,67 @@
   const TABS = {
     services: "Jasa",
     products: "Produk",
-    payment:  "Payment",
+    payment: "Payment",
     projects: "Project",
-    themes:   "Tema",
-    sidebar:  "Sidebar",
-    navbar:   "Navbar",
-    pages:    "Pages",
-    prefs:    "Preferensi",
-    website:  "Website"
+    themes: "Tema",
+    sidebar: "Sidebar",
+    navbar: "Navbar",
+    pages: "Pages",
+    prefs: "Preferensi",
+    website: "Website"
   };
 
   const FIELDS = {
     services: [
-      { k:"name", l:"Nama Jasa", t:"text" },
-      { k:"description", l:"Deskripsi", t:"textarea" },
-      { k:"image", l:"Gambar Jasa", t:"text" },
-      { k:"price", l:"Harga", t:"text" },
-      { k:"status", l:"Status", t:"select", o:["Tersedia","Tidak Tersedia","Pre-Order","Coming Soon"] },
-      { k:"icon", l:"Icon (fa-xxx)", t:"text" }
+      { k: "name", l: "Nama Jasa", t: "text" },
+      { k: "description", l: "Deskripsi", t: "textarea" },
+      { k: "image", l: "Gambar Jasa", t: "text" },
+      { k: "price", l: "Harga", t: "text" },
+      { k: "status", l: "Status", t: "select", o: ["Tersedia", "Tidak Tersedia", "Pre-Order", "Coming Soon"] },
+      { k: "icon", l: "Icon (fa-xxx)", t: "text" }
     ],
     products: [
-      { k:"name", l:"Nama Produk", t:"text" },
-      { k:"description", l:"Deskripsi", t:"textarea" },
-      { k:"image", l:"Gambar Produk", t:"text" },
-      { k:"price", l:"Harga", t:"text" },
-      { k:"status", l:"Status", t:"select", o:["Tersedia","Tidak Tersedia","Pre-Order","Coming Soon"] },
-      { k:"icon", l:"Icon (fa-xxx)", t:"text" }
+      { k: "name", l: "Nama Produk", t: "text" },
+      { k: "description", l: "Deskripsi", t: "textarea" },
+      { k: "image", l: "Gambar Produk", t: "text" },
+      { k: "price", l: "Harga", t: "text" },
+      { k: "status", l: "Status", t: "select", o: ["Tersedia", "Tidak Tersedia", "Pre-Order", "Coming Soon"] },
+      { k: "icon", l: "Icon (fa-xxx)", t: "text" }
     ],
     payment: [
-      { k:"id", l:"ID", t:"text" },
-      { k:"name", l:"Nama", t:"text" },
-      { k:"icon", l:"Icon", t:"text" },
-      { k:"color", l:"Warna (hex)", t:"text" },
-      { k:"type", l:"Tipe", t:"select", o:["qris","phone","url"] },
-      { k:"value", l:"Value", t:"textarea" },
-      { k:"status", l:"Status", t:"select", o:["available","unavailable","maintenance"] }
+      { k: "id", l: "ID", t: "text" },
+      { k: "name", l: "Nama", t: "text" },
+      { k: "icon", l: "Icon", t: "text" },
+      { k: "color", l: "Warna (hex)", t: "text" },
+      { k: "type", l: "Tipe", t: "select", o: ["qris", "phone", "url"] },
+      { k: "value", l: "Value", t: "textarea" },
+      { k: "status", l: "Status", t: "select", o: ["available", "unavailable", "maintenance"] }
     ],
     projects: [
-      { k:"name", l:"Nama Project", t:"text" },
-      { k:"description", l:"Deskripsi", t:"textarea" },
-      { k:"icon", l:"Icon (fa-xxx)", t:"text" },
-      { k:"image", l:"Screenshot Project", t:"text" },
-      { k:"tech", l:"Tech Stack (pisah pakai koma)", t:"text" },
-      { k:"status", l:"Status", t:"select", o:["live","beta","coming-soon","development","archived"] },
-      { k:"type", l:"Tipe", t:"select", o:["web","app","other"] },
-      { k:"url", l:"Link (kosongin kalau gak ada)", t:"text" }
+      { k: "name", l: "Nama Project", t: "text" },
+      { k: "description", l: "Deskripsi", t: "textarea" },
+      { k: "icon", l: "Icon (fa-xxx)", t: "text" },
+      { k: "image", l: "Screenshot Project", t: "text" },
+      { k: "tech", l: "Tech Stack (pisah pakai koma)", t: "text" },
+      { k: "status", l: "Status", t: "select", o: ["live", "beta", "coming-soon", "development", "archived"] },
+      { k: "type", l: "Tipe", t: "select", o: ["web", "app", "other"] },
+      { k: "url", l: "Link (kosongin kalau gak ada)", t: "text" }
     ],
     sidebar: [
-      { k:"id", l:"ID", t:"text" },
-      { k:"label", l:"Label", t:"text" },
-      { k:"desc", l:"Deskripsi", t:"text" },
-      { k:"icon", l:"Icon (fa-xxx)", t:"text" },
-      { k:"color", l:"Warna", t:"select", o:["","orange","green","purple"] },
-      { k:"adminOnly", l:"Admin Only", t:"select", o:["false","true"] },
-      { k:"type", l:"Tipe", t:"select", o:["page","builtin"] },
-      { k:"target", l:"Target", t:"text" }
+      { k: "id", l: "ID", t: "text" },
+      { k: "label", l: "Label", t: "text" },
+      { k: "desc", l: "Deskripsi", t: "text" },
+      { k: "icon", l: "Icon (fa-xxx)", t: "text" },
+      { k: "color", l: "Warna", t: "select", o: ["", "orange", "green", "purple"] },
+      { k: "adminOnly", l: "Admin Only", t: "select", o: ["false", "true"] },
+      { k: "type", l: "Tipe", t: "select", o: ["page", "builtin"] },
+      { k: "target", l: "Target", t: "text" }
     ],
     navbar: [
-      { k:"id", l:"ID", t:"text" },
-      { k:"label", l:"Label", t:"text" },
-      { k:"icon", l:"Icon (fa-xxx)", t:"text" },
-      { k:"page", l:"Target Page", t:"text" }
+      { k: "id", l: "ID", t: "text" },
+      { k: "label", l: "Label", t: "text" },
+      { k: "icon", l: "Icon (fa-xxx)", t: "text" },
+      { k: "page", l: "Target Page", t: "text" }
     ]
   };
 
@@ -143,11 +143,11 @@
 
   try {
     const savedTab = sessionStorage.getItem("msi_admin_tab");
-    if(savedTab && TABS[savedTab]) currentTab = savedTab;
-  } catch(e) {}
+    if (savedTab && TABS[savedTab]) currentTab = savedTab;
+  } catch (e) { }
 
   function saveTabState() {
-    try { sessionStorage.setItem("msi_admin_tab", currentTab); } catch(e) {}
+    try { sessionStorage.setItem("msi_admin_tab", currentTab); } catch (e) { }
   }
 
   const saveBtn = async (btn, label) => {
@@ -156,16 +156,16 @@
     const ok = await persistCloud();
     btn.disabled = false;
     btn.innerHTML = label;
-    if(ok){ toast("Tersimpan.","success"); render(); }
-    else toast("Gagal simpan.","error");
+    if (ok) { toast("Tersimpan.", "success"); render(); }
+    else toast("Gagal simpan.", "error");
     return ok;
   };
 
-  function render(){
-    const content = $("#adContent"); if(!content) return;
+  function render() {
+    const content = $("#adContent"); if (!content) return;
     const tabsEl = $("#adTabs");
-    tabsEl.innerHTML = Object.entries(TABS).map(([k,v]) =>
-      `<button data-tab="${k}" class="${k===currentTab?'active':''}">${v}</button>`
+    tabsEl.innerHTML = Object.entries(TABS).map(([k, v]) =>
+      `<button data-tab="${k}" class="${k === currentTab ? 'active' : ''}">${v}</button>`
     ).join("");
     tabsEl.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => {
       currentTab = b.dataset.tab;
@@ -174,21 +174,21 @@
       render();
     });
 
-    if(editing) return renderForm(content);
-    if(currentTab === "themes") return renderThemes(content);
-    if(currentTab === "pages") return renderPages(content);
-    if(currentTab === "prefs") return renderPrefs(content);
-    if(currentTab === "website") return renderWebsite(content);
+    if (editing) return renderForm(content);
+    if (currentTab === "themes") return renderThemes(content);
+    if (currentTab === "pages") return renderPages(content);
+    if (currentTab === "prefs") return renderPrefs(content);
+    if (currentTab === "website") return renderWebsite(content);
     renderList(content);
   }
 
-  function renderList(content){
+  function renderList(content) {
     const data = getCloudData();
     const list = data[currentTab] || [];
     content.innerHTML = `
       <button class="btn btn-primary ad-list-btn" data-add><i class="fa-solid fa-plus"></i> Tambah ${TABS[currentTab]}</button>
       <div class="ad-list">
-        ${list.length ? list.map((it,i) => `
+        ${list.length ? list.map((it, i) => `
           <div class="ad-item">
             <div class="ad-item-info">
               <b>${esc(it.name || it.label || it.id || "-")}</b>
@@ -207,16 +207,16 @@
       const i = Number(b.dataset.del);
       const it = getCloudData()[currentTab][i];
       const name = it?.name || it?.label || it?.id || "item";
-      if(!confirm(`Hapus "${name}"?`)) return;
+      if (!confirm(`Hapus "${name}"?`)) return;
       getCloudData()[currentTab].splice(i, 1);
       await persistCloud();
       refreshMain();
       render();
-      toast("Dihapus.","success");
+      toast("Dihapus.", "success");
     });
   }
 
-  function renderForm(content){
+  function renderForm(content) {
     const data = getCloudData();
     const fields = FIELDS[currentTab] || [];
     const isNew = editing.idx < 0;
@@ -230,10 +230,10 @@
     content.innerHTML = `
       <div class="ad-label">${isNew ? "Tambah" : "Edit"} ${TABS[currentTab]}</div>
       ${fields.map(f => {
-        const v = item[f.k] ?? "";
+      const v = item[f.k] ?? "";
 
-        if(isImageField(f.k) && f.t !== "textarea"){
-          return `
+      if (isImageField(f.k) && f.t !== "textarea") {
+        return `
             <div class="ad-field">
               <label>${esc(f.l)}</label>
               <div class="ad-img-input">
@@ -247,12 +247,12 @@
                 <img src="${esc(v)}" alt="Preview" onerror="this.parentElement.style.display='none'">
               </div>
             </div>`;
-        }
+      }
 
-        if(f.t === "textarea") return `<div class="ad-field"><label>${esc(f.l)}</label><textarea data-f="${f.k}" rows="3">${esc(v)}</textarea></div>`;
-        if(f.t === "select") return `<div class="ad-field"><label>${esc(f.l)}</label><select data-f="${f.k}">${f.o.map(o => `<option value="${esc(o)}" ${String(o)==String(v)?"selected":""}>${esc(o)}</option>`).join("")}</select></div>`;
-        return `<div class="ad-field"><label>${esc(f.l)}</label><input type="text" data-f="${f.k}" value="${esc(v)}"></div>`;
-      }).join("")}
+      if (f.t === "textarea") return `<div class="ad-field"><label>${esc(f.l)}</label><textarea data-f="${f.k}" rows="3">${esc(v)}</textarea></div>`;
+      if (f.t === "select") return `<div class="ad-field"><label>${esc(f.l)}</label><select data-f="${f.k}">${f.o.map(o => `<option value="${esc(o)}" ${String(o) == String(v) ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></div>`;
+      return `<div class="ad-field"><label>${esc(f.l)}</label><input type="text" data-f="${f.k}" value="${esc(v)}"></div>`;
+    }).join("")}
       <div class="ad-form-actions">
         <button class="btn btn-ghost" data-cancel style="flex:1">Batal</button>
         <button class="btn btn-primary" data-save style="flex:2"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
@@ -262,17 +262,17 @@
       btn.onclick = () => {
         const fieldName = btn.dataset.upload;
         const fileInput = content.querySelector(`[data-file="${fieldName}"]`);
-        if(fileInput) fileInput.click();
+        if (fileInput) fileInput.click();
       };
     });
 
     content.querySelectorAll("[data-file]").forEach(input => {
       input.onchange = (e) => {
         const file = e.target.files?.[0];
-        if(!file) return;
+        if (!file) return;
 
-        if(file.size > 2 * 1024 * 1024){
-          toast("Gambar max 2MB. Kompres dulu.","error");
+        if (file.size > 2 * 1024 * 1024) {
+          toast("Gambar max 2MB. Kompres dulu.", "error");
           return;
         }
 
@@ -283,28 +283,28 @@
           const textInput = content.querySelector(`[data-f="${fieldName}"]`);
           const preview = content.querySelector(`[data-preview="${fieldName}"]`);
 
-          if(textInput) textInput.value = base64;
-          if(preview){
+          if (textInput) textInput.value = base64;
+          if (preview) {
             preview.style.display = "block";
             const img = preview.querySelector("img");
-            if(img) img.src = base64;
+            if (img) img.src = base64;
           }
-          toast("Gambar ke-load.","success");
+          toast("Gambar ke-load.", "success");
         };
         reader.readAsDataURL(file);
       };
     });
 
     content.querySelectorAll("input[data-f]").forEach(input => {
-      if(!isImageField(input.dataset.f)) return;
+      if (!isImageField(input.dataset.f)) return;
       input.oninput = () => {
         const val = input.value.trim();
         const preview = content.querySelector(`[data-preview="${input.dataset.f}"]`);
-        if(preview){
-          if(val && (val.startsWith("http") || val.startsWith("data:"))){
+        if (preview) {
+          if (val && (val.startsWith("http") || val.startsWith("data:"))) {
             preview.style.display = "block";
             const img = preview.querySelector("img");
-            if(img) img.src = val;
+            if (img) img.src = val;
           } else {
             preview.style.display = "none";
           }
@@ -318,36 +318,36 @@
       fields.forEach(f => {
         const el = content.querySelector(`[data-f="${f.k}"]`);
         let val = el ? el.value.trim() : "";
-        if(f.k === "adminOnly") val = val === "true";
+        if (f.k === "adminOnly") val = val === "true";
         obj[f.k] = val;
       });
-      if(!obj.name && !obj.label && !obj.id){ toast("Field wajib belum diisi.","error"); return; }
+      if (!obj.name && !obj.label && !obj.id) { toast("Field wajib belum diisi.", "error"); return; }
 
-      if(isNew) getCloudData()[currentTab].push(obj);
+      if (isNew) getCloudData()[currentTab].push(obj);
       else getCloudData()[currentTab][editing.idx] = obj;
 
       const ok = await saveBtn(e.target.closest("button"), '<i class="fa-solid fa-floppy-disk"></i> Simpan');
-      if(ok){ editing = null; refreshMain(); }
+      if (ok) { editing = null; refreshMain(); }
     };
   }
 
-  function renderThemes(content){
+  function renderThemes(content) {
     const themes = getCloudData().themes;
     const active = themes.active || "t1";
     content.innerHTML = `
       <div class="ad-label">Tema Default Aktif</div>
       <div class="ad-mode">
-        ${["t1","t2"].map(k => `<button class="btn ${active===k?'btn-primary':'btn-ghost'}" data-default="${k}"><i class="fa-solid fa-palette"></i> ${esc(themes[k].name)}</button>`).join("")}
+        ${["t1", "t2"].map(k => `<button class="btn ${active === k ? 'btn-primary' : 'btn-ghost'}" data-default="${k}"><i class="fa-solid fa-palette"></i> ${esc(themes[k].name)}</button>`).join("")}
       </div>
-      ${["t1","t2"].map(k => themeCard(k, themes[k])).join("")}`;
+      ${["t1", "t2"].map(k => themeCard(k, themes[k])).join("")}`;
 
     content.querySelectorAll("[data-default]").forEach(b => b.onclick = async () => {
       getCloudData().themes.active = b.dataset.default;
       const ok = await persistCloud();
-      if(ok){ toast("Default updated.","success"); render(); }
+      if (ok) { toast("Default updated.", "success"); render(); }
     });
 
-    ["t1","t2"].forEach(k => {
+    ["t1", "t2"].forEach(k => {
       content.querySelector(`[data-th-save="${k}"]`).onclick = async (e) => {
         const t = getCloudData().themes[k];
         const get = (suffix) => content.querySelector(`[data-th="${k}-${suffix}"]`).value.trim();
@@ -358,12 +358,13 @@
         t.bgOpacity = parseFloat(get("opacity")) || 0.15;
         t.banner = { title: get("btitle"), desc: get("bdesc"), image: get("bimg") };
         const ok = await saveBtn(e.target.closest("button"), '<i class="fa-solid fa-floppy-disk"></i> Simpan');
-        if(ok && window.applyTheme) window.applyTheme(k);
+        if (ok && window.applyTheme) window.applyTheme(k);
       };
+      bindThemeUpload(content, k);
     });
   }
 
-  function themeCard(k, t){
+  function themeCard(k, t) {
     return `
       <div class="ad-theme-card">
         <div class="ad-theme-head">
@@ -380,87 +381,84 @@
         <div class="ad-field">
           <label>Background URL</label>
           <div class="ad-img-input">
-            <input type="text" data-th="${k}-bg" value="${esc(t.bgImage||"")}" placeholder="Paste URL atau upload...">
+            <input type="text" data-th="${k}-bg" value="${esc(t.bgImage || "")}" placeholder="Paste URL atau upload...">
             <button type="button" class="ad-img-btn" data-th-upload="${k}"><i class="fa-solid fa-image"></i></button>
           </div>
           <input type="file" accept="image/*" data-th-file="${k}" style="display:none">
           <div class="ad-img-preview" data-th-preview="${k}" style="display:${t.bgImage ? 'block' : 'none'};margin-top:8px">
-            <img src="${esc(t.bgImage||"")}" onerror="this.parentElement.style.display='none'">
+            <img src="${esc(t.bgImage || "")}" onerror="this.parentElement.style.display='none'">
           </div>
         </div>
-        <div class="ad-field"><label>BG Opacity (0-1)</label><input type="number" step="0.05" min="0" max="1" data-th="${k}-opacity" value="${t.bgOpacity||0.15}"></div>
+        <div class="ad-field"><label>BG Opacity (0-1)</label><input type="number" step="0.05" min="0" max="1" data-th="${k}-opacity" value="${t.bgOpacity || 0.15}"></div>
         <div class="ad-label" style="margin-top:10px">Banner</div>
-        <div class="ad-field"><label>Judul</label><input data-th="${k}-btitle" value="${esc(t.banner?.title||"")}"></div>
-        <div class="ad-field"><label>Deskripsi</label><input data-th="${k}-bdesc" value="${esc(t.banner?.desc||"")}"></div>
+        <div class="ad-field"><label>Judul</label><input data-th="${k}-btitle" value="${esc(t.banner?.title || "")}"></div>
+        <div class="ad-field"><label>Deskripsi</label><input data-th="${k}-bdesc" value="${esc(t.banner?.desc || "")}"></div>
         <div class="ad-field">
           <label>URL Gambar Banner</label>
           <div class="ad-img-input">
-            <input type="text" data-th="${k}-bimg" value="${esc(t.banner?.image||"")}" placeholder="Paste URL atau upload...">
+            <input type="text" data-th="${k}-bimg" value="${esc(t.banner?.image || "")}" placeholder="Paste URL atau upload...">
             <button type="button" class="ad-img-btn" data-th-upload-banner="${k}"><i class="fa-solid fa-image"></i></button>
           </div>
           <input type="file" accept="image/*" data-th-file-banner="${k}" style="display:none">
           <div class="ad-img-preview" data-th-preview-banner="${k}" style="display:${t.banner?.image ? 'block' : 'none'};margin-top:8px">
-            <img src="${esc(t.banner?.image||"")}" onerror="this.parentElement.style.display='none'">
+            <img src="${esc(t.banner?.image || "")}" onerror="this.parentElement.style.display='none'">
           </div>
         </div>
         <button class="btn btn-primary btn-block" data-th-save="${k}"><i class="fa-solid fa-floppy-disk"></i> Simpan Tema</button>
       </div>`;
   }
 
-  // Bind upload untuk themes
-  function bindThemeUpload(content, k){
-    // BG upload
+  function bindThemeUpload(content, k) {
     const bgBtn = content.querySelector(`[data-th-upload="${k}"]`);
     const bgFile = content.querySelector(`[data-th-file="${k}"]`);
-    if(bgBtn && bgFile){
+    if (bgBtn && bgFile) {
       bgBtn.onclick = () => bgFile.click();
       bgFile.onchange = (e) => {
         const file = e.target.files?.[0];
-        if(!file) return;
-        if(file.size > 2 * 1024 * 1024){ toast("Max 2MB.","error"); return; }
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) { toast("Max 2MB.", "error"); return; }
         const reader = new FileReader();
         reader.onload = (ev) => {
           const b64 = ev.target.result;
           content.querySelector(`[data-th="${k}-bg"]`).value = b64;
           const prev = content.querySelector(`[data-th-preview="${k}"]`);
-          if(prev){ prev.style.display = "block"; prev.querySelector("img").src = b64; }
-          toast("BG ke-load.","success");
+          if (prev) { prev.style.display = "block"; prev.querySelector("img").src = b64; }
+          toast("BG ke-load.", "success");
         };
         reader.readAsDataURL(file);
       };
     }
 
-    // Banner upload
     const bBtn = content.querySelector(`[data-th-upload-banner="${k}"]`);
     const bFile = content.querySelector(`[data-th-file-banner="${k}"]`);
-    if(bBtn && bFile){
+    if (bBtn && bFile) {
       bBtn.onclick = () => bFile.click();
       bFile.onchange = (e) => {
         const file = e.target.files?.[0];
-        if(!file) return;
-        if(file.size > 2 * 1024 * 1024){ toast("Max 2MB.","error"); return; }
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) { toast("Max 2MB.", "error"); return; }
         const reader = new FileReader();
         reader.onload = (ev) => {
           const b64 = ev.target.result;
           content.querySelector(`[data-th="${k}-bimg"]`).value = b64;
           const prev = content.querySelector(`[data-th-preview-banner="${k}"]`);
-          if(prev){ prev.style.display = "block"; prev.querySelector("img").src = b64; }
-          toast("Banner ke-load.","success");
+          if (prev) { prev.style.display = "block"; prev.querySelector("img").src = b64; }
+          toast("Banner ke-load.", "success");
         };
         reader.readAsDataURL(file);
       };
     }
   }
 
-  function renderPages(content){
+  function renderPages(content) {
     const pages = getCloudData().pages || {};
     const ids = Object.keys(pages);
     content.innerHTML = `
       <button class="btn btn-primary ad-list-btn" data-add-page><i class="fa-solid fa-plus"></i> Tambah Page</button>
       <div class="ad-list">
         ${ids.length ? ids.map(id => {
-          const p = pages[id];
-          return `<div class="ad-item">
+      const p = pages[id];
+      return `<div class="ad-item">
             <div class="ad-item-info">
               <b>${esc(p.title || id)}</b>
               <small>${esc(id)} · ${p.custom ? "CUSTOM" : "BUILTIN"}</small>
@@ -470,13 +468,13 @@
               ${p.custom ? `<button class="del" data-del-page="${esc(id)}"><i class="fa-solid fa-trash"></i></button>` : ''}
             </div>
           </div>`;
-        }).join("") : '<div class="ad-empty">Belum ada page</div>'}
+    }).join("") : '<div class="ad-empty">Belum ada page</div>'}
       </div>`;
 
     content.querySelector("[data-add-page]").onclick = () => {
       const id = prompt("ID page (lowercase, contoh: galeri):");
-      if(!id || !/^[a-z0-9_-]+$/.test(id)){ toast("ID harus lowercase.","error"); return; }
-      if(getCloudData().pages[id]){ toast("ID udah dipakai.","error"); return; }
+      if (!id || !/^[a-z0-9_-]+$/.test(id)) { toast("ID harus lowercase.", "error"); return; }
+      if (getCloudData().pages[id]) { toast("ID udah dipakai.", "error"); return; }
       getCloudData().pages[id] = { title: id, subtitle: "", custom: true, html: "<p>Edit HTML di sini...</p>" };
       persistCloud().then(() => render());
     };
@@ -487,10 +485,10 @@
       content.innerHTML = `
         <div class="ad-label">Edit Page: ${esc(id)}</div>
         <div class="ad-field"><label>ID</label><input data-pf="id" value="${esc(id)}"></div>
-        <div class="ad-field"><label>Judul</label><input data-pf="title" value="${esc(p.title||"")}"></div>
-        <div class="ad-field"><label>Subjudul</label><input data-pf="subtitle" value="${esc(p.subtitle||"")}"></div>
-        <div class="ad-field"><label>Custom HTML?</label><select data-pf="custom"><option value="true" ${p.custom?"selected":""}>true</option><option value="false" ${!p.custom?"selected":""}>false</option></select></div>
-        <div class="ad-field"><label>HTML Content</label><textarea data-pf="html" rows="8">${esc(p.html||"")}</textarea></div>
+        <div class="ad-field"><label>Judul</label><input data-pf="title" value="${esc(p.title || "")}"></div>
+        <div class="ad-field"><label>Subjudul</label><input data-pf="subtitle" value="${esc(p.subtitle || "")}"></div>
+        <div class="ad-field"><label>Custom HTML?</label><select data-pf="custom"><option value="true" ${p.custom ? "selected" : ""}>true</option><option value="false" ${!p.custom ? "selected" : ""}>false</option></select></div>
+        <div class="ad-field"><label>HTML Content</label><textarea data-pf="html" rows="8">${esc(p.html || "")}</textarea></div>
         <div class="ad-form-actions">
           <button class="btn btn-ghost" data-cancel style="flex:1">Batal</button>
           <button class="btn btn-primary" data-save-page style="flex:2"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
@@ -504,23 +502,23 @@
           custom: content.querySelector("[data-pf='custom']").value === "true",
           html: content.querySelector("[data-pf='html']").value
         };
-        if(newId !== id) delete getCloudData().pages[id];
+        if (newId !== id) delete getCloudData().pages[id];
         getCloudData().pages[newId] = data;
         const ok = await saveBtn(e.target.closest("button"), '<i class="fa-solid fa-floppy-disk"></i> Simpan');
-        if(ok) render();
+        if (ok) render();
       };
     });
 
     content.querySelectorAll("[data-del-page]").forEach(b => b.onclick = async () => {
       const id = b.dataset.delPage;
-      if(!confirm(`Hapus page "${id}"?`)) return;
+      if (!confirm(`Hapus page "${id}"?`)) return;
       delete getCloudData().pages[id];
       await persistCloud();
       render();
     });
   }
 
-  function renderPrefs(content){
+  function renderPrefs(content) {
     const p = getCloudData().preferences;
     const d = p.developer;
     content.innerHTML = `
@@ -528,7 +526,7 @@
       <div class="ad-field"><label>App Subtitle</label><input data-p="appSubtitle" value="${esc(p.appSubtitle)}"></div>
       <div class="ad-field"><label>Hero Badge</label><input data-p="heroBadge" value="${esc(p.heroBadge)}"></div>
       <div class="ad-field"><label>Hero Subtitle</label><input data-p="heroSubtitle" value="${esc(p.heroSubtitle)}"></div>
-      <div class="ad-field"><label>Hero Rotate (pisah dengan |)</label><textarea data-p="heroRotate" rows="3">${esc((p.heroRotate||[]).join(" | "))}</textarea></div>
+      <div class="ad-field"><label>Hero Rotate (pisah dengan |)</label><textarea data-p="heroRotate" rows="3">${esc((p.heroRotate || []).join(" | "))}</textarea></div>
       <div class="ad-field"><label>Developer Name</label><input data-p="devName" value="${esc(d.name)}"></div>
       <div class="ad-field"><label>Username</label><input data-p="devUser" value="${esc(d.username)}"></div>
       <div class="ad-field"><label>Role</label><input data-p="devRole" value="${esc(d.role)}"></div>
@@ -543,23 +541,22 @@
       <div class="ad-field"><label>Description</label><textarea data-p="devDesc" rows="3">${esc(d.description)}</textarea></div>
       <div class="ad-field"><label>WhatsApp URL</label><input data-p="wa" value="${esc(p.contact.whatsapp)}"></div>
       <div class="ad-field"><label>Channel URL</label><input data-p="channel" value="${esc(p.contact.channel)}"></div>
-      <div class="ad-field"><label>Daily Limit Lapor</label><input type="number" data-p="dailyLimit" value="${p.dailyLimit||5}"></div>
-      <div class="ad-field"><label>Discord Webhook URL</label><input data-p="webhook" value="${esc(p.webhookSaran||"")}"></div>
+      <div class="ad-field"><label>Daily Limit Lapor</label><input type="number" data-p="dailyLimit" value="${p.dailyLimit || 5}"></div>
+      <div class="ad-field"><label>Discord Webhook URL</label><input data-p="webhook" value="${esc(p.webhookSaran || "")}"></div>
       <button class="btn btn-primary btn-block" data-save-prefs><i class="fa-solid fa-floppy-disk"></i> Simpan</button>`;
 
-    // Upload avatar
     const upBtn = content.querySelector("[data-p-upload='devProfile']");
     const upFile = content.querySelector("[data-p-file='devProfile']");
-    if(upBtn && upFile){
+    if (upBtn && upFile) {
       upBtn.onclick = () => upFile.click();
       upFile.onchange = (e) => {
         const file = e.target.files?.[0];
-        if(!file) return;
-        if(file.size > 2 * 1024 * 1024){ toast("Max 2MB.","error"); return; }
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) { toast("Max 2MB.", "error"); return; }
         const reader = new FileReader();
         reader.onload = (ev) => {
           content.querySelector("[data-p='devProfile']").value = ev.target.result;
-          toast("Avatar ke-load.","success");
+          toast("Avatar ke-load.", "success");
         };
         reader.readAsDataURL(file);
       };
@@ -582,11 +579,11 @@
       p.dailyLimit = parseInt(g("dailyLimit")) || 5;
       p.webhookSaran = g("webhook");
       const ok = await saveBtn(e.target.closest("button"), '<i class="fa-solid fa-floppy-disk"></i> Simpan');
-      if(ok && window.renderPreferences) window.renderPreferences();
+      if (ok && window.renderPreferences) window.renderPreferences();
     };
   }
 
-  function renderWebsite(content){
+  function renderWebsite(content) {
     const site = getCloudData().site || {};
     const mode = (site.mode || "open").toLowerCase();
     const info = {
@@ -602,19 +599,19 @@
       <p style="font-size:11.5px;color:var(--muted);margin-bottom:14px">${esc(info.desc)}</p>
       <div class="ad-label">Mode Website</div>
       <div class="ad-mode">
-        <button class="btn ${mode==='open'?'btn-primary':'btn-ghost'}" data-mode="open"><i class="fa-solid fa-circle-check"></i> Open</button>
-        <button class="btn ${mode==='maintenance'?'btn-wa':'btn-ghost'}" data-mode="maintenance"><i class="fa-solid fa-screwdriver-wrench"></i> Maint</button>
-        <button class="btn ${mode==='update'?'btn-primary':'btn-ghost'}" data-mode="update"><i class="fa-solid fa-rocket"></i> Update</button>
+        <button class="btn ${mode === 'open' ? 'btn-primary' : 'btn-ghost'}" data-mode="open"><i class="fa-solid fa-circle-check"></i> Open</button>
+        <button class="btn ${mode === 'maintenance' ? 'btn-wa' : 'btn-ghost'}" data-mode="maintenance"><i class="fa-solid fa-screwdriver-wrench"></i> Maint</button>
+        <button class="btn ${mode === 'update' ? 'btn-primary' : 'btn-ghost'}" data-mode="update"><i class="fa-solid fa-rocket"></i> Update</button>
       </div>
-      <div class="ad-field"><label>Pesan Maintenance</label><textarea data-w="msg" rows="3">${esc(site.maintenanceMessage||"")}</textarea></div>
-      <div class="ad-field"><label>Estimasi</label><input data-w="eta" value="${esc(site.maintenanceEta||"")}" placeholder="30 menit"></div>
+      <div class="ad-field"><label>Pesan Maintenance</label><textarea data-w="msg" rows="3">${esc(site.maintenanceMessage || "")}</textarea></div>
+      <div class="ad-field"><label>Estimasi</label><input data-w="eta" value="${esc(site.maintenanceEta || "")}" placeholder="30 menit"></div>
       <button class="btn btn-primary btn-block" data-save-site><i class="fa-solid fa-floppy-disk"></i> Simpan</button>`;
 
     content.querySelectorAll("[data-mode]").forEach(b => b.onclick = async () => {
       getCloudData().site.mode = b.dataset.mode;
       await persistCloud();
-      if(window.checkMaintenance) window.checkMaintenance();
-      if(window.checkChangelog) window.checkChangelog();
+      if (window.checkMaintenance) window.checkMaintenance();
+      if (window.checkChangelog) window.checkChangelog();
       toast("Mode: " + b.dataset.mode.toUpperCase(), "success");
       render();
     });
@@ -623,51 +620,41 @@
       getCloudData().site.maintenanceMessage = content.querySelector("[data-w='msg']").value.trim() || "Website lagi diperbaiki.";
       getCloudData().site.maintenanceEta = content.querySelector("[data-w='eta']").value.trim();
       await saveBtn(e.target.closest("button"), '<i class="fa-solid fa-floppy-disk"></i> Simpan');
-      if(window.checkMaintenance) window.checkMaintenance();
+      if (window.checkMaintenance) window.checkMaintenance();
     };
   }
 
-  function refreshMain(){
-    if(window.refreshAll) window.refreshAll();
-    if(window.applyAdminMode) window.applyAdminMode();
+  function refreshMain() {
+    if (window.refreshAll) window.refreshAll();
+    if (window.applyAdminMode) window.applyAdminMode();
   }
-
-  // Override save button untuk themes — pakai binding manual
-  const originalRender = render;
-  render = function(){
-    originalRender();
-    if(currentTab === "themes" && !editing){
-      const content = $("#adContent");
-      ["t1","t2"].forEach(k => bindThemeUpload(content, k));
-    }
-  };
 
   document.querySelector("[data-ad-act='close']").onclick = closeAdminPanel;
   document.querySelector("[data-ad-act='logout']").onclick = async () => {
-    if(!confirm("Logout admin?")) return;
+    if (!confirm("Logout admin?")) return;
     const data = getCloudData();
-    if(data?.admin){
+    if (data?.admin) {
       data.admin.claimed = false;
       data.admin.ownerId = null;
       data.admin.claimedAt = null;
       await persistCloud();
     }
-    try{ localStorage.removeItem("msi_session"); }catch(e){}
-    try{ sessionStorage.removeItem("msi_session"); }catch(e){}
-    if(window.applyAdminMode) window.applyAdminMode();
+    try { localStorage.removeItem("msi_session"); } catch (e) { }
+    try { sessionStorage.removeItem("msi_session"); } catch (e) { }
+    if (window.applyAdminMode) window.applyAdminMode();
     closeAdminPanel();
-    toast("Logout.","success");
+    toast("Logout.", "success");
   };
   document.querySelector("[data-ad-act='sync']").onclick = async () => {
     const d = await cloudLoad();
-    if(!d){ toast("Gagal sync.","error"); return; }
+    if (!d) { toast("Gagal sync.", "error"); return; }
     setCloudData(ensureStructure(d));
     refreshMain();
     render();
-    toast("Synced.","success");
+    toast("Synced.", "success");
   };
   document.querySelector("[data-ad-act='export']").onclick = () => {
-    const blob = new Blob([JSON.stringify(getCloudData(), null, 2)], { type:"application/json" });
+    const blob = new Blob([JSON.stringify(getCloudData(), null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "msi-astra-data.json";
