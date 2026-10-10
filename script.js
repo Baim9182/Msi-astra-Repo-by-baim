@@ -645,32 +645,48 @@ function checkChangelog(){
 /* ==========================================================
    ADMIN AUTH — SINGLE DEVICE
    ========================================================== */
+/* ============ SESSION — PERSISTENT ============ */
+function setSession(){
+  const data = {
+    deviceId: DEVICE_ID,
+    exp: Date.now() + (30 * 86400000)
+  };
+  try{ localStorage.setItem(SESSION_KEY, JSON.stringify(data)); }catch(e){}
+  try{ sessionStorage.setItem(SESSION_KEY, JSON.stringify(data)); }catch(e){}
+}
+
+function getSessionData(){
+  let s = null;
+  try{ s = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); }catch(e){}
+  if(!s){
+    try{ s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null"); }catch(e){}
+  }
+  return s;
+}
+
 function checkIsAdmin(){
   const a = CLOUD_DATA?.admin || {};
   try{
-    const s = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
-    if(!s || s.deviceId !== DEVICE_ID || Date.now() >= s.exp){ IS_ADMIN = false; return false; }
+    const s = getSessionData();
+    if(!s || s.deviceId !== DEVICE_ID || Date.now() >= s.exp){ 
+      IS_ADMIN = false; 
+      return false; 
+    }
     if(!a.claimed || !a.ownerId || a.ownerId !== DEVICE_ID){
-      try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
       IS_ADMIN = false;
       return false;
     }
     IS_ADMIN = true;
     return true;
-  }catch(e){ IS_ADMIN = false; return false; }
-}
-
-function setSession(){
-  try{
-    localStorage.setItem(SESSION_KEY, JSON.stringify({
-      deviceId: DEVICE_ID,
-      exp: Date.now() + (7 * 86400000)
-    }));
-  }catch(e){}
+  }catch(e){ 
+    IS_ADMIN = false; 
+    return false; 
+  }
 }
 
 function clearSession(){
   try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+  try{ sessionStorage.removeItem(SESSION_KEY); }catch(e){}
 }
 
 async function performAdminLogin(key){
@@ -806,13 +822,24 @@ function openThemePanel(){
    ADMIN PANEL
    ========================================================== */
 async function openAdminPanel(){
-  if(!IS_ADMIN){ toast("Akses ditolak.","error"); return; }
+  if(!IS_ADMIN){ 
+    await cloudLoad().then(d => {
+      if(d){ CLOUD_DATA = ensureStructure(d); checkIsAdmin(); }
+    });
+  }
+
+  if(!IS_ADMIN){ 
+    toast("Akses ditolak. Login ulang ya.","error"); 
+    openAdminLogin();
+    return; 
+  }
 
   const fresh = await cloudLoad();
   if(fresh) CLOUD_DATA = ensureStructure(fresh);
 
-  if(!checkIsAdmin()){
-    toast("Session admin udah gak valid.","error");
+  const stillAdmin = checkIsAdmin();
+  if(!stillAdmin){
+    toast("Session expired. Login ulang.","error");
     applyAdminMode();
     openAdminLogin();
     return;
@@ -827,10 +854,6 @@ async function openAdminPanel(){
   const html = await loadFragment("admin");
   box.innerHTML = html;
   executeScripts(box);
-}
-
-function closeAdminPanel(){
-  $("#adminPanelModal").classList.remove("show");
 }
 
 /* ==========================================================
