@@ -631,14 +631,13 @@
 
   document.querySelector("[data-ad-act='close']").onclick = closeAdminPanel;
   document.querySelector("[data-ad-act='logout']").onclick = async () => {
-    if (!confirm("Logout admin?")) return;
-    const data = getCloudData();
-    if (data?.admin) {
-      data.admin.claimed = false;
-      data.admin.ownerId = null;
-      data.admin.claimedAt = null;
-      await persistCloud();
-    }
+  if (!confirm("Logout admin?")) return;
+  // Cukup clear session lokal. Cloud gak perlu diubah.
+  if (window.clearSession) window.clearSession();
+  if (window.applyAdminMode) window.applyAdminMode();
+  closeAdminPanel();
+  toast("Logout.", "success");
+};
     try { localStorage.removeItem("msi_session"); } catch (e) { }
     try { sessionStorage.removeItem("msi_session"); } catch (e) { }
     if (window.applyAdminMode) window.applyAdminMode();
