@@ -629,21 +629,33 @@
     if (window.applyAdminMode) window.applyAdminMode();
   }
 
+  /* ==========================================================
+     HEADER ACTIONS (close, logout, sync, export)
+     ========================================================== */
   document.querySelector("[data-ad-act='close']").onclick = closeAdminPanel;
+
   document.querySelector("[data-ad-act='logout']").onclick = async () => {
-  if (!confirm("Logout admin?")) return;
-  // Cukup clear session lokal. Cloud gak perlu diubah.
-  if (window.clearSession) window.clearSession();
-  if (window.applyAdminMode) window.applyAdminMode();
-  closeAdminPanel();
-  toast("Logout.", "success");
-};
-    try { localStorage.removeItem("msi_session"); } catch (e) { }
-    try { sessionStorage.removeItem("msi_session"); } catch (e) { }
+    if (!confirm("Logout admin?\n\nSetelah logout, lo harus login ulang pakai username & password.")) return;
+
+    // 1. Clear session (localStorage + sessionStorage) & set IS_ADMIN = false
+    if (window.clearSession) window.clearSession();
+
+    // 2. Reset field admin di cloud biar bersih (opsional, gak ngefek ke auth)
+    const data = getCloudData();
+    if (data?.admin) {
+      data.admin.claimed = false;
+      data.admin.ownerId = null;
+      data.admin.claimedAt = null;
+      await persistCloud();
+    }
+
+    // 3. Update UI (hide tombol admin)
     if (window.applyAdminMode) window.applyAdminMode();
+
     closeAdminPanel();
-    toast("Logout.", "success");
+    toast("Logout berhasil.", "success");
   };
+
   document.querySelector("[data-ad-act='sync']").onclick = async () => {
     const d = await cloudLoad();
     if (!d) { toast("Gagal sync.", "error"); return; }
@@ -652,6 +664,7 @@
     render();
     toast("Synced.", "success");
   };
+
   document.querySelector("[data-ad-act='export']").onclick = () => {
     const blob = new Blob([JSON.stringify(getCloudData(), null, 2)], { type: "application/json" });
     const a = document.createElement("a");
