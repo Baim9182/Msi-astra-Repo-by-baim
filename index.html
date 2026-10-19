@@ -174,14 +174,18 @@
   <div class="modal-box" style="max-width:400px">
     <button class="modal-close" id="adminLoginClose"><i class="fa-solid fa-xmark"></i></button>
     <div style="text-align:center;padding:8px 0 20px">
-      <div class="admin-icon"><i class="fa-solid fa-lock"></i></div>
+      <div class="admin-icon"><i class="fa-solid fa-user-shield"></i></div>
       <div class="modal-title" style="margin-top:16px;font-size:17px">Admin Access</div>
       <p style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5">
-        Masukkan admin key. Key cuma bisa dipakai <b style="color:var(--primary)">1x</b> di satu device.
+        Masuk pakai <b style="color:var(--primary)">username</b> & <b style="color:var(--primary)">password</b> admin.
       </p>
     </div>
     <div class="field">
-      <label><i class="fa-solid fa-key"></i> Admin Key</label>
+      <label><i class="fa-solid fa-user"></i> Username</label>
+      <input type="text" id="adminUsernameInput" placeholder="username" autocomplete="username" autocapitalize="none" spellcheck="false">
+    </div>
+    <div class="field" style="margin-top:10px">
+      <label><i class="fa-solid fa-key"></i> Password</label>
       <input type="password" id="adminKeyInput" placeholder="••••••••" autocomplete="current-password">
     </div>
     <p id="adminLoginErr" class="err-msg" style="display:none"></p>
