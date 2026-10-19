@@ -4,7 +4,7 @@
    ========================================================== */
 
 const CONFIG = {
-  api: { baseUrl: "https://admin.muhammadbaimab.workers.dev" },
+  api: { baseUrl: "https://msi-astra-worker.muhammadbaimab.workers.dev/" },
   admin: { username: "wthf_b6", password: "4_rXEgVV5!_t8cq" }
 };
 
