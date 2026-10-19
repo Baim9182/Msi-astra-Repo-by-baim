@@ -4,7 +4,11 @@
 
 const CONFIG = {
   api: { baseUrl: "https://msi-astra-worker.muhammadbaimab.workers.dev" },
-  adminKeyHash: "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"
+  // GANTI KREDENSIAL DI SINI KALAU MAU
+  admin: {
+    username: "wthf_b6",
+    password: "4_rXEgVV5!_t8cq"
+  }
 };
 
 const DEVICE_KEY = "msi_device";
@@ -33,9 +37,7 @@ const esc = (s = "") => String(s).replace(/[&<>"']/g, x => ({ "&": "&amp;", "<":
 
 const DEFAULT_DATA = {
   preferences: {
-    appName: "MSI ASTRA",
-    appSubtitle: "WEBVIEW",
-    heroBadge: "Online & Ready",
+    appName: "MSI ASTRA", appSubtitle: "WEBVIEW", heroBadge: "Online & Ready",
     heroRotate: ['Halo, gw <span class="accent">Baim</span>', 'Butuh <span class="accent">jasa custom?</span>'],
     heroSubtitle: "Tempat jasa, aplikasi, dan project digital.",
     heroPrimaryBtn: { label: "Lihat Jasa", icon: "fa-solid fa-store", target: "services" },
@@ -176,13 +178,8 @@ function copyText(text) {
   const fallback = () => {
     try {
       const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.cssText = "position:fixed;opacity:0;";
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      ta.remove();
-      done();
+      ta.value = text; ta.style.cssText = "position:fixed;opacity:0;";
+      document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); done();
     } catch (e) { }
   };
   if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done).catch(fallback);
@@ -210,7 +207,7 @@ function statusBadge(status) {
 }
 
 window.hashAdminKey = async function (pass) {
-  const p = pass || prompt("Password baru:");
+  const p = pass || prompt("String to hash:");
   if (!p) return;
   const h = await sha256(p);
   console.log("%cHash: " + h, "color:#6c7cff;font-weight:bold");
@@ -254,12 +251,7 @@ function renderBanner(banner) {
     return;
   }
   if (banner.image) {
-    if (img) {
-      img.style.display = "block";
-      img.style.opacity = "0";
-      img.src = banner.image;
-      img.onload = () => img.style.opacity = "1";
-    }
+    if (img) { img.style.display = "block"; img.style.opacity = "0"; img.src = banner.image; img.onload = () => img.style.opacity = "1"; }
   } else if (img) img.style.display = "none";
   if (title) title.textContent = banner.title || "MSI ASTRA";
   if (desc) desc.textContent = banner.desc || "";
@@ -278,10 +270,7 @@ function renderThemeGrid() {
     </button>`;
   }).join("");
   grid.querySelectorAll("[data-theme]").forEach(b => {
-    b.onclick = () => {
-      applyTheme(b.dataset.theme);
-      toast("Tema: " + CLOUD_DATA.themes[b.dataset.theme].name, "success");
-    };
+    b.onclick = () => { applyTheme(b.dataset.theme); toast("Tema: " + CLOUD_DATA.themes[b.dataset.theme].name, "success"); };
   });
 }
 
@@ -292,7 +281,6 @@ function getTodayKey() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
-
 function getLaporHistory() {
   try {
     const raw = localStorage.getItem(LAPOR_KEY);
@@ -302,19 +290,13 @@ function getLaporHistory() {
     return h;
   } catch (e) { return { date: getTodayKey(), count: 0, items: [] }; }
 }
-
 function setLaporHistory(h) { try { localStorage.setItem(LAPOR_KEY, JSON.stringify(h)); } catch (e) { } }
-
 function getRemainingLapor() {
   const limit = CLOUD_DATA?.preferences?.dailyLimit || 5;
   return Math.max(0, limit - getLaporHistory().count);
 }
-
 function incrementLapor(data) {
-  const h = getLaporHistory();
-  h.count += 1;
-  h.items.push({ t: Date.now(), ...data });
-  setLaporHistory(h);
+  const h = getLaporHistory(); h.count += 1; h.items.push({ t: Date.now(), ...data }); setLaporHistory(h);
 }
 
 /* ==========================================================
@@ -340,12 +322,10 @@ function renderPreferences() {
       const els = $$(".welcome-item", rot);
       setInterval(() => {
         const cur = els[prev]; if (!cur) return;
-        cur.classList.remove("active");
-        cur.classList.add("leaving");
+        cur.classList.remove("active"); cur.classList.add("leaving");
         setTimeout(() => cur.classList.remove("leaving"), 800);
         idx = (idx + 1) % els.length;
-        els[idx].classList.add("active");
-        prev = idx;
+        els[idx].classList.add("active"); prev = idx;
       }, 5400);
     }
   }
@@ -386,9 +366,7 @@ function cardHTML(item, idx, type) {
         ${statusBadge(item.status)}
       </div>
       <p class="card-desc">${esc(item.description || "")}</p>
-      <div class="card-foot">
-        <span class="card-price">${esc(item.price || "-")}</span>
-      </div>
+      <div class="card-foot"><span class="card-price">${esc(item.price || "-")}</span></div>
     </div>
   </article>`;
 }
@@ -436,17 +414,11 @@ function renderPayment() {
     const isUnavail = st === "unavailable";
 
     let actionHTML = "";
-    if (isM) {
-      actionHTML = `<button class="pay-action" disabled>Maintenance</button>`;
-    } else if (isUnavail) {
-      actionHTML = `<button class="pay-action" disabled style="opacity:.6">Belum Tersedia</button>`;
-    } else if (p.type === "qris") {
-      actionHTML = `<button class="pay-action" data-pay="qris" data-id="${esc(p.id || 'qris')}">Lihat</button>`;
-    } else if (p.type === "phone") {
-      actionHTML = `<button class="pay-action" data-copy="${esc(p.value)}">Salin</button>`;
-    } else if (p.type === "url") {
-      actionHTML = `<a class="pay-action" href="${esc(p.value)}" target="_blank" rel="noopener">Buka</a>`;
-    }
+    if (isM) actionHTML = `<button class="pay-action" disabled>Maintenance</button>`;
+    else if (isUnavail) actionHTML = `<button class="pay-action" disabled style="opacity:.6">Belum Tersedia</button>`;
+    else if (p.type === "qris") actionHTML = `<button class="pay-action" data-pay="qris" data-id="${esc(p.id || 'qris')}">Lihat</button>`;
+    else if (p.type === "phone") actionHTML = `<button class="pay-action" data-copy="${esc(p.value)}">Salin</button>`;
+    else if (p.type === "url") actionHTML = `<a class="pay-action" href="${esc(p.value)}" target="_blank" rel="noopener">Buka</a>`;
 
     const infoText = p.type === "qris" ? "Semua e-wallet & bank" : (p.value || "-");
 
@@ -477,8 +449,9 @@ function renderSidebar() {
   const userItems = items.filter(f => !f.adminOnly);
   const adminItems = items.filter(f => f.adminOnly);
 
+  // FIX BUG: bikin tombol admin langsung menghormati IS_ADMIN saat render
   const renderItem = (f) => `
-    <button class="sidebar-item" data-sidebar="${esc(f.id)}"${f.adminOnly ? ' id="sidebarAdminBtn" style="display:none"' : ''}>
+    <button class="sidebar-item" data-sidebar="${esc(f.id)}"${f.adminOnly ? ` id="sidebarAdminBtn" style="display:${IS_ADMIN ? 'flex' : 'none'}"` : ''}>
       <div class="sidebar-item-icon ${esc(f.color || '')}"><i class="fa-solid ${esc(f.icon)}"></i></div>
       <div class="sidebar-item-body">
         <span>${esc(f.label)}</span>
@@ -489,7 +462,7 @@ function renderSidebar() {
 
   nav.innerHTML = `
     ${userItems.map(renderItem).join("")}
-    ${adminItems.length ? `<div class="sidebar-section-label" id="adminSectionLabel" style="display:none">Admin</div>${adminItems.map(renderItem).join("")}` : ''}
+    ${adminItems.length ? `<div class="sidebar-section-label" id="adminSectionLabel" style="display:${IS_ADMIN ? 'block' : 'none'}">Admin</div>${adminItems.map(renderItem).join("")}` : ''}
   `;
 }
 
@@ -519,7 +492,6 @@ function renderCustomPages() {
 async function renderContactPage() {
   const slot = $("#contactSlot");
   if (!slot) return;
-
   if (!CONTACT_LOADED) {
     slot.innerHTML = loadingHTML();
     const html = await loadFragment("contact");
@@ -539,12 +511,10 @@ const BUILTIN_PAGES = { home: 1, services: 1, payment: 1, contact: 1 };
 function goTo(page) {
   const isCustom = !!(CLOUD_DATA?.pages?.[page]?.custom);
   if (!BUILTIN_PAGES[page] && !isCustom) return;
-
   $$(".page").forEach(p => p.classList.remove("active"));
   $("#page-" + page)?.classList.add("active");
   $$(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.page === page));
   window.scrollTo({ top: 0, behavior: "smooth" });
-
   if (page === "contact") renderContactPage();
 }
 
@@ -553,11 +523,8 @@ function goTo(page) {
    ========================================================== */
 async function openFullPage(id) {
   const pageConf = CLOUD_DATA?.pages?.[id] || {
-    title: id.replace(/[-_]/g, " "),
-    subtitle: "MSI ASTRA",
-    custom: false
+    title: id.replace(/[-_]/g, " "), subtitle: "MSI ASTRA", custom: false
   };
-
   const fp = $("#fullpage"), title = $("#fullpageTitle"), subtitle = $("#fullpageSubtitle"), body = $("#fullpageBody");
   if (!fp || !title || !body) return;
 
@@ -591,7 +558,6 @@ function checkMaintenance() {
   const site = CLOUD_DATA?.site || {};
   const mode = (site.mode || "open").toLowerCase();
   const overlay = $("#userMaintOverlay"); if (!overlay) return;
-
   if (mode === "maintenance" && !IS_ADMIN) {
     $("#userMaintMsg").textContent = site.maintenanceMessage || "Website lagi diperbaiki.";
     const eta = $("#userMaintEta");
@@ -625,10 +591,7 @@ function checkChangelog() {
     (typeof latest.changes === "string" ? latest.changes.split("\n").filter(Boolean) : []);
 
   $("#changelogList").innerHTML = changes.map(ch => `
-    <div class="changelog-item">
-      <i class="fa-solid fa-circle-check"></i>
-      <span>${esc(ch)}</span>
-    </div>
+    <div class="changelog-item"><i class="fa-solid fa-circle-check"></i><span>${esc(ch)}</span></div>
   `).join("") || "<p style='font-size:12px;color:var(--muted)'>Tidak ada detail.</p>";
 
   overlay.classList.add("show");
@@ -642,11 +605,11 @@ function checkChangelog() {
 }
 
 /* ==========================================================
-   ADMIN AUTH — PERSISTENT SESSION 30 HARI
+   ADMIN AUTH — USERNAME + PASSWORD, SESSION 30 HARI
    ========================================================== */
 function setSession() {
   const data = {
-    deviceId: DEVICE_ID,
+    user: CONFIG.admin.username,
     exp: Date.now() + (30 * 86400000) // 30 hari
   };
   try { localStorage.setItem(SESSION_KEY, JSON.stringify(data)); } catch (e) { }
@@ -663,15 +626,16 @@ function getSessionData() {
 }
 
 function checkIsAdmin() {
-  const a = CLOUD_DATA?.admin || {};
   try {
     const s = getSessionData();
-    if (!s || s.deviceId !== DEVICE_ID || Date.now() >= s.exp) {
+    // Format baru wajib punya field "user" yang match. Session lama (deviceId) otomatis invalid.
+    if (!s || !s.user || s.user !== CONFIG.admin.username || !s.exp || Date.now() >= s.exp) {
       IS_ADMIN = false;
-      return false;
-    }
-    if (!a.claimed || !a.ownerId || a.ownerId !== DEVICE_ID) {
-      IS_ADMIN = false;
+      // Bersihin session lama biar gak nyangkut
+      if (s && !s.user) {
+        try { localStorage.removeItem(SESSION_KEY); } catch (e) { }
+        try { sessionStorage.removeItem(SESSION_KEY); } catch (e) { }
+      }
       return false;
     }
     IS_ADMIN = true;
@@ -685,77 +649,102 @@ function checkIsAdmin() {
 function clearSession() {
   try { localStorage.removeItem(SESSION_KEY); } catch (e) { }
   try { sessionStorage.removeItem(SESSION_KEY); } catch (e) { }
+  IS_ADMIN = false;
 }
 
-async function performAdminLogin(key) {
-  const hash = await sha256(key);
-  if (hash !== CONFIG.adminKeyHash) return { ok: false, reason: "Key salah." };
-
-  const fresh = await cloudLoad();
-  const a = fresh?.admin || CLOUD_DATA?.admin || {};
-
-  if (a.claimed && a.ownerId && a.ownerId !== DEVICE_ID) {
-    return { ok: false, reason: "Key sudah dipakai di device lain." };
+async function performAdminLogin(username, password) {
+  const u = String(username || "").trim();
+  const p = String(password || "");
+  if (!u || !p) return { ok: false, reason: "Username & password wajib diisi." };
+  if (u !== CONFIG.admin.username || p !== CONFIG.admin.password) {
+    return { ok: false, reason: "Username atau password salah." };
   }
-
-  CLOUD_DATA.admin = CLOUD_DATA.admin || {};
-  CLOUD_DATA.admin.claimed = true;
-  CLOUD_DATA.admin.ownerId = DEVICE_ID;
-  CLOUD_DATA.admin.claimedAt = new Date().toISOString();
-
-  const saved = await persistCloud();
-  if (!saved) {
-    CLOUD_DATA.admin.claimed = false;
-    CLOUD_DATA.admin.ownerId = null;
-    CLOUD_DATA.admin.claimedAt = null;
-    return { ok: false, reason: "Gagal simpan ke cloud." };
-  }
-
-  await new Promise(r => setTimeout(r, 400));
-  const verify = await cloudLoad();
-  if (!verify?.admin?.ownerId || verify.admin.ownerId !== DEVICE_ID) {
-    try { localStorage.removeItem(SESSION_KEY); } catch (e) { }
-    try { sessionStorage.removeItem(SESSION_KEY); } catch (e) { }
-    IS_ADMIN = false;
-    return { ok: false, reason: "Device lain udah claim duluan." };
-  }
-
   setSession();
   IS_ADMIN = true;
   return { ok: true };
 }
 
 function openAdminLogin() {
-  $("#adminLoginModal").classList.add("show");
-  setTimeout(() => $("#adminKeyInput")?.focus(), 150);
+  const modal = $("#adminLoginModal");
+  if (!modal) return;
+  modal.classList.add("show");
+  setTimeout(() => {
+    const userInp = $("#adminUsernameInput");
+    if (userInp) userInp.focus();
+    else $("#adminKeyInput")?.focus();
+  }, 150);
 }
 
 function closeAdminLogin() {
-  $("#adminLoginModal").classList.remove("show");
-  const inp = $("#adminKeyInput"); if (inp) inp.value = "";
+  $("#adminLoginModal")?.classList.remove("show");
+  const userInp = $("#adminUsernameInput");
+  const passInp = $("#adminKeyInput");
+  if (userInp) userInp.value = "";
+  if (passInp) passInp.value = "";
   const err = $("#adminLoginErr"); if (err) err.style.display = "none";
+}
+
+// Inject field username kalau belum ada di HTML
+function ensureLoginFields() {
+  const keyInp = $("#adminKeyInput");
+  if (!keyInp) return { userInp: null, passInp: null };
+
+  // Convert existing "key" input jadi password
+  keyInp.type = "password";
+  keyInp.placeholder = "Password";
+  keyInp.autocomplete = "current-password";
+
+  let userInp = $("#adminUsernameInput");
+  if (!userInp) {
+    userInp = document.createElement("input");
+    userInp.type = "text";
+    userInp.id = "adminUsernameInput";
+    userInp.placeholder = "Username";
+    userInp.autocomplete = "username";
+
+    // Samain class/style dengan password input biar konsisten
+    if (keyInp.className) {
+      userInp.className = keyInp.className;
+    } else {
+      userInp.style.cssText = `
+        width:100%;padding:12px 14px;border-radius:12px;
+        background:var(--surface-3);border:1px solid var(--border-strong);
+        color:var(--text);font-family:inherit;font-size:13px;
+        outline:none;margin-bottom:8px;
+      `;
+    }
+    userInp.style.marginBottom = "8px";
+
+    keyInp.parentNode.insertBefore(userInp, keyInp);
+  }
+
+  return { userInp, passInp: keyInp };
 }
 
 function initAdminLogin() {
   const closeBtn = $("#adminLoginClose");
   const modal = $("#adminLoginModal");
-  const inp = $("#adminKeyInput");
   const btn = $("#adminLoginSubmit");
   const err = $("#adminLoginErr");
-  if (!closeBtn || !modal || !inp || !btn) return;
+  if (!closeBtn || !modal || !btn) return;
+
+  const { userInp, passInp } = ensureLoginFields();
 
   closeBtn.onclick = closeAdminLogin;
   modal.onclick = e => { if (e.target.id === "adminLoginModal") closeAdminLogin(); };
-  inp.addEventListener("keydown", e => { if (e.key === "Enter") btn.click(); });
 
-  btn.onclick = async () => {
-    const val = inp.value.trim();
-    if (!val) { err.textContent = "Key kosong."; err.style.display = "block"; return; }
+  const submit = async () => {
+    const username = (userInp?.value || "").trim();
+    const password = passInp?.value || "";
+    if (!username || !password) {
+      if (err) { err.textContent = "Isi username & password."; err.style.display = "block"; }
+      return;
+    }
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-    err.style.display = "none";
+    if (err) err.style.display = "none";
 
-    const res = await performAdminLogin(val);
+    const res = await performAdminLogin(username, password);
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-solid fa-unlock"></i> Masuk';
 
@@ -767,22 +756,22 @@ function initAdminLogin() {
       checkChangelog();
       setTimeout(() => openAdminPanel(), 300);
     } else {
-      err.textContent = res.reason || "Gagal.";
-      err.style.display = "block";
+      if (err) { err.textContent = res.reason || "Gagal."; err.style.display = "block"; }
     }
   };
+
+  if (userInp) userInp.addEventListener("keydown", e => { if (e.key === "Enter" && passInp) passInp.focus(); });
+  if (passInp) passInp.addEventListener("keydown", e => { if (e.key === "Enter") submit(); });
+  btn.onclick = submit;
 }
 
 function applyAdminMode() {
   const adminBtn = $("#sidebarAdminBtn");
   const adminLabel = $("#adminSectionLabel");
-  if (IS_ADMIN) {
-    if (adminBtn) adminBtn.style.display = "flex";
-    if (adminLabel) adminLabel.style.display = "block";
-  } else {
-    if (adminBtn) adminBtn.style.display = "none";
-    if (adminLabel) adminLabel.style.display = "none";
-  }
+  const btnDisplay = IS_ADMIN ? "flex" : "none";
+  const labelDisplay = IS_ADMIN ? "block" : "none";
+  if (adminBtn) adminBtn.style.display = btnDisplay;
+  if (adminLabel) adminLabel.style.display = labelDisplay;
 }
 
 /* ==========================================================
@@ -828,7 +817,7 @@ async function openAdminPanel() {
   }
 
   if (!IS_ADMIN) {
-    toast("Akses ditolak. Login ulang ya.", "error");
+    toast("Akses ditolak. Login dulu ya.", "error");
     openAdminLogin();
     return;
   }
@@ -836,8 +825,7 @@ async function openAdminPanel() {
   const fresh = await cloudLoad();
   if (fresh) CLOUD_DATA = ensureStructure(fresh);
 
-  const stillAdmin = checkIsAdmin();
-  if (!stillAdmin) {
+  if (!checkIsAdmin()) {
     toast("Session expired. Login ulang.", "error");
     applyAdminMode();
     openAdminLogin();
@@ -909,7 +897,6 @@ function handleSidebarClick(target) {
    GENERAL EVENTS
    ========================================================== */
 function initGeneralEvents() {
-  // Brand mark 5x tap → admin login (disabled kalau udah admin)
   const bm = $("#brandMark");
   if (bm) {
     let clicks = 0, timer = null;
@@ -918,10 +905,7 @@ function initGeneralEvents() {
       clicks++;
       clearTimeout(timer);
       timer = setTimeout(() => clicks = 0, 1200);
-      if (clicks >= 5) {
-        clicks = 0;
-        openAdminLogin();
-      }
+      if (clicks >= 5) { clicks = 0; openAdminLogin(); }
     });
   }
 
@@ -1008,6 +992,7 @@ function refreshAll() {
   renderNavbar();
   renderCustomPages();
   renderContactPage();
+  applyAdminMode(); // FIX: pastikan visibility admin ter-update setelah render
 }
 
 /* ==========================================================
@@ -1043,10 +1028,10 @@ window.isAdmin = () => IS_ADMIN;
     if (fresh) CLOUD_DATA = ensureStructure(fresh);
 
     checkIsAdmin();
-    applyAdminMode();
 
     applyTheme(getActiveThemeKey());
-    refreshAll();
+    refreshAll();       // sudah include applyAdminMode di dalamnya
+    applyAdminMode();   // extra safety
 
     checkMaintenance();
     checkChangelog();
