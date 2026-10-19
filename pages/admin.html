@@ -42,6 +42,19 @@
 .ad-img-btn:active{transform:scale(.95)}
 .ad-img-preview{margin-top:8px;padding:8px;border-radius:12px;background:var(--surface-3);border:1px solid var(--border);text-align:center}
 .ad-img-preview img{max-width:100%;max-height:160px;border-radius:8px;object-fit:cover}
+.blk-card{padding:14px;border-radius:14px;background:var(--surface-3);border:1px solid var(--border);margin-bottom:10px}
+.blk-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.blk-type{font-size:10.5px;font-weight:700;color:var(--primary);text-transform:uppercase;font-family:var(--font-mono);display:flex;align-items:center;gap:6px}
+.blk-tools{display:flex;gap:4px}
+.blk-tools button{width:28px;height:28px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);color:var(--muted);font-size:11px;display:grid;place-items:center;cursor:pointer}
+.blk-tools button.del{color:#f87171}
+.blk-picker{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}
+.blk-picker button{padding:14px 8px;border-radius:12px;background:var(--surface-3);border:1px solid var(--border);color:var(--text);font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:all .25s}
+.blk-picker button:active{transform:scale(.95);border-color:var(--primary)}
+.blk-picker button i{font-size:18px;color:var(--primary)}
+.pv-wrap{background:#000;border-radius:12px;border:1px solid var(--border);padding:16px;margin-top:12px;max-height:60vh;overflow-y:auto}
+.ver-item{padding:12px;border-radius:12px;background:var(--surface-3);border:1px solid var(--border);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ver-item small{font-family:var(--font-mono);font-size:10.5px;color:var(--muted)}
 </style>
 
 <button class="modal-close" data-ad-act="close"><i class="fa-solid fa-xmark"></i></button>
@@ -68,20 +81,16 @@
   const setCloudData = window.setCloudData;
   const persistCloud = window.persistCloud;
   const cloudLoad = window.cloudLoad;
+  const cloudVersions = window.cloudVersions;
+  const cloudRestore = window.cloudRestore;
   const ensureStructure = window.ensureStructure;
   const closeAdminPanel = window.closeAdminPanel;
+  const renderBlock = window.renderBlock;
 
   const TABS = {
-    services: "Jasa",
-    products: "Produk",
-    payment: "Payment",
-    projects: "Project",
-    themes: "Tema",
-    sidebar: "Sidebar",
-    navbar: "Navbar",
-    pages: "Pages",
-    prefs: "Preferensi",
-    website: "Website"
+    services: "Jasa", products: "Produk", payment: "Payment", projects: "Project",
+    themes: "Tema", sidebar: "Sidebar", navbar: "Navbar", pages: "Pages",
+    builder: "Builder", prefs: "Preferensi", website: "Website", history: "History"
   };
 
   const FIELDS = {
@@ -107,18 +116,18 @@
       { k: "icon", l: "Icon", t: "text" },
       { k: "color", l: "Warna (hex)", t: "text" },
       { k: "type", l: "Tipe", t: "select", o: ["qris", "phone", "url"] },
-      { k: "value", l: "Value", t: "textarea" },
+      { k: "value", l: "Value / QRIS Image", t: "image-or-text" },
       { k: "status", l: "Status", t: "select", o: ["available", "unavailable", "maintenance"] }
     ],
     projects: [
       { k: "name", l: "Nama Project", t: "text" },
       { k: "description", l: "Deskripsi", t: "textarea" },
       { k: "icon", l: "Icon (fa-xxx)", t: "text" },
-      { k: "image", l: "Screenshot Project", t: "text" },
-      { k: "tech", l: "Tech Stack (pisah pakai koma)", t: "text" },
+      { k: "image", l: "Screenshot", t: "text" },
+      { k: "tech", l: "Tech Stack", t: "text" },
       { k: "status", l: "Status", t: "select", o: ["live", "beta", "coming-soon", "development", "archived"] },
       { k: "type", l: "Tipe", t: "select", o: ["web", "app", "other"] },
-      { k: "url", l: "Link (kosongin kalau gak ada)", t: "text" }
+      { k: "url", l: "Link", t: "text" }
     ],
     sidebar: [
       { k: "id", l: "ID", t: "text" },
@@ -138,17 +147,45 @@
     ]
   };
 
+  const BLOCK_TYPES = [
+    { type: "heading", label: "Heading", icon: "fa-heading", fields: [
+      { k: "text", l: "Teks", t: "text" }, { k: "size", l: "Ukuran", t: "select", o: ["sm", "md", "lg", "xl"] }, { k: "align", l: "Align", t: "select", o: ["left", "center", "right"] }
+    ]},
+    { type: "text", label: "Teks", icon: "fa-paragraph", fields: [
+      { k: "text", l: "Teks", t: "textarea" }, { k: "align", l: "Align", t: "select", o: ["left", "center", "right"] }
+    ]},
+    { type: "image", label: "Gambar", icon: "fa-image", fields: [
+      { k: "src", l: "URL / Upload", t: "text" }, { k: "alt", l: "Alt", t: "text" }, { k: "rounded", l: "Rounded", t: "select", o: ["true", "false"] }, { k: "width", l: "Width", t: "text" }, { k: "align", l: "Align", t: "select", o: ["left", "center", "right"] }
+    ]},
+    { type: "button", label: "Tombol", icon: "fa-hand-pointer", fields: [
+      { k: "label", l: "Label", t: "text" }, { k: "href", l: "Link", t: "text" }, { k: "icon", l: "Icon", t: "text" }, { k: "style", l: "Style", t: "select", o: ["primary", "ghost", "wa"] }, { k: "align", l: "Align", t: "select", o: ["left", "center", "right"] }
+    ]},
+    { type: "hero", label: "Hero", icon: "fa-star", fields: [
+      { k: "badge", l: "Badge", t: "text" }, { k: "title", l: "Judul", t: "text" }, { k: "subtitle", l: "Subjudul", t: "text" }
+    ]},
+    { type: "card-grid", label: "Card Grid", icon: "fa-table-cells", fields: [] },
+    { type: "table", label: "Tabel", icon: "fa-table", fields: [] },
+    { type: "form", label: "Form", icon: "fa-list", fields: [] },
+    { type: "announcement", label: "Pengumuman", icon: "fa-bullhorn", fields: [
+      { k: "text", l: "Teks", t: "textarea" }, { k: "type", l: "Tipe", t: "select", o: ["info", "success", "warning", "error"] }
+    ]},
+    { type: "list", label: "List", icon: "fa-list-ul", fields: [] },
+    { type: "quote", label: "Quote", icon: "fa-quote-left", fields: [
+      { k: "text", l: "Teks", t: "textarea" }, { k: "author", l: "Author", t: "text" }
+    ]},
+    { type: "code", label: "Code", icon: "fa-code", fields: [{ k: "text", l: "Code", t: "textarea" }] },
+    { type: "divider", label: "Divider", icon: "fa-minus", fields: [{ k: "style", l: "Style", t: "select", o: ["line", "dashed"] }] },
+    { type: "spacer", label: "Spacer", icon: "fa-arrows-up-down", fields: [{ k: "height", l: "Tinggi", t: "text" }] }
+  ];
+
   let currentTab = "services";
   let editing = null;
+  let builderSub = "pages";
+  let editingPageId = null;
+  let previewPage = null;
 
-  try {
-    const savedTab = sessionStorage.getItem("msi_admin_tab");
-    if (savedTab && TABS[savedTab]) currentTab = savedTab;
-  } catch (e) { }
-
-  function saveTabState() {
-    try { sessionStorage.setItem("msi_admin_tab", currentTab); } catch (e) { }
-  }
+  try { const s = sessionStorage.getItem("msi_admin_tab"); if (s && TABS[s]) currentTab = s; } catch (e) { }
+  function saveTabState() { try { sessionStorage.setItem("msi_admin_tab", currentTab); } catch (e) { } }
 
   const saveBtn = async (btn, label) => {
     btn.disabled = true;
@@ -164,43 +201,27 @@
   function render() {
     const content = $("#adContent"); if (!content) return;
     const tabsEl = $("#adTabs");
-    tabsEl.innerHTML = Object.entries(TABS).map(([k, v]) =>
-      `<button data-tab="${k}" class="${k === currentTab ? 'active' : ''}">${v}</button>`
-    ).join("");
+    tabsEl.innerHTML = Object.entries(TABS).map(([k, v]) => `<button data-tab="${k}" class="${k === currentTab ? 'active' : ''}">${v}</button>`).join("");
     tabsEl.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => {
-      currentTab = b.dataset.tab;
-      editing = null;
-      saveTabState();
-      render();
+      currentTab = b.dataset.tab; editing = null; editingPageId = null; previewPage = null; saveTabState(); render();
     });
 
+    if (editingPageId) return renderPageEditor(content);
+    if (previewPage) return renderPreview(content);
     if (editing) return renderForm(content);
     if (currentTab === "themes") return renderThemes(content);
     if (currentTab === "pages") return renderPages(content);
+    if (currentTab === "builder") return renderBuilder(content);
     if (currentTab === "prefs") return renderPrefs(content);
     if (currentTab === "website") return renderWebsite(content);
+    if (currentTab === "history") return renderHistory(content);
     renderList(content);
   }
 
   function renderList(content) {
     const data = getCloudData();
     const list = data[currentTab] || [];
-    content.innerHTML = `
-      <button class="btn btn-primary ad-list-btn" data-add><i class="fa-solid fa-plus"></i> Tambah ${TABS[currentTab]}</button>
-      <div class="ad-list">
-        ${list.length ? list.map((it, i) => `
-          <div class="ad-item">
-            <div class="ad-item-info">
-              <b>${esc(it.name || it.label || it.id || "-")}</b>
-              <small>${esc(it.status || it.price || it.value || it.desc || it.tech || "")}</small>
-            </div>
-            <div class="ad-item-btns">
-              <button data-edit="${i}"><i class="fa-solid fa-pen"></i></button>
-              <button class="del" data-del="${i}"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          </div>`).join("") : '<div class="ad-empty">Belum ada data</div>'}
-      </div>`;
-
+    content.innerHTML = `<button class="btn btn-primary ad-list-btn" data-add><i class="fa-solid fa-plus"></i> Tambah ${TABS[currentTab]}</button><div class="ad-list">${list.length ? list.map((it, i) => `<div class="ad-item"><div class="ad-item-info"><b>${esc(it.name || it.label || it.id || "-")}</b><small>${esc(it.status || it.price || it.value || it.desc || it.tech || "")}</small></div><div class="ad-item-btns"><button data-edit="${i}"><i class="fa-solid fa-pen"></i></button><button class="del" data-del="${i}"><i class="fa-solid fa-trash"></i></button></div></div>`).join("") : '<div class="ad-empty">Belum ada data</div>'}</div>`;
     content.querySelector("[data-add]").onclick = () => { editing = { idx: -1 }; render(); };
     content.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => { editing = { idx: Number(b.dataset.edit) }; render(); });
     content.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
@@ -209,10 +230,7 @@
       const name = it?.name || it?.label || it?.id || "item";
       if (!confirm(`Hapus "${name}"?`)) return;
       getCloudData()[currentTab].splice(i, 1);
-      await persistCloud();
-      refreshMain();
-      render();
-      toast("Dihapus.", "success");
+      await persistCloud(); refreshMain(); render(); toast("Dihapus.", "success");
     });
   }
 
@@ -221,97 +239,60 @@
     const fields = FIELDS[currentTab] || [];
     const isNew = editing.idx < 0;
     const item = isNew ? {} : (data[currentTab][editing.idx] || {});
+    const isImg = (k) => ["image", "bimg", "avatar", "screenshot"].includes((k || "").toLowerCase());
 
-    const isImageField = (k) => {
-      const key = (k || "").toLowerCase();
-      return key === "image" || key === "bimg" || key === "avatar" || key === "screenshot";
-    };
-
-    content.innerHTML = `
-      <div class="ad-label">${isNew ? "Tambah" : "Edit"} ${TABS[currentTab]}</div>
-      ${fields.map(f => {
+    content.innerHTML = `<div class="ad-label">${isNew ? "Tambah" : "Edit"} ${TABS[currentTab]}</div>${fields.map(f => {
       const v = item[f.k] ?? "";
-
-      if (isImageField(f.k) && f.t !== "textarea") {
-        return `
-            <div class="ad-field">
-              <label>${esc(f.l)}</label>
-              <div class="ad-img-input">
-                <input type="text" data-f="${f.k}" value="${esc(v)}" placeholder="Paste URL atau upload...">
-                <button type="button" class="ad-img-btn" data-upload="${f.k}">
-                  <i class="fa-solid fa-image"></i> Galeri
-                </button>
-              </div>
-              <input type="file" accept="image/*" data-file="${f.k}" style="display:none">
-              <div class="ad-img-preview" data-preview="${f.k}" style="display:${v ? 'block' : 'none'}">
-                <img src="${esc(v)}" alt="Preview" onerror="this.parentElement.style.display='none'">
-              </div>
-            </div>`;
+      if (f.t === "image-or-text") {
+        const has = v && (String(v).startsWith("http") || String(v).startsWith("data:"));
+        return `<div class="ad-field"><label>${esc(f.l)}</label><textarea data-f="${f.k}" rows="3" placeholder="Paste URL, teks, atau upload...">${esc(v)}</textarea><button type="button" class="ad-img-btn" data-imgt-upload="${f.k}" style="margin-top:8px;justify-content:center;width:100%"><i class="fa-solid fa-image"></i> Upload dari Galeri</button><input type="file" accept="image/*" data-imgt-file="${f.k}" style="display:none"><div class="ad-img-preview" data-imgt-preview="${f.k}" style="display:${has ? 'block' : 'none'};margin-top:8px"><img src="${has ? esc(v) : ''}" onerror="this.parentElement.style.display='none'"></div></div>`;
       }
-
+      if (isImg(f.k) && f.t !== "textarea") {
+        return `<div class="ad-field"><label>${esc(f.l)}</label><div class="ad-img-input"><input type="text" data-f="${f.k}" value="${esc(v)}" placeholder="URL / upload..."><button type="button" class="ad-img-btn" data-upload="${f.k}"><i class="fa-solid fa-image"></i> Galeri</button></div><input type="file" accept="image/*" data-file="${f.k}" style="display:none"><div class="ad-img-preview" data-preview="${f.k}" style="display:${v ? 'block' : 'none'}"><img src="${esc(v)}" onerror="this.parentElement.style.display='none'"></div></div>`;
+      }
       if (f.t === "textarea") return `<div class="ad-field"><label>${esc(f.l)}</label><textarea data-f="${f.k}" rows="3">${esc(v)}</textarea></div>`;
       if (f.t === "select") return `<div class="ad-field"><label>${esc(f.l)}</label><select data-f="${f.k}">${f.o.map(o => `<option value="${esc(o)}" ${String(o) == String(v) ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></div>`;
       return `<div class="ad-field"><label>${esc(f.l)}</label><input type="text" data-f="${f.k}" value="${esc(v)}"></div>`;
-    }).join("")}
-      <div class="ad-form-actions">
-        <button class="btn btn-ghost" data-cancel style="flex:1">Batal</button>
-        <button class="btn btn-primary" data-save style="flex:2"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
-      </div>`;
+    }).join("")}<div class="ad-form-actions"><button class="btn btn-ghost" data-cancel style="flex:1">Batal</button><button class="btn btn-primary" data-save style="flex:2"><i class="fa-solid fa-floppy-disk"></i> Simpan</button></div>`;
 
-    content.querySelectorAll("[data-upload]").forEach(btn => {
-      btn.onclick = () => {
-        const fieldName = btn.dataset.upload;
-        const fileInput = content.querySelector(`[data-file="${fieldName}"]`);
-        if (fileInput) fileInput.click();
+    content.querySelectorAll("[data-imgt-upload]").forEach(btn => btn.onclick = () => content.querySelector(`[data-imgt-file="${btn.dataset.imgtUpload}"]`)?.click());
+    content.querySelectorAll("[data-imgt-file]").forEach(inp => inp.onchange = e => {
+      const f = e.target.files?.[0]; if (!f) return;
+      if (f.size > 2 * 1024 * 1024) { toast("Max 2MB.", "error"); return; }
+      const rd = new FileReader();
+      rd.onload = ev => {
+        const b64 = ev.target.result;
+        content.querySelector(`[data-f="${inp.dataset.imgtFile}"]`).value = b64;
+        const p = content.querySelector(`[data-imgt-preview="${inp.dataset.imgtFile}"]`);
+        if (p) { p.style.display = "block"; p.querySelector("img").src = b64; }
+        toast("Ke-load.", "success");
+      };
+      rd.readAsDataURL(f);
+    });
+    fields.filter(f => f.t === "image-or-text").forEach(f => {
+      const ta = content.querySelector(`textarea[data-f="${f.k}"]`); if (!ta) return;
+      ta.oninput = () => {
+        const v = ta.value.trim();
+        const p = content.querySelector(`[data-imgt-preview="${f.k}"]`);
+        if (!p) return;
+        if (v && (v.startsWith("http") || v.startsWith("data:"))) { p.style.display = "block"; p.querySelector("img").src = v; }
+        else p.style.display = "none";
       };
     });
-
-    content.querySelectorAll("[data-file]").forEach(input => {
-      input.onchange = (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        if (file.size > 2 * 1024 * 1024) {
-          toast("Gambar max 2MB. Kompres dulu.", "error");
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const base64 = ev.target.result;
-          const fieldName = input.dataset.file;
-          const textInput = content.querySelector(`[data-f="${fieldName}"]`);
-          const preview = content.querySelector(`[data-preview="${fieldName}"]`);
-
-          if (textInput) textInput.value = base64;
-          if (preview) {
-            preview.style.display = "block";
-            const img = preview.querySelector("img");
-            if (img) img.src = base64;
-          }
-          toast("Gambar ke-load.", "success");
-        };
-        reader.readAsDataURL(file);
+    content.querySelectorAll("[data-upload]").forEach(btn => btn.onclick = () => content.querySelector(`[data-file="${btn.dataset.upload}"]`)?.click());
+    content.querySelectorAll("[data-file]").forEach(inp => inp.onchange = e => {
+      const f = e.target.files?.[0]; if (!f) return;
+      if (f.size > 2 * 1024 * 1024) { toast("Max 2MB.", "error"); return; }
+      const rd = new FileReader();
+      rd.onload = ev => {
+        const b64 = ev.target.result;
+        content.querySelector(`[data-f="${inp.dataset.file}"]`).value = b64;
+        const p = content.querySelector(`[data-preview="${inp.dataset.file}"]`);
+        if (p) { p.style.display = "block"; p.querySelector("img").src = b64; }
+        toast("Ke-load.", "success");
       };
+      rd.readAsDataURL(f);
     });
-
-    content.querySelectorAll("input[data-f]").forEach(input => {
-      if (!isImageField(input.dataset.f)) return;
-      input.oninput = () => {
-        const val = input.value.trim();
-        const preview = content.querySelector(`[data-preview="${input.dataset.f}"]`);
-        if (preview) {
-          if (val && (val.startsWith("http") || val.startsWith("data:"))) {
-            preview.style.display = "block";
-            const img = preview.querySelector("img");
-            if (img) img.src = val;
-          } else {
-            preview.style.display = "none";
-          }
-        }
-      };
-    });
-
     content.querySelector("[data-cancel]").onclick = () => { editing = null; render(); };
     content.querySelector("[data-save]").onclick = async (e) => {
       const obj = {};
@@ -321,292 +302,309 @@
         if (f.k === "adminOnly") val = val === "true";
         obj[f.k] = val;
       });
-      if (!obj.name && !obj.label && !obj.id) { toast("Field wajib belum diisi.", "error"); return; }
-
+      if (!obj.name && !obj.label && !obj.id) { toast("Field wajib.", "error"); return; }
       if (isNew) getCloudData()[currentTab].push(obj);
       else getCloudData()[currentTab][editing.idx] = obj;
-
       const ok = await saveBtn(e.target.closest("button"), '<i class="fa-solid fa-floppy-disk"></i> Simpan');
       if (ok) { editing = null; refreshMain(); }
     };
   }
 
   function renderThemes(content) {
-    const themes = getCloudData().themes;
-    const active = themes.active || "t1";
-    content.innerHTML = `
-      <div class="ad-label">Tema Default Aktif</div>
-      <div class="ad-mode">
-        ${["t1", "t2"].map(k => `<button class="btn ${active === k ? 'btn-primary' : 'btn-ghost'}" data-default="${k}"><i class="fa-solid fa-palette"></i> ${esc(themes[k].name)}</button>`).join("")}
-      </div>
-      ${["t1", "t2"].map(k => themeCard(k, themes[k])).join("")}`;
-
-    content.querySelectorAll("[data-default]").forEach(b => b.onclick = async () => {
-      getCloudData().themes.active = b.dataset.default;
-      const ok = await persistCloud();
-      if (ok) { toast("Default updated.", "success"); render(); }
-    });
-
-    ["t1", "t2"].forEach(k => {
-      content.querySelector(`[data-th-save="${k}"]`).onclick = async (e) => {
-        const t = getCloudData().themes[k];
-        const get = (suffix) => content.querySelector(`[data-th="${k}-${suffix}"]`).value.trim();
-        t.name = get("name") || t.name;
-        t.primary = get("primary") || t.primary;
-        t.secondary = get("secondary") || t.secondary;
-        t.bgImage = get("bg");
-        t.bgOpacity = parseFloat(get("opacity")) || 0.15;
-        t.banner = { title: get("btitle"), desc: get("bdesc"), image: get("bimg") };
-        const ok = await saveBtn(e.target.closest("button"), '<i class="fa-solid fa-floppy-disk"></i> Simpan');
-        if (ok && window.applyTheme) window.applyTheme(k);
-      };
-      bindThemeUpload(content, k);
-    });
+    const t = getCloudData().themes?.t1 || {};
+    content.innerHTML = `<div class="ad-banner" style="background:rgba(96,165,250,.1);border-color:rgba(96,165,250,.3);color:#60a5fa"><i class="fa-solid fa-circle-info"></i> Tema cuma <b style="margin-left:4px">Monochrome</b></div>${themeCard("t1", t)}`;
+    content.querySelector(`[data-th-save="t1"]`).onclick = async (e) => {
+      const th = getCloudData().themes.t1;
+      const g = (s) => content.querySelector(`[data-th="t1-${s}"]`).value.trim();
+      th.name = g("name") || th.name;
+      th.primary = g("primary") || th.primary;
+      th.secondary = g("secondary") || th.secondary;
+      th.bgImage = g("bg");
+      th.bgOpacity = parseFloat(g("opacity")) || 0.15;
+      th.banner = { title: g("btitle"), desc: g("bdesc"), image: g("bimg") };
+      const ok = await saveBtn(e.target.closest("button"), '<i class="fa-solid fa-floppy-disk"></i> Simpan');
+      if (ok && window.applyTheme) window.applyTheme();
+    };
+    bindThemeUpload(content, "t1");
   }
 
   function themeCard(k, t) {
-    return `
-      <div class="ad-theme-card">
-        <div class="ad-theme-head">
-          <div class="ad-theme-title">
-            <div class="ad-theme-color" style="background:linear-gradient(135deg,${t.primary},${t.secondary})"></div>
-            <b>${esc(t.name)}</b>
-          </div>
-        </div>
-        <div class="ad-field"><label>Nama</label><input data-th="${k}-name" value="${esc(t.name)}"></div>
-        <div class="ad-color-grid">
-          <div class="ad-field"><label>Primary</label><input data-th="${k}-primary" value="${esc(t.primary)}"></div>
-          <div class="ad-field"><label>Secondary</label><input data-th="${k}-secondary" value="${esc(t.secondary)}"></div>
-        </div>
-        <div class="ad-field">
-          <label>Background URL</label>
-          <div class="ad-img-input">
-            <input type="text" data-th="${k}-bg" value="${esc(t.bgImage || "")}" placeholder="Paste URL atau upload...">
-            <button type="button" class="ad-img-btn" data-th-upload="${k}"><i class="fa-solid fa-image"></i></button>
-          </div>
-          <input type="file" accept="image/*" data-th-file="${k}" style="display:none">
-          <div class="ad-img-preview" data-th-preview="${k}" style="display:${t.bgImage ? 'block' : 'none'};margin-top:8px">
-            <img src="${esc(t.bgImage || "")}" onerror="this.parentElement.style.display='none'">
-          </div>
-        </div>
-        <div class="ad-field"><label>BG Opacity (0-1)</label><input type="number" step="0.05" min="0" max="1" data-th="${k}-opacity" value="${t.bgOpacity || 0.15}"></div>
-        <div class="ad-label" style="margin-top:10px">Banner</div>
-        <div class="ad-field"><label>Judul</label><input data-th="${k}-btitle" value="${esc(t.banner?.title || "")}"></div>
-        <div class="ad-field"><label>Deskripsi</label><input data-th="${k}-bdesc" value="${esc(t.banner?.desc || "")}"></div>
-        <div class="ad-field">
-          <label>URL Gambar Banner</label>
-          <div class="ad-img-input">
-            <input type="text" data-th="${k}-bimg" value="${esc(t.banner?.image || "")}" placeholder="Paste URL atau upload...">
-            <button type="button" class="ad-img-btn" data-th-upload-banner="${k}"><i class="fa-solid fa-image"></i></button>
-          </div>
-          <input type="file" accept="image/*" data-th-file-banner="${k}" style="display:none">
-          <div class="ad-img-preview" data-th-preview-banner="${k}" style="display:${t.banner?.image ? 'block' : 'none'};margin-top:8px">
-            <img src="${esc(t.banner?.image || "")}" onerror="this.parentElement.style.display='none'">
-          </div>
-        </div>
-        <button class="btn btn-primary btn-block" data-th-save="${k}"><i class="fa-solid fa-floppy-disk"></i> Simpan Tema</button>
-      </div>`;
+    return `<div class="ad-theme-card"><div class="ad-theme-head"><div class="ad-theme-title"><div class="ad-theme-color" style="background:linear-gradient(135deg,${t.primary},${t.secondary})"></div><b>${esc(t.name)}</b></div></div><div class="ad-field"><label>Nama</label><input data-th="${k}-name" value="${esc(t.name)}"></div><div class="ad-color-grid"><div class="ad-field"><label>Primary</label><input data-th="${k}-primary" value="${esc(t.primary)}"></div><div class="ad-field"><label>Secondary</label><input data-th="${k}-secondary" value="${esc(t.secondary)}"></div></div><div class="ad-field"><label>Background</label><div class="ad-img-input"><input type="text" data-th="${k}-bg" value="${esc(t.bgImage || "")}"><button type="button" class="ad-img-btn" data-th-upload="${k}"><i class="fa-solid fa-image"></i></button></div><input type="file" accept="image/*" data-th-file="${k}" style="display:none"><div class="ad-img-preview" data-th-preview="${k}" style="display:${t.bgImage ? 'block' : 'none'};margin-top:8px"><img src="${esc(t.bgImage || "")}" onerror="this.parentElement.style.display='none'"></div></div><div class="ad-field"><label>Opacity</label><input type="number" step="0.05" min="0" max="1" data-th="${k}-opacity" value="${t.bgOpacity || 0.15}"></div><div class="ad-label" style="margin-top:10px">Banner</div><div class="ad-field"><label>Judul</label><input data-th="${k}-btitle" value="${esc(t.banner?.title || "")}"></div><div class="ad-field"><label>Deskripsi</label><input data-th="${k}-bdesc" value="${esc(t.banner?.desc || "")}"></div><div class="ad-field"><label>URL Banner</label><div class="ad-img-input"><input type="text" data-th="${k}-bimg" value="${esc(t.banner?.image || "")}"><button type="button" class="ad-img-btn" data-th-upload-banner="${k}"><i class="fa-solid fa-image"></i></button></div><input type="file" accept="image/*" data-th-file-banner="${k}" style="display:none"><div class="ad-img-preview" data-th-preview-banner="${k}" style="display:${t.banner?.image ? 'block' : 'none'};margin-top:8px"><img src="${esc(t.banner?.image || "")}" onerror="this.parentElement.style.display='none'"></div></div><button class="btn btn-primary btn-block" data-th-save="${k}"><i class="fa-solid fa-floppy-disk"></i> Simpan Tema</button></div>`;
   }
 
   function bindThemeUpload(content, k) {
-    const bgBtn = content.querySelector(`[data-th-upload="${k}"]`);
-    const bgFile = content.querySelector(`[data-th-file="${k}"]`);
-    if (bgBtn && bgFile) {
-      bgBtn.onclick = () => bgFile.click();
-      bgFile.onchange = (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        if (file.size > 2 * 1024 * 1024) { toast("Max 2MB.", "error"); return; }
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const b64 = ev.target.result;
-          content.querySelector(`[data-th="${k}-bg"]`).value = b64;
-          const prev = content.querySelector(`[data-th-preview="${k}"]`);
-          if (prev) { prev.style.display = "block"; prev.querySelector("img").src = b64; }
-          toast("BG ke-load.", "success");
+    const bind = (btnSel, fileSel, targetSel, prevSel) => {
+      const btn = content.querySelector(btnSel), file = content.querySelector(fileSel);
+      if (!btn || !file) return;
+      btn.onclick = () => file.click();
+      file.onchange = e => {
+        const f = e.target.files?.[0]; if (!f) return;
+        if (f.size > 2 * 1024 * 1024) { toast("Max 2MB.", "error"); return; }
+        const rd = new FileReader();
+        rd.onload = ev => {
+          content.querySelector(targetSel).value = ev.target.result;
+          const p = content.querySelector(prevSel);
+          if (p) { p.style.display = "block"; p.querySelector("img").src = ev.target.result; }
+          toast("Ke-load.", "success");
         };
-        reader.readAsDataURL(file);
+        rd.readAsDataURL(f);
       };
-    }
-
-    const bBtn = content.querySelector(`[data-th-upload-banner="${k}"]`);
-    const bFile = content.querySelector(`[data-th-file-banner="${k}"]`);
-    if (bBtn && bFile) {
-      bBtn.onclick = () => bFile.click();
-      bFile.onchange = (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        if (file.size > 2 * 1024 * 1024) { toast("Max 2MB.", "error"); return; }
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const b64 = ev.target.result;
-          content.querySelector(`[data-th="${k}-bimg"]`).value = b64;
-          const prev = content.querySelector(`[data-th-preview-banner="${k}"]`);
-          if (prev) { prev.style.display = "block"; prev.querySelector("img").src = b64; }
-          toast("Banner ke-load.", "success");
-        };
-        reader.readAsDataURL(file);
-      };
-    }
+    };
+    bind(`[data-th-upload="${k}"]`, `[data-th-file="${k}"]`, `[data-th="${k}-bg"]`, `[data-th-preview="${k}"]`);
+    bind(`[data-th-upload-banner="${k}"]`, `[data-th-file-banner="${k}"]`, `[data-th="${k}-bimg"]`, `[data-th-preview-banner="${k}"]`);
   }
 
   function renderPages(content) {
     const pages = getCloudData().pages || {};
     const ids = Object.keys(pages);
-    content.innerHTML = `
-      <button class="btn btn-primary ad-list-btn" data-add-page><i class="fa-solid fa-plus"></i> Tambah Page</button>
-      <div class="ad-list">
-        ${ids.length ? ids.map(id => {
+    content.innerHTML = `<button class="btn btn-primary ad-list-btn" data-add-page><i class="fa-solid fa-plus"></i> Tambah Page (HTML)</button><div class="ad-list">${ids.length ? ids.map(id => {
       const p = pages[id];
-      return `<div class="ad-item">
-            <div class="ad-item-info">
-              <b>${esc(p.title || id)}</b>
-              <small>${esc(id)} · ${p.custom ? "CUSTOM" : "BUILTIN"}</small>
-            </div>
-            <div class="ad-item-btns">
-              <button data-edit-page="${esc(id)}"><i class="fa-solid fa-pen"></i></button>
-              ${p.custom ? `<button class="del" data-del-page="${esc(id)}"><i class="fa-solid fa-trash"></i></button>` : ''}
-            </div>
-          </div>`;
-    }).join("") : '<div class="ad-empty">Belum ada page</div>'}
-      </div>`;
-
+      return `<div class="ad-item"><div class="ad-item-info"><b>${esc(p.title || id)}</b><small>${esc(id)} · ${p.custom ? "CUSTOM" : "BUILTIN"}</small></div><div class="ad-item-btns"><button data-edit-page="${esc(id)}"><i class="fa-solid fa-pen"></i></button>${p.custom ? `<button class="del" data-del-page="${esc(id)}"><i class="fa-solid fa-trash"></i></button>` : ''}</div></div>`;
+    }).join("") : '<div class="ad-empty">Belum ada</div>'}</div>`;
     content.querySelector("[data-add-page]").onclick = () => {
-      const id = prompt("ID page (lowercase, contoh: galeri):");
-      if (!id || !/^[a-z0-9_-]+$/.test(id)) { toast("ID harus lowercase.", "error"); return; }
-      if (getCloudData().pages[id]) { toast("ID udah dipakai.", "error"); return; }
-      getCloudData().pages[id] = { title: id, subtitle: "", custom: true, html: "<p>Edit HTML di sini...</p>" };
+      const id = prompt("ID page (lowercase):");
+      if (!id || !/^[a-z0-9_-]+$/.test(id)) { toast("ID lowercase.", "error"); return; }
+      if (getCloudData().pages[id]) { toast("Dipakai.", "error"); return; }
+      getCloudData().pages[id] = { title: id, subtitle: "", custom: true, html: "<p>Edit HTML...</p>" };
       persistCloud().then(() => render());
     };
-
     content.querySelectorAll("[data-edit-page]").forEach(b => b.onclick = () => {
       const id = b.dataset.editPage;
       const p = getCloudData().pages[id];
-      content.innerHTML = `
-        <div class="ad-label">Edit Page: ${esc(id)}</div>
-        <div class="ad-field"><label>ID</label><input data-pf="id" value="${esc(id)}"></div>
-        <div class="ad-field"><label>Judul</label><input data-pf="title" value="${esc(p.title || "")}"></div>
-        <div class="ad-field"><label>Subjudul</label><input data-pf="subtitle" value="${esc(p.subtitle || "")}"></div>
-        <div class="ad-field"><label>Custom HTML?</label><select data-pf="custom"><option value="true" ${p.custom ? "selected" : ""}>true</option><option value="false" ${!p.custom ? "selected" : ""}>false</option></select></div>
-        <div class="ad-field"><label>HTML Content</label><textarea data-pf="html" rows="8">${esc(p.html || "")}</textarea></div>
-        <div class="ad-form-actions">
-          <button class="btn btn-ghost" data-cancel style="flex:1">Batal</button>
-          <button class="btn btn-primary" data-save-page style="flex:2"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
-        </div>`;
+      content.innerHTML = `<div class="ad-label">Edit: ${esc(id)}</div><div class="ad-field"><label>Judul</label><input data-pf="title" value="${esc(p.title || "")}"></div><div class="ad-field"><label>Subjudul</label><input data-pf="subtitle" value="${esc(p.subtitle || "")}"></div><div class="ad-field"><label>HTML</label><textarea data-pf="html" rows="8">${esc(p.html || "")}</textarea></div><div class="ad-form-actions"><button class="btn btn-ghost" data-cancel style="flex:1">Batal</button><button class="btn btn-primary" data-save-page style="flex:2">Simpan</button></div>`;
       content.querySelector("[data-cancel]").onclick = () => render();
       content.querySelector("[data-save-page]").onclick = async (e) => {
-        const newId = content.querySelector("[data-pf='id']").value.trim();
-        const data = {
-          title: content.querySelector("[data-pf='title']").value.trim(),
-          subtitle: content.querySelector("[data-pf='subtitle']").value.trim(),
-          custom: content.querySelector("[data-pf='custom']").value === "true",
-          html: content.querySelector("[data-pf='html']").value
-        };
-        if (newId !== id) delete getCloudData().pages[id];
-        getCloudData().pages[newId] = data;
-        const ok = await saveBtn(e.target.closest("button"), '<i class="fa-solid fa-floppy-disk"></i> Simpan');
+        p.title = content.querySelector("[data-pf='title']").value.trim();
+        p.subtitle = content.querySelector("[data-pf='subtitle']").value.trim();
+        p.html = content.querySelector("[data-pf='html']").value;
+        const ok = await saveBtn(e.target.closest("button"), "Simpan");
         if (ok) render();
       };
     });
-
     content.querySelectorAll("[data-del-page]").forEach(b => b.onclick = async () => {
       const id = b.dataset.delPage;
-      if (!confirm(`Hapus page "${id}"?`)) return;
+      if (!confirm(`Hapus "${id}"?`)) return;
       delete getCloudData().pages[id];
-      await persistCloud();
+      await persistCloud(); render();
+    });
+  }
+
+  function renderBuilder(content) {
+    content.innerHTML = `<div class="ad-mode" style="margin-bottom:14px"><button class="btn ${builderSub === 'pages' ? 'btn-primary' : 'btn-ghost'}" data-sub="pages"><i class="fa-solid fa-file-lines"></i> Pages</button><button class="btn ${builderSub === 'modules' ? 'btn-primary' : 'btn-ghost'}" data-sub="modules"><i class="fa-solid fa-puzzle-piece"></i> Modules</button></div><div id="builderBody"></div>`;
+    content.querySelectorAll("[data-sub]").forEach(b => b.onclick = () => { builderSub = b.dataset.sub; render(); });
+    const body = $("#builderBody");
+    if (builderSub === "pages") renderBuilderPages(body);
+    else renderBuilderModules(body);
+  }
+
+  function renderBuilderPages(body) {
+    const pages = getCloudData().builder?.pages || {};
+    const ids = Object.keys(pages);
+    body.innerHTML = `<button class="btn btn-primary ad-list-btn" data-add-bp><i class="fa-solid fa-plus"></i> Buat Halaman</button><div class="ad-list">${ids.length ? ids.map(id => {
+      const p = pages[id];
+      const cls = p.status === "published" ? "available" : "maintenance";
+      return `<div class="ad-item"><div class="ad-item-info"><b>${esc(p.title || id)}</b><small>${p.blocks?.length || 0} block · <span class="badge ${cls}" style="font-size:8.5px;padding:2px 6px">${esc(p.status || "draft")}</span></small></div><div class="ad-item-btns"><button data-edit-bp="${esc(id)}"><i class="fa-solid fa-pen"></i></button><button data-prev-bp="${esc(id)}"><i class="fa-solid fa-eye"></i></button><button data-dup-bp="${esc(id)}"><i class="fa-solid fa-copy"></i></button><button class="del" data-del-bp="${esc(id)}"><i class="fa-solid fa-trash"></i></button></div></div>`;
+    }).join("") : '<div class="ad-empty">Belum ada halaman</div>'}</div><p style="font-size:10.5px;color:var(--muted-2);margin-top:10px;font-family:var(--font-mono)">Setelah publish, tambahkan ke Sidebar/Navbar biar muncul di menu.</p>`;
+    body.querySelector("[data-add-bp]").onclick = () => {
+      const id = prompt("ID (lowercase):");
+      if (!id || !/^[a-z0-9_-]+$/.test(id)) { toast("ID lowercase.", "error"); return; }
+      if (getCloudData().builder.pages[id]) { toast("Dipakai.", "error"); return; }
+      getCloudData().builder.pages[id] = { id, title: id, subtitle: "", slug: id, status: "draft", visible: true, adminOnly: false, seo: { title: "", desc: "" }, blocks: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+      persistCloud().then(() => { editingPageId = id; render(); });
+    };
+    body.querySelectorAll("[data-edit-bp]").forEach(b => b.onclick = () => { editingPageId = b.dataset.editBp; render(); });
+    body.querySelectorAll("[data-prev-bp]").forEach(b => b.onclick = () => { previewPage = b.dataset.prevBp; render(); });
+    body.querySelectorAll("[data-dup-bp]").forEach(b => b.onclick = async () => {
+      const id = b.dataset.dupBp;
+      const src = getCloudData().builder.pages[id];
+      const nid = id + "_c_" + Math.random().toString(36).slice(2, 6);
+      getCloudData().builder.pages[nid] = JSON.parse(JSON.stringify({ ...src, id: nid, title: src.title + " (copy)", status: "draft" }));
+      await persistCloud(); render(); toast("Diduplikat.", "success");
+    });
+    body.querySelectorAll("[data-del-bp]").forEach(b => b.onclick = async () => {
+      const id = b.dataset.delBp;
+      if (!confirm(`Hapus "${id}"?`)) return;
+      delete getCloudData().builder.pages[id];
+      await persistCloud(); render(); toast("Dihapus.", "success");
+    });
+  }
+
+  function renderBuilderModules(body) {
+    const mods = getCloudData().builder?.modules || {};
+    const ids = Object.keys(mods);
+    body.innerHTML = `<button class="btn btn-primary ad-list-btn" data-add-mod><i class="fa-solid fa-plus"></i> Buat Module</button><div class="ad-list">${ids.length ? ids.map(id => {
+      const m = mods[id];
+      const on = m.enabled !== false;
+      return `<div class="ad-item"><div class="ad-item-info"><b><i class="fa-solid ${esc(m.icon || 'fa-puzzle-piece')}" style="color:var(--primary);margin-right:6px"></i>${esc(m.name)}</b><small>${esc(m.desc || "")} · ${(m.pageIds || []).length} page</small></div><div class="ad-item-btns"><button data-toggle-mod="${esc(id)}"><i class="fa-solid ${on ? 'fa-toggle-on' : 'fa-toggle-off'}"></i></button><button data-edit-mod="${esc(id)}"><i class="fa-solid fa-pen"></i></button><button class="del" data-del-mod="${esc(id)}"><i class="fa-solid fa-trash"></i></button></div></div>`;
+    }).join("") : '<div class="ad-empty">Belum ada module</div>'}</div>`;
+    body.querySelector("[data-add-mod]").onclick = () => openModuleEditor(body, null);
+    body.querySelectorAll("[data-toggle-mod]").forEach(b => b.onclick = async () => {
+      const id = b.dataset.toggleMod;
+      const m = getCloudData().builder.modules[id];
+      m.enabled = m.enabled === false ? true : false;
+      await persistCloud(); refreshMain(); render(); toast("Module: " + (m.enabled ? "ON" : "OFF"), "success");
+    });
+    body.querySelectorAll("[data-edit-mod]").forEach(b => b.onclick = () => openModuleEditor(body, b.dataset.editMod));
+    body.querySelectorAll("[data-del-mod]").forEach(b => b.onclick = async () => {
+      const id = b.dataset.delMod;
+      if (!confirm(`Hapus "${id}"?`)) return;
+      delete getCloudData().builder.modules[id];
+      await persistCloud(); render();
+    });
+  }
+
+  function openModuleEditor(body, editId) {
+    const ex = editId ? getCloudData().builder.modules[editId] : {};
+    const pages = Object.keys(getCloudData().builder?.pages || {});
+    body.innerHTML = `<div class="ad-label">${editId ? "Edit" : "Buat"} Module</div><div class="ad-field"><label>Nama</label><input id="modName" value="${esc(ex.name || "")}"></div><div class="ad-field"><label>Deskripsi</label><input id="modDesc" value="${esc(ex.desc || "")}"></div><div class="ad-field"><label>Icon</label><input id="modIcon" value="${esc(ex.icon || "fa-puzzle-piece")}"></div><div class="ad-field"><label>Warna</label><select id="modColor">${["", "orange", "green", "purple"].map(c => `<option value="${c}" ${ex.color === c ? "selected" : ""}>${c || "default"}</option>`).join("")}</select></div><div class="ad-field"><label>Halaman (pisah koma)</label><input id="modPages" value="${esc((ex.pageIds || []).join(", "))}" placeholder="${pages.slice(0, 3).join(", ")}"></div><div class="ad-form-actions"><button class="btn btn-ghost" id="modCancel" style="flex:1">Batal</button><button class="btn btn-primary" id="modSave" style="flex:2">Simpan</button></div>`;
+    body.querySelector("#modCancel").onclick = () => render();
+    body.querySelector("#modSave").onclick = async (e) => {
+      const name = body.querySelector("#modName").value.trim();
+      if (!name) { toast("Nama wajib.", "error"); return; }
+      const id = editId || "mod_" + name.toLowerCase().replace(/[^a-z0-9]/g, "_") + "_" + Math.random().toString(36).slice(2, 5);
+      getCloudData().builder.modules[id] = { id, name, desc: body.querySelector("#modDesc").value.trim(), icon: body.querySelector("#modIcon").value.trim() || "fa-puzzle-piece", color: body.querySelector("#modColor").value, enabled: ex.enabled !== false, pageIds: body.querySelector("#modPages").value.split(",").map(x => x.trim()).filter(Boolean) };
+      const btn = e.target.closest("button"); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+      const ok = await persistCloud(); btn.disabled = false; btn.innerHTML = "Simpan";
+      if (ok) { toast("Tersimpan.", "success"); refreshMain(); render(); } else toast("Gagal.", "error");
+    };
+  }
+
+  function renderPageEditor(content) {
+    const p = getCloudData().builder.pages[editingPageId];
+    if (!p) { editingPageId = null; render(); return; }
+    content.innerHTML = `<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><button class="btn btn-ghost" data-back style="padding:8px 12px"><i class="fa-solid fa-arrow-left"></i></button><div style="flex:1"><div class="ad-label" style="margin:0">Edit: ${esc(p.title)}</div></div><span class="badge ${p.status === "published" ? "available" : "maintenance"}" style="font-size:9px">${esc(p.status)}</span></div><div class="ad-theme-card"><div class="ad-field"><label>Judul</label><input id="bpTitle" value="${esc(p.title)}"></div><div class="ad-field"><label>Subjudul</label><input id="bpSubtitle" value="${esc(p.subtitle || "")}"></div><div class="ad-color-grid"><div class="ad-field"><label>Status</label><select id="bpStatus"><option value="draft" ${p.status === "draft" ? "selected" : ""}>Draft</option><option value="published" ${p.status === "published" ? "selected" : ""}>Published</option></select></div><div class="ad-field"><label>Visible</label><select id="bpVisible"><option value="true" ${p.visible !== false ? "selected" : ""}>Ya</option><option value="false" ${p.visible === false ? "selected" : ""}>Sembunyikan</option></select></div></div><div class="ad-color-grid"><div class="ad-field"><label>Admin Only</label><select id="bpAdminOnly"><option value="false" ${p.adminOnly !== true ? "selected" : ""}>Tidak</option><option value="true" ${p.adminOnly === true ? "selected" : ""}>Ya</option></select></div><div class="ad-field"><label>SEO Title</label><input id="bpSeoTitle" value="${esc(p.seo?.title || "")}"></div></div><div class="ad-field"><label>SEO Desc</label><input id="bpSeoDesc" value="${esc(p.seo?.desc || "")}"></div></div><div class="ad-label" style="margin-top:14px">Blocks (${(p.blocks || []).length})</div><div id="blocksList"></div><button class="btn btn-primary btn-block" id="addBlock" style="margin-top:10px"><i class="fa-solid fa-plus"></i> Tambah Block</button><div class="ad-form-actions"><button class="btn btn-ghost" id="prevPage" style="flex:1"><i class="fa-solid fa-eye"></i> Preview</button><button class="btn btn-primary" id="savePage" style="flex:2"><i class="fa-solid fa-floppy-disk"></i> Simpan</button></div>`;
+
+    const saveMeta = () => {
+      p.title = content.querySelector("#bpTitle").value.trim() || p.id;
+      p.subtitle = content.querySelector("#bpSubtitle").value.trim();
+      p.status = content.querySelector("#bpStatus").value;
+      p.visible = content.querySelector("#bpVisible").value === "true";
+      p.adminOnly = content.querySelector("#bpAdminOnly").value === "true";
+      p.seo = { title: content.querySelector("#bpSeoTitle").value.trim(), desc: content.querySelector("#bpSeoDesc").value.trim() };
+      p.updatedAt = new Date().toISOString();
+    };
+    ["#bpTitle", "#bpSubtitle", "#bpStatus", "#bpVisible", "#bpAdminOnly", "#bpSeoTitle", "#bpSeoDesc"].forEach(sel => content.querySelector(sel)?.addEventListener("change", saveMeta));
+
+    renderBlocks(content, p);
+    content.querySelector("[data-back]").onclick = () => { editingPageId = null; render(); };
+    content.querySelector("#addBlock").onclick = () => openBlockPicker(content, p);
+    content.querySelector("#prevPage").onclick = () => { saveMeta(); previewPage = p.id; editingPageId = null; render(); };
+    content.querySelector("#savePage").onclick = async (e) => {
+      saveMeta();
+      const ok = await saveBtn(e.target.closest("button"), '<i class="fa-solid fa-floppy-disk"></i> Simpan');
+      if (ok) refreshMain();
+    };
+  }
+
+  function renderBlocks(content, page) {
+    const wrap = content.querySelector("#blocksList");
+    if (!page.blocks?.length) { wrap.innerHTML = '<div class="ad-empty">Belum ada block.</div>'; return; }
+    wrap.innerHTML = page.blocks.map((b, i) => {
+      const t = BLOCK_TYPES.find(x => x.type === b.type) || { label: b.type, icon: "fa-cube", fields: [] };
+      return `<div class="blk-card"><div class="blk-head"><div class="blk-type"><i class="fa-solid ${t.icon}"></i> ${esc(t.label)}</div><div class="blk-tools"><button data-up="${i}" ${i === 0 ? "disabled style=opacity:.3" : ""}><i class="fa-solid fa-chevron-up"></i></button><button data-down="${i}" ${i === page.blocks.length - 1 ? "disabled style=opacity:.3" : ""}><i class="fa-solid fa-chevron-down"></i></button><button class="del" data-del="${i}"><i class="fa-solid fa-trash"></i></button></div></div><div data-block-fields="${i}"></div></div>`;
+    }).join("");
+
+    page.blocks.forEach((b, i) => {
+      const t = BLOCK_TYPES.find(x => x.type === b.type);
+      const el = wrap.querySelector(`[data-block-fields="${i}"]`);
+      if (!t || !el) return;
+      b.data = b.data || {};
+      if (!t.fields.length) { el.innerHTML = `<p style="font-size:11px;color:var(--muted);font-family:var(--font-mono)">Block ini belum ada field.</p>`; return; }
+      el.innerHTML = t.fields.map(f => {
+        const v = b.data[f.k] ?? "";
+        if (f.t === "textarea") return `<div class="ad-field"><label>${esc(f.l)}</label><textarea data-bf="${i}-${f.k}" rows="3">${esc(v)}</textarea></div>`;
+        if (f.t === "select") return `<div class="ad-field"><label>${esc(f.l)}</label><select data-bf="${i}-${f.k}">${f.o.map(o => `<option value="${esc(o)}" ${String(o) == String(v) ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></div>`;
+        return `<div class="ad-field"><label>${esc(f.l)}</label><input data-bf="${i}-${f.k}" value="${esc(v)}"></div>`;
+      }).join("");
+      t.fields.forEach(f => {
+        const inp = el.querySelector(`[data-bf="${i}-${f.k}"]`);
+        if (inp) inp.oninput = () => { b.data[f.k] = inp.value; };
+      });
+    });
+
+    wrap.querySelectorAll("[data-up]").forEach(btn => btn.onclick = () => { const i = Number(btn.dataset.up); [page.blocks[i - 1], page.blocks[i]] = [page.blocks[i], page.blocks[i - 1]]; renderBlocks(content, page); });
+    wrap.querySelectorAll("[data-down]").forEach(btn => btn.onclick = () => { const i = Number(btn.dataset.down); [page.blocks[i + 1], page.blocks[i]] = [page.blocks[i], page.blocks[i + 1]]; renderBlocks(content, page); });
+    wrap.querySelectorAll("[data-del]").forEach(btn => btn.onclick = () => { if (!confirm("Hapus block?")) return; page.blocks.splice(Number(btn.dataset.del), 1); renderBlocks(content, page); });
+  }
+
+  function openBlockPicker(content, page) {
+    content.innerHTML = `<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px"><button class="btn btn-ghost" id="pickerBack" style="padding:8px 12px"><i class="fa-solid fa-arrow-left"></i></button><div class="ad-label" style="margin:0">Pilih Block</div></div><div class="blk-picker">${BLOCK_TYPES.map(t => `<button data-pick="${t.type}"><i class="fa-solid ${t.icon}"></i>${esc(t.label)}</button>`).join("")}</div>`;
+    content.querySelector("#pickerBack").onclick = () => render();
+    content.querySelectorAll("[data-pick]").forEach(btn => btn.onclick = () => {
+      const type = btn.dataset.pick;
+      const nb = { id: "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 4), type, data: {} };
+      if (type === "heading") nb.data = { text: "Judul Baru", size: "lg", align: "left" };
+      if (type === "text") nb.data = { text: "Teks...", align: "left" };
+      if (type === "button") nb.data = { label: "Klik", href: "#", icon: "fa-solid fa-arrow-right", style: "primary", align: "left" };
+      if (type === "card-grid") nb.data = { cards: [{ title: "Card", desc: "Deskripsi", icon: "fa-solid fa-box" }] };
+      if (type === "table") nb.data = { headers: ["A", "B"], rows: [["1", "2"]] };
+      if (type === "form") nb.data = { fields: [{ label: "Nama", name: "nama", type: "text" }], submitLabel: "Kirim", submitTo: "whatsapp" };
+      if (type === "list") nb.data = { items: ["Item 1", "Item 2"], ordered: false };
+      if (type === "divider") nb.data = { style: "line" };
+      if (type === "spacer") nb.data = { height: 24 };
+      page.blocks = page.blocks || [];
+      page.blocks.push(nb);
+      editingPageId = page.id;
       render();
     });
+  }
+
+  function renderPreview(content) {
+    const p = getCloudData().builder.pages[previewPage];
+    if (!p) { previewPage = null; render(); return; }
+    content.innerHTML = `<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><button class="btn btn-ghost" id="prevBack" style="padding:8px 12px"><i class="fa-solid fa-arrow-left"></i></button><div class="ad-label" style="margin:0">Preview: ${esc(p.title)}</div></div><div class="pv-wrap" id="pvBody"></div><p style="font-size:10.5px;color:var(--muted-2);margin-top:10px;font-family:var(--font-mono);text-align:center">Preview hanya di admin.</p>`;
+    content.querySelector("#pvBody").innerHTML = (p.blocks || []).map(renderBlock).join("") || "<p style='color:var(--muted);text-align:center'>Kosong</p>";
+    content.querySelector("#prevBack").onclick = () => { previewPage = null; editingPageId = p.id; render(); };
   }
 
   function renderPrefs(content) {
     const p = getCloudData().preferences;
     const d = p.developer;
-    content.innerHTML = `
-      <div class="ad-field"><label>App Name</label><input data-p="appName" value="${esc(p.appName)}"></div>
-      <div class="ad-field"><label>App Subtitle</label><input data-p="appSubtitle" value="${esc(p.appSubtitle)}"></div>
-      <div class="ad-field"><label>Hero Badge</label><input data-p="heroBadge" value="${esc(p.heroBadge)}"></div>
-      <div class="ad-field"><label>Hero Subtitle</label><input data-p="heroSubtitle" value="${esc(p.heroSubtitle)}"></div>
-      <div class="ad-field"><label>Hero Rotate (pisah dengan |)</label><textarea data-p="heroRotate" rows="3">${esc((p.heroRotate || []).join(" | "))}</textarea></div>
-      <div class="ad-field"><label>Developer Name</label><input data-p="devName" value="${esc(d.name)}"></div>
-      <div class="ad-field"><label>Username</label><input data-p="devUser" value="${esc(d.username)}"></div>
-      <div class="ad-field"><label>Role</label><input data-p="devRole" value="${esc(d.role)}"></div>
-      <div class="ad-field">
-        <label>Avatar URL</label>
-        <div class="ad-img-input">
-          <input type="text" data-p="devProfile" value="${esc(d.profileImage)}" placeholder="Paste URL atau upload...">
-          <button type="button" class="ad-img-btn" data-p-upload="devProfile"><i class="fa-solid fa-image"></i></button>
-        </div>
-        <input type="file" accept="image/*" data-p-file="devProfile" style="display:none">
-      </div>
-      <div class="ad-field"><label>Description</label><textarea data-p="devDesc" rows="3">${esc(d.description)}</textarea></div>
-      <div class="ad-field"><label>WhatsApp URL</label><input data-p="wa" value="${esc(p.contact.whatsapp)}"></div>
-      <div class="ad-field"><label>Channel URL</label><input data-p="channel" value="${esc(p.contact.channel)}"></div>
-      <div class="ad-field"><label>Daily Limit Lapor</label><input type="number" data-p="dailyLimit" value="${p.dailyLimit || 5}"></div>
-      <div class="ad-field"><label>Discord Webhook URL</label><input data-p="webhook" value="${esc(p.webhookSaran || "")}"></div>
-      <button class="btn btn-primary btn-block" data-save-prefs><i class="fa-solid fa-floppy-disk"></i> Simpan</button>`;
+    content.innerHTML = `<div class="ad-field"><label>App Name</label><input data-p="appName" value="${esc(p.appName)}"></div><div class="ad-field"><label>App Subtitle</label><input data-p="appSubtitle" value="${esc(p.appSubtitle)}"></div><div class="ad-field"><label>Logo</label><div class="ad-img-input"><input type="text" data-p="logo" value="${esc(p.logo || "")}"><button type="button" class="ad-img-btn" data-p-upload="logo"><i class="fa-solid fa-image"></i></button></div><input type="file" accept="image/*" data-p-file="logo" style="display:none"><div class="ad-img-preview" data-p-preview="logo" style="display:${p.logo ? 'block' : 'none'};margin-top:8px"><img src="${esc(p.logo || "")}" onerror="this.parentElement.style.display='none'"></div></div><div class="ad-field"><label>Hero Badge</label><input data-p="heroBadge" value="${esc(p.heroBadge)}"></div><div class="ad-field"><label>Hero Subtitle</label><input data-p="heroSubtitle" value="${esc(p.heroSubtitle)}"></div><div class="ad-field"><label>Hero Rotate (|)</label><textarea data-p="heroRotate" rows="3">${esc((p.heroRotate || []).join(" | "))}</textarea></div><div class="ad-field"><label>Dev Name</label><input data-p="devName" value="${esc(d.name)}"></div><div class="ad-field"><label>Username</label><input data-p="devUser" value="${esc(d.username)}"></div><div class="ad-field"><label>Role</label><input data-p="devRole" value="${esc(d.role)}"></div><div class="ad-field"><label>Avatar</label><div class="ad-img-input"><input type="text" data-p="devProfile" value="${esc(d.profileImage)}"><button type="button" class="ad-img-btn" data-p-upload="devProfile"><i class="fa-solid fa-image"></i></button></div><input type="file" accept="image/*" data-p-file="devProfile" style="display:none"></div><div class="ad-field"><label>Description</label><textarea data-p="devDesc" rows="3">${esc(d.description)}</textarea></div><div class="ad-field"><label>WhatsApp</label><input data-p="wa" value="${esc(p.contact.whatsapp)}"></div><div class="ad-field"><label>Channel</label><input data-p="channel" value="${esc(p.contact.channel)}"></div><div class="ad-field"><label>Daily Limit</label><input type="number" data-p="dailyLimit" value="${p.dailyLimit || 5}"></div><div class="ad-field"><label>Webhook</label><input data-p="webhook" value="${esc(p.webhookSaran || "")}"></div><button class="btn btn-primary btn-block" data-save-prefs><i class="fa-solid fa-floppy-disk"></i> Simpan</button>`;
 
-    const upBtn = content.querySelector("[data-p-upload='devProfile']");
-    const upFile = content.querySelector("[data-p-file='devProfile']");
-    if (upBtn && upFile) {
-      upBtn.onclick = () => upFile.click();
-      upFile.onchange = (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        if (file.size > 2 * 1024 * 1024) { toast("Max 2MB.", "error"); return; }
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          content.querySelector("[data-p='devProfile']").value = ev.target.result;
-          toast("Avatar ke-load.", "success");
+    const bindImg = (field) => {
+      const btn = content.querySelector(`[data-p-upload='${field}']`);
+      const file = content.querySelector(`[data-p-file='${field}']`);
+      if (!btn || !file) return;
+      btn.onclick = () => file.click();
+      file.onchange = e => {
+        const f = e.target.files?.[0]; if (!f) return;
+        if (f.size > 2 * 1024 * 1024) { toast("Max 2MB.", "error"); return; }
+        const rd = new FileReader();
+        rd.onload = ev => {
+          content.querySelector(`[data-p='${field}']`).value = ev.target.result;
+          const prev = content.querySelector(`[data-p-preview='${field}']`);
+          if (prev) { prev.style.display = "block"; prev.querySelector("img").src = ev.target.result; }
+          toast("Ke-load.", "success");
         };
-        reader.readAsDataURL(file);
+        rd.readAsDataURL(f);
       };
-    }
+    };
+    bindImg("logo"); bindImg("devProfile");
 
     content.querySelector("[data-save-prefs]").onclick = async (e) => {
       const g = (k) => content.querySelector(`[data-p="${k}"]`).value.trim();
       p.appName = g("appName") || p.appName;
       p.appSubtitle = g("appSubtitle");
+      p.logo = g("logo");
       p.heroBadge = g("heroBadge");
       p.heroSubtitle = g("heroSubtitle");
       p.heroRotate = g("heroRotate").split("|").map(x => x.trim()).filter(Boolean);
-      d.name = g("devName");
-      d.username = g("devUser");
-      d.role = g("devRole");
-      d.profileImage = g("devProfile");
-      d.description = g("devDesc");
-      p.contact.whatsapp = g("wa");
-      p.contact.channel = g("channel");
+      d.name = g("devName"); d.username = g("devUser"); d.role = g("devRole");
+      d.profileImage = g("devProfile"); d.description = g("devDesc");
+      p.contact.whatsapp = g("wa"); p.contact.channel = g("channel");
       p.dailyLimit = parseInt(g("dailyLimit")) || 5;
       p.webhookSaran = g("webhook");
       const ok = await saveBtn(e.target.closest("button"), '<i class="fa-solid fa-floppy-disk"></i> Simpan');
-      if (ok && window.renderPreferences) window.renderPreferences();
+      if (ok) { if (window.renderPreferences) window.renderPreferences(); if (window.applyLogo) window.applyLogo(); }
     };
   }
 
   function renderWebsite(content) {
     const site = getCloudData().site || {};
     const mode = (site.mode || "open").toLowerCase();
-    const info = {
-      open: { label: "ONLINE", color: "#4ade80", icon: "fa-circle-check", desc: "Website online" },
-      maintenance: { label: "MAINTENANCE", color: "#fbbf24", icon: "fa-screwdriver-wrench", desc: "User lihat popup maintenance" },
-      update: { label: "UPDATE", color: "#6c7cff", icon: "fa-rocket", desc: "User lihat changelog popup" }
-    }[mode] || { label: "ONLINE", color: "#4ade80", icon: "fa-circle-check", desc: "Website online" };
-
-    content.innerHTML = `
-      <div class="ad-banner" style="background:${info.color}15;border-color:${info.color}40;color:${info.color}">
-        <i class="fa-solid ${info.icon}"></i> Status: <b style="margin-left:4px">${info.label}</b>
-      </div>
-      <p style="font-size:11.5px;color:var(--muted);margin-bottom:14px">${esc(info.desc)}</p>
-      <div class="ad-label">Mode Website</div>
-      <div class="ad-mode">
-        <button class="btn ${mode === 'open' ? 'btn-primary' : 'btn-ghost'}" data-mode="open"><i class="fa-solid fa-circle-check"></i> Open</button>
-        <button class="btn ${mode === 'maintenance' ? 'btn-wa' : 'btn-ghost'}" data-mode="maintenance"><i class="fa-solid fa-screwdriver-wrench"></i> Maint</button>
-        <button class="btn ${mode === 'update' ? 'btn-primary' : 'btn-ghost'}" data-mode="update"><i class="fa-solid fa-rocket"></i> Update</button>
-      </div>
-      <div class="ad-field"><label>Pesan Maintenance</label><textarea data-w="msg" rows="3">${esc(site.maintenanceMessage || "")}</textarea></div>
-      <div class="ad-field"><label>Estimasi</label><input data-w="eta" value="${esc(site.maintenanceEta || "")}" placeholder="30 menit"></div>
-      <button class="btn btn-primary btn-block" data-save-site><i class="fa-solid fa-floppy-disk"></i> Simpan</button>`;
-
+    const info = { open: { label: "ONLINE", color: "#4ade80", icon: "fa-circle-check" }, maintenance: { label: "MAINT", color: "#fbbf24", icon: "fa-screwdriver-wrench" }, update: { label: "UPDATE", color: "#6c7cff", icon: "fa-rocket" } }[mode] || { label: "ONLINE", color: "#4ade80", icon: "fa-circle-check" };
+    content.innerHTML = `<div class="ad-banner" style="background:${info.color}15;border-color:${info.color}40;color:${info.color}"><i class="fa-solid ${info.icon}"></i> Status: <b style="margin-left:4px">${info.label}</b></div><div class="ad-mode"><button class="btn ${mode === 'open' ? 'btn-primary' : 'btn-ghost'}" data-mode="open">Open</button><button class="btn ${mode === 'maintenance' ? 'btn-wa' : 'btn-ghost'}" data-mode="maintenance">Maint</button><button class="btn ${mode === 'update' ? 'btn-primary' : 'btn-ghost'}" data-mode="update">Update</button></div><div class="ad-field"><label>Pesan</label><textarea data-w="msg" rows="3">${esc(site.maintenanceMessage || "")}</textarea></div><div class="ad-field"><label>ETA</label><input data-w="eta" value="${esc(site.maintenanceEta || "")}" placeholder="30 menit"></div><button class="btn btn-primary btn-block" data-save-site>Simpan</button>`;
     content.querySelectorAll("[data-mode]").forEach(b => b.onclick = async () => {
       getCloudData().site.mode = b.dataset.mode;
       await persistCloud();
@@ -615,56 +613,48 @@
       toast("Mode: " + b.dataset.mode.toUpperCase(), "success");
       render();
     });
-
     content.querySelector("[data-save-site]").onclick = async (e) => {
-      getCloudData().site.maintenanceMessage = content.querySelector("[data-w='msg']").value.trim() || "Website lagi diperbaiki.";
+      getCloudData().site.maintenanceMessage = content.querySelector("[data-w='msg']").value.trim();
       getCloudData().site.maintenanceEta = content.querySelector("[data-w='eta']").value.trim();
-      await saveBtn(e.target.closest("button"), '<i class="fa-solid fa-floppy-disk"></i> Simpan');
+      await saveBtn(e.target.closest("button"), "Simpan");
       if (window.checkMaintenance) window.checkMaintenance();
     };
+  }
+
+  async function renderHistory(content) {
+    content.innerHTML = `<div style="text-align:center;padding:20px"><i class="fa-solid fa-spinner fa-spin" style="color:var(--primary)"></i><p style="margin-top:10px;font-size:11.5px;color:var(--muted);font-family:var(--font-mono)">LOADING...</p></div>`;
+    const versions = await cloudVersions();
+    if (!versions.length) { content.innerHTML = `<div class="ad-empty">Belum ada versi.<br><small style="font-size:10.5px;color:var(--muted-2)">Versi otomatis tersimpan tiap klik Simpan.</small></div>`; return; }
+    content.innerHTML = `<div class="ad-label">Versi (${versions.length})</div>${versions.map(v => `<div class="ver-item"><div><b style="font-size:12px">${new Date(v.timestamp).toLocaleString("id-ID")}</b><br><small>${(v.size / 1024).toFixed(1)} KB</small></div><button class="btn btn-ghost" data-restore="${v.id}" style="padding:7px 12px;font-size:11px"><i class="fa-solid fa-rotate-left"></i> Restore</button></div>`).join("")}<p style="font-size:10.5px;color:var(--muted-2);margin-top:12px;font-family:var(--font-mono)">⚠️ Restore akan menimpa data saat ini.</p>`;
+    content.querySelectorAll("[data-restore]").forEach(b => b.onclick = async () => {
+      if (!confirm("Restore versi ini?")) return;
+      const data = await cloudRestore(b.dataset.restore);
+      if (data) { setCloudData(ensureStructure(data)); refreshMain(); render(); toast("Direstore.", "success"); }
+      else toast("Gagal.", "error");
+    });
   }
 
   function refreshMain() {
     if (window.refreshAll) window.refreshAll();
     if (window.applyAdminMode) window.applyAdminMode();
+    if (window.applyLogo) window.applyLogo();
   }
 
-  /* ==========================================================
-     HEADER ACTIONS (close, logout, sync, export)
-     ========================================================== */
   document.querySelector("[data-ad-act='close']").onclick = closeAdminPanel;
-
   document.querySelector("[data-ad-act='logout']").onclick = async () => {
-    if (!confirm("Logout admin?\n\nSetelah logout, lo harus login ulang pakai username & password.")) return;
-
-    // 1. Clear session (localStorage + sessionStorage) & set IS_ADMIN = false
+    if (!confirm("Logout admin?")) return;
     if (window.clearSession) window.clearSession();
-
-    // 2. Reset field admin di cloud biar bersih (opsional, gak ngefek ke auth)
-    const data = getCloudData();
-    if (data?.admin) {
-      data.admin.claimed = false;
-      data.admin.ownerId = null;
-      data.admin.claimedAt = null;
-      await persistCloud();
-    }
-
-    // 3. Update UI (hide tombol admin)
     if (window.applyAdminMode) window.applyAdminMode();
-
     closeAdminPanel();
     toast("Logout berhasil.", "success");
   };
-
   document.querySelector("[data-ad-act='sync']").onclick = async () => {
     const d = await cloudLoad();
     if (!d) { toast("Gagal sync.", "error"); return; }
     setCloudData(ensureStructure(d));
-    refreshMain();
-    render();
+    refreshMain(); render();
     toast("Synced.", "success");
   };
-
   document.querySelector("[data-ad-act='export']").onclick = () => {
     const blob = new Blob([JSON.stringify(getCloudData(), null, 2)], { type: "application/json" });
     const a = document.createElement("a");
