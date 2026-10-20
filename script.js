@@ -1,4 +1,4 @@
-/* MSI ASTRA v8.0 - Core Script */
+/* MSI ASTRA v8.1 - Core Script */
 const CONFIG = {
   api: { baseUrl: "https://msi-astra-worker.muhammadbaimab.workers.dev" },
   admin: { username: "wthf_b6", password: "4_rXEgVV5!_t8cq" }
@@ -18,8 +18,21 @@ const esc = (s = "") => String(s).replace(/[&<>"']/g, x => ({ "&": "&amp;", "<":
 const DEFAULT_DATA = {
   preferences: { appName: "MSI ASTRA", appSubtitle: "WEBVIEW", logo: "", heroBadge: "Online", heroRotate: ["Halo"], heroSubtitle: "", contact: {}, developer: {} },
   themes: { active: "t1", t1: { name: "Dark", primary: "#ffffff", secondary: "#a1a1aa" } },
-  sidebar: [], navbar: [], pages: {}, services: [], products: [], payment: [], tools: [], site: { mode: "open" }, changelog: []
+  sidebar: [], navbar: [], pages: {}, services: [], products: [], payment: [], tools: [], users: [], site: { mode: "open" }, changelog: []
 };
+
+/* --- CLOCK --- */
+function startClock() {
+  const tEl = $("#clockTime"), sEl = $("#clockSec");
+  if (!tEl || !sEl) return;
+  const tick = () => {
+    const d = new Date();
+    tEl.textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+    sEl.textContent = ":" + String(d.getSeconds()).padStart(2, "0");
+  };
+  tick();
+  setInterval(tick, 1000);
+}
 
 /* --- CLOUD & API --- */
 async function cloudLoad() {
@@ -46,7 +59,7 @@ async function persistCloud() { return CLOUD_DATA ? await cloudSave(CLOUD_DATA) 
 
 function ensureStructure(d) {
   if (!d) d = {};
-  ["preferences","themes","sidebar","navbar","pages","services","products","payment","tools","changelog"].forEach(k => {
+  ["preferences","themes","sidebar","navbar","pages","services","products","payment","tools","users","changelog"].forEach(k => {
     if (!d[k]) d[k] = DEFAULT_DATA[k];
   });
   if (!d.site) d.site = DEFAULT_DATA.site;
@@ -233,6 +246,8 @@ function checkIsAdmin() {
   try {
     const s = JSON.parse(localStorage.getItem(SESSION_KEY));
     if (s && s.user === CONFIG.admin.username && Date.now() < s.exp) IS_ADMIN = true;
+    // Support login dari user management Gist
+    if(s && CLOUD_DATA?.users?.some(u => u.username === s.user)) IS_ADMIN = true;
   } catch(e) { IS_ADMIN = false; }
   return IS_ADMIN;
 }
@@ -246,8 +261,8 @@ async function openAdminPanel() {
   const fp = $("#fullpage"), title = $("#fullpageTitle"), subtitle = $("#fullpageSubtitle"), body = $("#fullpageBody");
   if (!fp || !title || !body) return;
   
-  title.textContent = "ADMIN WORKSPACE";
-  if(subtitle) subtitle.textContent = "MSI ASTRA · DEVELOPER CONTROL CENTER";
+  title.textContent = "ADMIN CONTROL CENTER";
+  if(subtitle) subtitle.textContent = "MSI ASTRA · SERVER MONITORING";
   
   body.innerHTML = `<div style="padding:60px 20px;text-align:center"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--primary)"></i></div>`;
   fp.classList.add("show");
@@ -302,6 +317,8 @@ window.closeAdminPanel = closeFullPage;
 window.clearSession = () => { localStorage.removeItem(SESSION_KEY); IS_ADMIN = false; applyAdminMode(); };
 
 (async function init() {
+  startClock(); // JAM JALAN
+  
   const data = await cloudLoad();
   CLOUD_DATA = ensureStructure(data);
   
@@ -360,7 +377,12 @@ window.clearSession = () => { localStorage.removeItem(SESSION_KEY); IS_ADMIN = f
   $("#adminLoginSubmit").onclick = async () => {
     const u = $("#adminUsernameInput").value;
     const p = $("#adminKeyInput").value;
-    if (u === CONFIG.admin.username && p === CONFIG.admin.password) {
+    
+    // Cek Config Utama ATAU User Management
+    const isMainAdmin = (u === CONFIG.admin.username && p === CONFIG.admin.password);
+    const isUserAdmin = CLOUD_DATA?.users?.some(x => x.username === u && x.password === p);
+
+    if (isMainAdmin || isUserAdmin) {
       localStorage.setItem(SESSION_KEY, JSON.stringify({ user: u, exp: Date.now() + 30*86400000 }));
       IS_ADMIN = true;
       closeAdminLogin();
