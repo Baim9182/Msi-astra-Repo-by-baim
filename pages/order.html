@@ -1,5 +1,4 @@
 <style>
-/* ═══ DEVELOPER TOOLS STYLES ═══ */
 .dev-tools-wrap { max-width: 1000px; margin: 0 auto; padding-bottom: 60px; animation: fadeIn .4s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -51,41 +50,24 @@
 .api-output-copy { font-size: 10px; background: var(--surface-3); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; cursor: pointer; color: var(--text); }
 .api-pre { white-space: pre-wrap; word-break: break-all; font-family: var(--font-mono); font-size: 11px; line-height: 1.6; color: #4ade80; max-height: 250px; overflow-y: auto; background: #0a0a0c; padding: 16px; border-radius: 12px; border: 1px solid var(--border); margin: 0; }
 .api-error { color: #f87171; font-size: 12px; text-align: center; font-weight: 600; padding: 16px; background: rgba(239,68,68,0.1); border-radius: 12px; border: 1px solid rgba(239,68,68,0.2); }
+.api-media { width: 100%; border-radius: 12px; margin-bottom: 10px; background: #000; }
 </style>
 
 <div class="dev-tools-wrap">
-  <!-- Banner -->
   <div class="dev-banner">
     <div class="dev-banner-title"><i class="fa-solid fa-terminal"></i> Developer Tools</div>
-    <div class="dev-banner-desc">Kumpulan API utility dan automasi untuk kebutuhan digital Anda. Semua parameter disesuaikan dengan dokumentasi endpoint masing-masing.</div>
+    <div class="dev-banner-desc">Kumpulan API utility dan automasi untuk kebutuhan digital Anda. Sistem secara otomatis mendeteksi parameter GET/POST dan menampilkan media (jika ada).</div>
   </div>
 
-  <!-- Device Info -->
   <div class="dev-sysinfo">
-    <div class="sys-card">
-      <div class="sys-icon"><i class="fa-solid fa-battery-half" id="battIcon"></i></div>
-      <div class="sys-info"><b id="battLevel">--%</b><small id="battStatus">Checking</small></div>
-    </div>
-    <div class="sys-card">
-      <div class="sys-icon"><i class="fa-solid fa-memory"></i></div>
-      <div class="sys-info"><b id="ramInfo">-- GB</b><small>RAM / Device Mem</small></div>
-    </div>
-    <div class="sys-card">
-      <div class="sys-icon"><i class="fa-solid fa-wifi"></i></div>
-      <div class="sys-info"><b id="netInfo">--</b><small>Koneksi</small></div>
-    </div>
-    <div class="sys-card">
-      <div class="sys-icon"><i class="fa-solid fa-laptop"></i></div>
-      <div class="sys-info"><b id="osInfo">--</b><small>Platform OS</small></div>
-    </div>
+    <div class="sys-card"><div class="sys-icon"><i class="fa-solid fa-battery-half" id="battIcon"></i></div><div class="sys-info"><b id="battLevel">--%</b><small id="battStatus">Checking</small></div></div>
+    <div class="sys-card"><div class="sys-icon"><i class="fa-solid fa-memory"></i></div><div class="sys-info"><b id="ramInfo">-- GB</b><small>RAM / Mem</small></div></div>
+    <div class="sys-card"><div class="sys-icon"><i class="fa-solid fa-wifi"></i></div><div class="sys-info"><b id="netInfo">--</b><small>Network</small></div></div>
+    <div class="sys-card"><div class="sys-icon"><i class="fa-solid fa-laptop"></i></div><div class="sys-info"><b id="osInfo">--</b><small>Platform</small></div></div>
   </div>
 
-  <!-- Toolbar -->
   <div class="tool-toolbar">
-    <div class="tool-search">
-      <i class="fa-solid fa-magnifying-glass"></i>
-      <input type="text" id="toolSearchInput" placeholder="Cari tools (contoh: TikTok, QR)...">
-    </div>
+    <div class="tool-search"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="toolSearchInput" placeholder="Cari API Tools..."></div>
     <div class="tool-filters" id="toolFilters">
       <button class="tool-filter-btn active" data-cat="all">Semua</button>
       <button class="tool-filter-btn" data-cat="downloader">Downloader</button>
@@ -96,31 +78,25 @@
     </div>
   </div>
 
-  <!-- Grid -->
   <div class="tool-grid" id="toolsGrid"></div>
 </div>
 
-<!-- Tool Modal -->
 <div class="modal" id="toolModal">
   <div class="modal-box" style="max-width: 520px; padding: 24px;">
     <button class="modal-close" onclick="document.getElementById('toolModal').classList.remove('show')"><i class="fa-solid fa-xmark"></i></button>
     
     <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border);">
       <div id="tmIcon" style="width:50px; height:50px; border-radius:14px; background:var(--surface-3); display:grid; place-items:center; font-size:24px; flex-shrink:0;"></div>
-      <div>
-        <h3 id="tmTitle" style="margin:0; font-size:18px; font-weight:800; color:var(--text);">Tool Name</h3>
-        <p id="tmDesc" style="margin:4px 0 0; font-size:12px; color:var(--muted);">Description</p>
-      </div>
+      <div><h3 id="tmTitle" style="margin:0; font-size:18px; font-weight:800; color:var(--text);">Tool Name</h3><p id="tmDesc" style="margin:4px 0 0; font-size:12px; color:var(--muted);">Description</p></div>
     </div>
     
     <div id="tmFields" style="display:flex; flex-direction:column; gap:16px;"></div>
-    
     <button class="btn btn-primary btn-block" id="tmRun" style="margin-top:24px; padding:14px; font-size:14px; border-radius:12px; font-weight:700;"><i class="fa-solid fa-play"></i> Eksekusi API</button>
     
     <div class="api-output" id="tmResultBox">
       <div class="api-output-header">
-        <div class="api-output-title"><i class="fa-solid fa-code"></i> Response JSON</div>
-        <button class="api-output-copy" id="tmCopy">Copy</button>
+        <div class="api-output-title"><i class="fa-solid fa-code"></i> Response Result</div>
+        <button class="api-output-copy" id="tmCopy">Copy Raw</button>
       </div>
       <div id="tmResult"></div>
     </div>
@@ -131,51 +107,34 @@
 (function(){
   const $ = window.$, getData = window.getCloudData, toast = window.toast;
   
-  /* --- 1. DEVICE INFO LOGIC --- */
+  /* 1. Device Info */
   async function loadDeviceInfo() {
     try {
       if (navigator.getBattery) {
         const b = await navigator.getBattery();
         $("#battLevel").textContent = Math.round(b.level * 100) + '%';
         $("#battStatus").textContent = b.charging ? 'Charging' : 'Discharging';
-        if(b.level < 0.2 && !b.charging) {
-          $("#battLevel").style.color = '#f87171';
-          $("#battIcon").style.color = '#f87171';
-        }
+        if(b.level < 0.2 && !b.charging) { $("#battLevel").style.color = '#f87171'; $("#battIcon").style.color = '#f87171'; }
       }
     } catch(e) { $("#battStatus").textContent = 'N/A'; }
-    
     if (navigator.deviceMemory) $("#ramInfo").textContent = navigator.deviceMemory + ' GB';
-    else $("#ramInfo").textContent = 'Unknown';
-    
     if (navigator.connection) $("#netInfo").textContent = navigator.connection.effectiveType.toUpperCase();
-    else $("#netInfo").textContent = 'Unknown';
-    
     const ua = navigator.userAgent;
     let os = "Unknown";
-    if (ua.indexOf("Win") != -1) os = "Windows";
-    else if (ua.indexOf("Mac") != -1) os = "MacOS";
-    else if (ua.indexOf("Linux") != -1) os = "Linux";
-    else if (ua.indexOf("Android") != -1) os = "Android";
-    else if (ua.indexOf("like Mac") != -1) os = "iOS";
+    if (ua.indexOf("Android") != -1) os = "Android"; else if (ua.indexOf("like Mac") != -1) os = "iOS"; else if (ua.indexOf("Win") != -1) os = "Windows";
     $("#osInfo").textContent = os;
   }
   loadDeviceInfo();
 
-  /* --- 2. TOOLS LOGIC --- */
+  /* 2. Tools Logic */
   const allTools = (getData()?.tools || []).filter(t => t.enabled !== false);
-  let currentCat = 'all';
-  let searchQuery = '';
+  let currentCat = 'all', searchQuery = '';
 
   function renderTools() {
     const grid = $("#toolsGrid");
     let filtered = allTools;
-    
     if (currentCat !== 'all') filtered = filtered.filter(t => t.cat === currentCat);
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(t => t.name.toLowerCase().includes(q) || (t.desc||"").toLowerCase().includes(q));
-    }
+    if (searchQuery) { const q = searchQuery.toLowerCase(); filtered = filtered.filter(t => t.name.toLowerCase().includes(q) || (t.desc||"").toLowerCase().includes(q)); }
 
     if (!filtered.length) {
       grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);"><i class="fa-solid fa-folder-open fa-2x" style="margin-bottom:10px;opacity:.5"></i><br>Tools tidak ditemukan.</div>';
@@ -200,7 +159,6 @@
     $("#tmIcon").innerHTML = `<i class="${t.icon}" style="color:${t.color||'var(--primary)'}"></i>`;
     $("#tmResultBox").classList.remove("show");
     
-    // Render Inputs
     $("#tmFields").innerHTML = (t.params||[]).map(p => `
       <div class="field">
         <label>${p.label || p.key} ${p.required ? '<span style="color:#f87171">*</span>' : ''}</label>
@@ -208,9 +166,9 @@
       </div>
     `).join("");
 
-    // Eksekusi API
     $("#tmRun").onclick = async () => {
       const url = new URL(t.api);
+      const params = {};
       let valid = true;
       
       (t.params||[]).forEach(p => {
@@ -218,8 +176,7 @@
         if(el) {
           if(p.required !== false && !el.value.trim()) { valid = false; el.style.borderColor = '#f87171'; }
           else { el.style.borderColor = 'var(--border)'; }
-          
-          if(el.value.trim()) url.searchParams.set(p.key, el.value.trim());
+          if(el.value.trim()) params[p.key] = el.value.trim();
         }
       });
       
@@ -231,10 +188,41 @@
       $("#tmResult").innerHTML = `<div style="text-align:center; padding:20px; color:var(--muted); font-family:var(--font-mono); font-size:12px;"><i class="fa-solid fa-circle-notch fa-spin fa-2x" style="margin-bottom:10px;"></i><br>Menunggu Response Server...</div>`;
       
       try {
-        const r = await fetch(url.toString());
+        let fetchUrl = t.api;
+        let fetchOpts = { method: 'GET' };
+
+        // Deteksi apakah API menggunakan GET atau POST berdasarkan konfigurasi / default GET
+        if (t.method && t.method.toUpperCase() === 'POST') {
+            fetchOpts.method = 'POST';
+            // Asumsi default POST menggunakan JSON, atau FormData jika di-set
+            if (t.bodyType === 'formdata') {
+                fetchOpts.body = new FormData();
+                Object.keys(params).forEach(k => fetchOpts.body.append(k, params[k]));
+            } else {
+                fetchOpts.headers = { 'Content-Type': 'application/json' };
+                fetchOpts.body = JSON.stringify(params);
+            }
+        } else {
+            Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
+            fetchUrl = url.toString();
+        }
+
+        const r = await fetch(fetchUrl, fetchOpts);
         const json = await r.json();
         const jsonStr = JSON.stringify(json, null, 2);
-        $("#tmResult").innerHTML = `<pre class="api-pre">${jsonStr}</pre>`;
+        
+        // Coba deteksi jika API mengembalikan URL gambar/video untuk ditampilkan
+        let mediaHtml = "";
+        const strData = JSON.stringify(json);
+        const mediaUrlMatch = strData.match(/https?:\/\/[^"\s]+\.(jpg|jpeg|png|gif|mp4|webp)/i);
+        
+        if(mediaUrlMatch) {
+            const mediaUrl = mediaUrlMatch[0];
+            if(mediaUrl.match(/\.(mp4)/i)) mediaHtml = `<video src="${mediaUrl}" class="api-media" controls></video>`;
+            else mediaHtml = `<img src="${mediaUrl}" class="api-media" alt="Result">`;
+        }
+
+        $("#tmResult").innerHTML = `${mediaHtml}<pre class="api-pre">${jsonStr}</pre>`;
         $("#tmCopy").onclick = () => { navigator.clipboard.writeText(jsonStr); toast("JSON Disalin", "success"); };
       } catch(e) {
         $("#tmResult").innerHTML = `<div class="api-error"><i class="fa-solid fa-triangle-exclamation"></i> Gagal: ${e.message}</div>`;
@@ -246,7 +234,6 @@
     modal.classList.add("show");
   }
 
-  // Event Listeners Toolbar
   $("#toolSearchInput").addEventListener("input", e => { searchQuery = e.target.value; renderTools(); });
   $("#toolFilters").querySelectorAll(".tool-filter-btn").forEach(b => {
     b.onclick = () => {
