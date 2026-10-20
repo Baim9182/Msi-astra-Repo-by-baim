@@ -1,34 +1,62 @@
 <style>
-.ad-container { max-width: 800px; margin: 0 auto; padding-bottom: 40px; }
-.ad-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.ad-title { font-size: 18px; font-weight: 800; color: var(--primary); }
-.ad-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border); scrollbar-width: none; }
+/* ═══ DEVELOPER ADMIN DASHBOARD STYLES ═══ */
+.ad-wrap { max-width: 1000px; margin: 0 auto; padding-bottom: 60px; animation: fadeIn .4s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.ad-header { position: sticky; top: 0; z-index: 10; background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); padding: 16px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.ad-title { font-family: var(--font-mono); font-size: 18px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
+.ad-logout { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; background: rgba(239,68,68,0.1); color: #f87171; font-size: 11px; font-weight: 700; border: 1px solid rgba(239,68,68,0.2); cursor: pointer; transition: .2s; font-family: var(--font-mono); }
+.ad-logout:hover { background: rgba(239,68,68,0.2); }
+
+.ad-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--border); scrollbar-width: none; }
 .ad-tabs::-webkit-scrollbar { display: none; }
-.ad-tabs button { flex-shrink: 0; padding: 10px 16px; border-radius: 12px; font-size: 12px; font-weight: 700; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: .2s; }
-.ad-tabs button.active { background: var(--primary); color: #000; border-color: var(--primary); }
-.ad-list-btn { width: 100%; margin-bottom: 16px; padding: 14px; font-size: 13px; }
-.ad-item { padding: 16px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-.ad-item-info b { font-size: 13.5px; display: block; margin-bottom: 4px; color: var(--text); }
-.ad-item-info small { font-size: 11px; color: var(--muted); display: block; }
+.ad-tabs button { flex-shrink: 0; padding: 10px 16px; border-radius: 8px; font-family: var(--font-mono); font-size: 12px; font-weight: 700; background: transparent; border: 1px solid transparent; color: var(--muted); cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 8px; }
+.ad-tabs button:hover { background: var(--surface-3); color: var(--text); }
+.ad-tabs button.active { background: var(--primary-soft); color: var(--primary); border-color: var(--border-strong); }
+
+/* Dashboard Stats */
+.ad-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
+@media(min-width: 768px) { .ad-grid { grid-template-columns: repeat(4, 1fr); } }
+.ad-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 16px; padding: 20px; position: relative; overflow: hidden; transition: .2s; }
+.ad-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+.ad-card-icon { font-size: 22px; color: var(--primary); margin-bottom: 16px; opacity: 0.8; }
+.ad-card-num { font-size: 32px; font-weight: 800; font-family: var(--font-mono); color: var(--text); line-height: 1; margin-bottom: 8px; }
+.ad-card-lbl { font-size: 11px; font-family: var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+.ad-card-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: var(--primary); width: 100%; opacity: 0.6; }
+
+/* Lists */
+.ad-list-btn { width: 100%; margin-bottom: 20px; padding: 14px; font-size: 13px; border-radius: 12px; background: var(--primary); color: #000; font-weight: 800; font-family: var(--font-mono); display: flex; justify-content: center; align-items: center; gap: 8px; cursor: pointer; transition: .2s; box-shadow: 0 4px 14px var(--primary-glow); border: none; }
+.ad-list-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--primary-glow); }
+.ad-item { padding: 16px 20px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; transition: .2s; }
+.ad-item:hover { border-color: var(--border-strong); background: var(--surface-3); }
+.ad-item-info b { font-size: 14px; display: block; margin-bottom: 4px; color: var(--text); font-weight: 700; }
+.ad-item-info small { font-size: 11.5px; color: var(--muted); display: block; font-family: var(--font-mono); }
 .ad-item-btns { display: flex; gap: 6px; flex-shrink: 0; }
-.ad-item-btns button { width: 36px; height: 36px; border-radius: 10px; background: var(--surface-3); border: 1px solid var(--border); color: var(--primary); cursor: pointer; display: grid; place-items: center; font-size: 13px; }
-.ad-item-btns button.del { color: #f87171; }
-.ad-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
-.ad-field label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
-.ad-field input, .ad-field textarea, .ad-field select { width: 100%; padding: 14px; border-radius: 12px; background: var(--surface-3); border: 1px solid var(--border); color: var(--text); font-family: inherit; font-size: 13px; outline: none; transition: .2s; }
-.ad-field input:focus, .ad-field textarea:focus { border-color: var(--primary); }
-.ad-form-actions { display: flex; gap: 10px; margin-top: 24px; }
-.ad-dash { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-.ad-stat { padding: 20px 16px; border-radius: 16px; border: 1px solid var(--border); background: var(--surface-2); text-align: center; }
-.ad-stat .num { font-size: 28px; font-weight: 800; font-family: var(--font-mono); color: var(--primary); line-height: 1; margin-bottom: 8px; }
-.ad-stat .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 600; }
-.ad-banner { padding: 16px; border-radius: 14px; background: rgba(96,165,250,.1); border: 1px solid rgba(96,165,250,.2); color: #60a5fa; font-size: 12px; margin-bottom: 20px; text-align: center; line-height: 1.5; }
+.ad-item-btns button { width: 34px; height: 34px; border-radius: 8px; background: var(--surface-3); border: 1px solid var(--border); color: var(--muted); cursor: pointer; display: grid; place-items: center; font-size: 13px; transition: .2s; }
+.ad-item-btns button:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-soft); }
+.ad-item-btns button.del:hover { color: #f87171; border-color: #f87171; background: rgba(239,68,68,0.1); }
+
+/* Forms */
+.ad-form { background: var(--surface-2); padding: 24px; border-radius: 16px; border: 1px solid var(--border); animation: fadeIn .3s; }
+.ad-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+.ad-field label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-family: var(--font-mono); }
+.ad-field input, .ad-field textarea, .ad-field select { width: 100%; padding: 14px 16px; border-radius: 10px; background: var(--surface-3); border: 1px solid var(--border); color: var(--text); font-family: var(--font-mono); font-size: 13px; outline: none; transition: .2s; }
+.ad-field input:focus, .ad-field textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.ad-field textarea { resize: vertical; min-height: 80px; }
+.ad-form-actions { display: flex; gap: 12px; margin-top: 24px; }
+.ad-form-actions button { padding: 14px; border-radius: 10px; font-weight: 800; font-size: 13px; cursor: pointer; border: none; transition: .2s; font-family: var(--font-mono); }
+.btn-cancel { flex: 1; background: var(--surface-3); color: var(--text); border: 1px solid var(--border) !important; }
+.btn-cancel:hover { background: var(--surface-2); }
+.btn-save { flex: 2; background: var(--primary); color: #000; box-shadow: 0 4px 12px var(--primary-glow); }
+.btn-save:hover { transform: translateY(-2px); }
 </style>
 
-<div class="ad-container">
+<div class="ad-wrap">
   <div class="ad-header">
-    <div class="ad-title"><i class="fa-solid fa-sliders"></i> Manajemen Website</div>
-    <button class="btn btn-ghost" onclick="window.clearSession(); window.closeAdminPanel();" style="padding: 8px 14px; font-size: 11px;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+    <div class="ad-title"><i class="fa-solid fa-server"></i> System Admin</div>
+    <button class="ad-logout" onclick="window.clearSession(); window.closeAdminPanel();">
+      <i class="fa-solid fa-power-off"></i> Disconnect
+    </button>
   </div>
   
   <div class="ad-tabs" id="adTabs"></div>
@@ -40,19 +68,25 @@
   const $ = window.$, esc = window.esc, getData = window.getCloudData, save = window.persistCloud, toast = window.toast;
   
   const TABS = { 
-    dashboard: "📊 Dashboard", 
-    services: "🛠 Jasa", 
-    products: "📦 Produk", 
-    tools: "🔧 Tools", 
-    payment: "💳 Payment",
-    sidebar: "📑 Sidebar",
-    prefs: "⚙️ Pengaturan" 
+    dashboard: { label: "Dashboard", icon: "fa-chart-line" },
+    services: { label: "Layanan", icon: "fa-cogs" },
+    products: { label: "Produk", icon: "fa-cube" },
+    tools: { label: "Tools API", icon: "fa-terminal" },
+    payment: { label: "Payment", icon: "fa-credit-card" },
+    sidebar: { label: "Navigasi", icon: "fa-list-ul" },
+    prefs: { label: "Konfigurasi", icon: "fa-sliders-h" }
   };
+  
   let curTab = "dashboard", editing = null;
 
   function render() {
     const tabs = $("#adTabs");
-    tabs.innerHTML = Object.entries(TABS).map(([k,v]) => `<button data-tab="${k}" class="${k===curTab?'active':''}">${v}</button>`).join("");
+    tabs.innerHTML = Object.entries(TABS).map(([k,v]) => `
+      <button data-tab="${k}" class="${k===curTab?'active':''}">
+        <i class="fa-solid ${v.icon}"></i> ${v.label}
+      </button>
+    `).join("");
+    
     tabs.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { curTab = b.dataset.tab; editing = null; render(); });
     
     if (editing) return renderForm();
@@ -64,24 +98,52 @@
   function renderDash() {
     const d = getData();
     const activeTools = (d.tools || []).filter(t => t.enabled !== false).length;
+    
     $("#adContent").innerHTML = `
-      <div class="ad-banner">
-        <b>Selamat datang, Admin!</b><br>Semua perubahan di sini langsung tersimpan ke database Gist secara otomatis.
+      <div class="ad-grid">
+        <div class="ad-card">
+          <i class="fa-solid fa-cogs ad-card-icon"></i>
+          <div class="ad-card-num">${(d.services||[]).length}</div>
+          <div class="ad-card-lbl">Layanan Jasa</div>
+          <div class="ad-card-bar"></div>
+        </div>
+        <div class="ad-card">
+          <i class="fa-solid fa-cube ad-card-icon"></i>
+          <div class="ad-card-num">${(d.products||[]).length}</div>
+          <div class="ad-card-lbl">Produk Digital</div>
+          <div class="ad-card-bar" style="background:#4ade80"></div>
+        </div>
+        <div class="ad-card">
+          <i class="fa-solid fa-terminal ad-card-icon"></i>
+          <div class="ad-card-num">${activeTools}</div>
+          <div class="ad-card-lbl">Tools Aktif</div>
+          <div class="ad-card-bar" style="background:#fbbf24"></div>
+        </div>
+        <div class="ad-card">
+          <i class="fa-solid fa-list-ul ad-card-icon"></i>
+          <div class="ad-card-num">${(d.sidebar||[]).length}</div>
+          <div class="ad-card-lbl">Menu Sidebar</div>
+          <div class="ad-card-bar" style="background:#a78bfa"></div>
+        </div>
       </div>
-      <div class="ad-dash">
-        <div class="ad-stat"><div class="num">${(d.services||[]).length}</div><div class="lbl">Layanan Jasa</div></div>
-        <div class="ad-stat"><div class="num">${(d.products||[]).length}</div><div class="lbl">Produk Digital</div></div>
-        <div class="ad-stat"><div class="num">${activeTools}</div><div class="lbl">Tools Aktif</div></div>
-        <div class="ad-stat"><div class="num">${(d.sidebar||[]).length}</div><div class="lbl">Menu Navigasi</div></div>
+      
+      <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:16px; padding:20px;">
+        <div style="font-size:12px; font-family:var(--font-mono); color:var(--muted); display:flex; justify-content:space-between; margin-bottom:12px;">
+          <span>SYSTEM STATUS</span>
+          <span style="color:#4ade80;"><i class="fa-solid fa-circle" style="font-size:8px; margin-right:4px;"></i> ONLINE</span>
+        </div>
+        <div style="font-size:12px; font-family:var(--font-mono); color:var(--muted); display:flex; justify-content:space-between;">
+          <span>DATABASE CONNECTION</span>
+          <span style="color:#4ade80;">GIST CONNECTED</span>
+        </div>
       </div>
-      <p style="font-size:12px;color:var(--muted);text-align:center">Gunakan tab di atas untuk mulai mengedit.</p>
     `;
   }
 
   function renderList() {
     const list = getData()[curTab] || [];
     $("#adContent").innerHTML = `
-      <button class="btn btn-primary ad-list-btn" data-add><i class="fa-solid fa-plus"></i> Tambah Data Baru</button>
+      <button class="ad-list-btn" data-add><i class="fa-solid fa-plus"></i> Tambah Data Baru</button>
       <div>
         ${list.map((it,i) => `
         <div class="ad-item">
@@ -90,11 +152,11 @@
             <small>${esc(it.price||it.cat||it.desc||it.value||"")}</small>
           </div>
           <div class="ad-item-btns">
-            ${curTab === 'tools' ? `<button data-toggle="${i}" title="Aktif/Nonaktif"><i class="fa-solid ${it.enabled !== false ? 'fa-toggle-on' : 'fa-toggle-off'}"></i></button>` : ''}
+            ${curTab === 'tools' ? `<button data-toggle="${i}" title="Toggle Status"><i class="fa-solid ${it.enabled !== false ? 'fa-toggle-on' : 'fa-toggle-off'}"></i></button>` : ''}
             <button data-edit="${i}" title="Edit"><i class="fa-solid fa-pen"></i></button>
             <button class="del" data-del="${i}" title="Hapus"><i class="fa-solid fa-trash"></i></button>
           </div>
-        </div>`).join("") || '<div style="text-align:center;padding:30px;color:var(--muted);border:1px dashed var(--border);border-radius:12px">Belum ada data.</div>'}
+        </div>`).join("") || '<div style="text-align:center; padding:40px; color:var(--muted); border:1px dashed var(--border); border-radius:12px; font-family:var(--font-mono); font-size:12px;">NO DATA FOUND</div>'}
       </div>`;
       
     $("#adContent").querySelector("[data-add]").onclick = () => { editing = { idx: -1 }; render(); };
@@ -108,7 +170,7 @@
     $("#adContent").querySelectorAll("[data-edit]").forEach(b => b.onclick = () => { editing = { idx: +b.dataset.edit }; render(); });
     
     $("#adContent").querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
-      if(!confirm("Yakin ingin menghapus data ini?")) return;
+      if(!confirm("Hapus data ini secara permanen?")) return;
       getData()[curTab].splice(+b.dataset.del, 1);
       await save(); window.refreshAll(); render(); toast("Data dihapus", "error");
     });
@@ -119,24 +181,26 @@
     const data = isNew ? {} : getData()[curTab][editing.idx];
     
     let fields = `
-      <div class="ad-field"><label>Nama / Label</label><input id="fName" value="${esc(data.name||data.label||"")}" placeholder="Masukkan nama..."></div>
+      <div class="ad-field"><label>Nama / Label</label><input id="fName" value="${esc(data.name||data.label||"")}" placeholder="..."></div>
       <div class="ad-field"><label>Harga / Target Link / Kategori</label><input id="fPrice" value="${esc(data.price||data.target||data.cat||"")}" placeholder="..."></div>
-      <div class="ad-field"><label>Deskripsi / Icon Class</label><textarea id="fDesc" rows="3" placeholder="...">${esc(data.description||data.desc||data.icon||"")}</textarea></div>
+      <div class="ad-field"><label>Deskripsi / Icon Class (FontAwesome)</label><textarea id="fDesc" rows="2" placeholder="fa-solid fa-box">${esc(data.description||data.desc||data.icon||"")}</textarea></div>
     `;
 
     if (curTab === "tools") {
-      fields += `<div class="ad-field"><label>API URL Endpoint</label><input id="fApi" value="${esc(data.api||"")}" placeholder="https://..."></div>`;
+      fields += `<div class="ad-field"><label>API Endpoint URL</label><input id="fApi" value="${esc(data.api||"")}" placeholder="https://..."></div>`;
     }
 
     $("#adContent").innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
-        <button class="btn btn-ghost" onclick="document.querySelector('[data-tab=\\'${curTab}\\']').click()" style="padding:8px 12px"><i class="fa-solid fa-arrow-left"></i></button>
-        <div style="font-size:16px;font-weight:700">${isNew?'Tambah':'Edit'} ${TABS[curTab]}</div>
-      </div>
-      ${fields}
-      <div class="ad-form-actions">
-        <button class="btn btn-ghost" id="fCancel" style="flex:1">Batal</button>
-        <button class="btn btn-primary" id="fSave" style="flex:2">Simpan Perubahan</button>
+      <div class="ad-form">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px; border-bottom:1px solid var(--border); padding-bottom:16px;">
+          <button class="ad-item-btns" onclick="document.querySelector('[data-tab=\\'${curTab}\\']').click()" style="background:none; border:none; width:auto; padding:0; color:var(--muted); cursor:pointer;"><i class="fa-solid fa-arrow-left fa-lg"></i></button>
+          <div style="font-size:16px; font-weight:800; color:var(--text); font-family:var(--font-mono);">${isNew?'CREATE':'EDIT'} ${TABS[curTab].label.toUpperCase()}</div>
+        </div>
+        ${fields}
+        <div class="ad-form-actions">
+          <button class="btn-cancel" id="fCancel">Batal</button>
+          <button class="btn-save" id="fSave"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
+        </div>
       </div>`;
     
     $("#fCancel").onclick = () => { editing = null; render(); };
@@ -155,11 +219,12 @@
       if (isNew) getData()[curTab].push(obj);
       else getData()[curTab][editing.idx] = obj;
       
-      const btn = $("#fSave"); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+      const btn = $("#fSave"); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
       const ok = await save();
-      btn.disabled = false; btn.innerHTML = "Simpan Perubahan";
-      if (ok) { toast("Berhasil disimpan!", "success"); editing = null; window.refreshAll(); render(); }
-      else toast("Gagal menyimpan. Cek koneksi internet.", "error");
+      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan';
+      
+      if (ok) { toast("Saved successfully!", "success"); editing = null; window.refreshAll(); render(); }
+      else toast("Save failed. Check connection.", "error");
     };
   }
 
@@ -167,11 +232,13 @@
     const p = getData().preferences;
     const t = getData().themes?.t1 || getData().themes;
     $("#adContent").innerHTML = `
-      <div class="ad-field"><label>Nama Website (App Name)</label><input id="pName" value="${esc(p.appName)}"></div>
-      <div class="ad-field"><label>Subteks Hero</label><input id="pSub" value="${esc(p.heroSubtitle)}"></div>
-      <div class="ad-field"><label>Nomor WhatsApp (Link)</label><input id="pWa" value="${esc(p.contact?.whatsapp||"")}"></div>
-      <div class="ad-field"><label>Warna Tema Utama (Hex)</label><input id="pTema" value="${esc(t?.primary||"#ffffff")}"></div>
-      <button class="btn btn-primary btn-block" id="pSave" style="margin-top:20px">Simpan Pengaturan</button>`;
+      <div class="ad-form">
+        <div class="ad-field"><label>App Name</label><input id="pName" value="${esc(p.appName)}"></div>
+        <div class="ad-field"><label>Hero Subtitle</label><input id="pSub" value="${esc(p.heroSubtitle)}"></div>
+        <div class="ad-field"><label>WhatsApp Link</label><input id="pWa" value="${esc(p.contact?.whatsapp||"")}"></div>
+        <div class="ad-field"><label>Theme Color (Hex)</label><input id="pTema" value="${esc(t?.primary||"#ffffff")}"></div>
+        <button class="btn-save" id="pSave" style="width:100%; margin-top:10px;"><i class="fa-solid fa-floppy-disk"></i> Simpan Konfigurasi</button>
+      </div>`;
     
     $("#pSave").onclick = async () => {
       p.appName = $("#pName").value;
@@ -181,11 +248,12 @@
       if(getData().themes?.t1) getData().themes.t1.primary = $("#pTema").value;
       else if(getData().themes) getData().themes.primary = $("#pTema").value;
       
-      const btn = $("#pSave"); btn.innerHTML = "Menyimpan..."; btn.disabled = true;
+      const btn = $("#pSave"); btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...'; btn.disabled = true;
       const ok = await save();
-      btn.innerHTML = "Simpan Pengaturan"; btn.disabled = false;
-      if (ok) { toast("Pengaturan tersimpan", "success"); window.refreshAll(); }
-      else toast("Gagal", "error");
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Konfigurasi'; btn.disabled = false;
+      
+      if (ok) { toast("Configuration saved", "success"); window.refreshAll(); }
+      else toast("Failed to save", "error");
     };
   }
 
