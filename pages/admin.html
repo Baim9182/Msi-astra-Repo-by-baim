@@ -1,5 +1,5 @@
 <style>
-/* ═══ DEVELOPER ADMIN DASHBOARD STYLES ═══ */
+/* DEVELOPER UI STYLES */
 .ad-wrap { max-width: 1000px; margin: 0 auto; padding-bottom: 60px; animation: fadeIn .4s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -14,7 +14,7 @@
 .ad-tabs button:hover { background: var(--surface-3); color: var(--text); }
 .ad-tabs button.active { background: var(--primary-soft); color: var(--primary); border-color: var(--border-strong); }
 
-/* Dashboard Stats */
+/* Grid Dashboard */
 .ad-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
 @media(min-width: 768px) { .ad-grid { grid-template-columns: repeat(4, 1fr); } }
 .ad-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 16px; padding: 20px; position: relative; overflow: hidden; transition: .2s; }
@@ -24,7 +24,17 @@
 .ad-card-lbl { font-size: 11px; font-family: var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
 .ad-card-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: var(--primary); width: 100%; opacity: 0.6; }
 
-/* Lists */
+/* Monitoring Panel */
+.monitor-panel { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
+@media(min-width: 768px) { .monitor-panel { grid-template-columns: 1fr 1fr; } }
+.mon-card { background: #0a0a0c; border: 1px solid var(--border); border-radius: 16px; padding: 20px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.mon-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--border); }
+.mon-row:last-child { border: none; }
+.mon-val { color: var(--text); font-weight: 700; }
+.mon-green { color: #4ade80; }
+.mon-blue { color: #60a5fa; }
+
+/* Lists & Forms */
 .ad-list-btn { width: 100%; margin-bottom: 20px; padding: 14px; font-size: 13px; border-radius: 12px; background: var(--primary); color: #000; font-weight: 800; font-family: var(--font-mono); display: flex; justify-content: center; align-items: center; gap: 8px; cursor: pointer; transition: .2s; box-shadow: 0 4px 14px var(--primary-glow); border: none; }
 .ad-list-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--primary-glow); }
 .ad-item { padding: 16px 20px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; transition: .2s; }
@@ -36,26 +46,22 @@
 .ad-item-btns button:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-soft); }
 .ad-item-btns button.del:hover { color: #f87171; border-color: #f87171; background: rgba(239,68,68,0.1); }
 
-/* Forms */
 .ad-form { background: var(--surface-2); padding: 24px; border-radius: 16px; border: 1px solid var(--border); animation: fadeIn .3s; }
 .ad-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
 .ad-field label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-family: var(--font-mono); }
 .ad-field input, .ad-field textarea, .ad-field select { width: 100%; padding: 14px 16px; border-radius: 10px; background: var(--surface-3); border: 1px solid var(--border); color: var(--text); font-family: var(--font-mono); font-size: 13px; outline: none; transition: .2s; }
 .ad-field input:focus, .ad-field textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
-.ad-field textarea { resize: vertical; min-height: 80px; }
 .ad-form-actions { display: flex; gap: 12px; margin-top: 24px; }
 .ad-form-actions button { padding: 14px; border-radius: 10px; font-weight: 800; font-size: 13px; cursor: pointer; border: none; transition: .2s; font-family: var(--font-mono); }
 .btn-cancel { flex: 1; background: var(--surface-3); color: var(--text); border: 1px solid var(--border) !important; }
-.btn-cancel:hover { background: var(--surface-2); }
 .btn-save { flex: 2; background: var(--primary); color: #000; box-shadow: 0 4px 12px var(--primary-glow); }
-.btn-save:hover { transform: translateY(-2px); }
 </style>
 
 <div class="ad-wrap">
   <div class="ad-header">
-    <div class="ad-title"><i class="fa-solid fa-server"></i> System Admin</div>
+    <div class="ad-title"><i class="fa-solid fa-server"></i> SYSTEM MONITORING</div>
     <button class="ad-logout" onclick="window.clearSession(); window.closeAdminPanel();">
-      <i class="fa-solid fa-power-off"></i> Disconnect
+      <i class="fa-solid fa-power-off"></i> DISCONNECT
     </button>
   </div>
   
@@ -72,7 +78,7 @@
     services: { label: "Layanan", icon: "fa-cogs" },
     products: { label: "Produk", icon: "fa-cube" },
     tools: { label: "Tools API", icon: "fa-terminal" },
-    payment: { label: "Payment", icon: "fa-credit-card" },
+    users: { label: "Users", icon: "fa-users" },
     sidebar: { label: "Navigasi", icon: "fa-list-ul" },
     prefs: { label: "Konfigurasi", icon: "fa-sliders-h" }
   };
@@ -95,10 +101,16 @@
     renderList();
   }
 
-  function renderDash() {
+  async function renderDash() {
     const d = getData();
     const activeTools = (d.tools || []).filter(t => t.enabled !== false).length;
     
+    // Device Monitoring
+    let batt = "N/A", net = "N/A", mem = "N/A";
+    if(navigator.getBattery) { const b = await navigator.getBattery(); batt = Math.round(b.level*100)+"%"; }
+    if(navigator.connection) { net = navigator.connection.effectiveType; }
+    if(navigator.deviceMemory) { mem = navigator.deviceMemory + " GB"; }
+
     $("#adContent").innerHTML = `
       <div class="ad-grid">
         <div class="ad-card">
@@ -116,25 +128,31 @@
         <div class="ad-card">
           <i class="fa-solid fa-terminal ad-card-icon"></i>
           <div class="ad-card-num">${activeTools}</div>
-          <div class="ad-card-lbl">Tools Aktif</div>
+          <div class="ad-card-lbl">Tools API</div>
           <div class="ad-card-bar" style="background:#fbbf24"></div>
         </div>
         <div class="ad-card">
-          <i class="fa-solid fa-list-ul ad-card-icon"></i>
-          <div class="ad-card-num">${(d.sidebar||[]).length}</div>
-          <div class="ad-card-lbl">Menu Sidebar</div>
+          <i class="fa-solid fa-users ad-card-icon"></i>
+          <div class="ad-card-num">${(d.users||[]).length}</div>
+          <div class="ad-card-lbl">Admin Users</div>
           <div class="ad-card-bar" style="background:#a78bfa"></div>
         </div>
       </div>
-      
-      <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:16px; padding:20px;">
-        <div style="font-size:12px; font-family:var(--font-mono); color:var(--muted); display:flex; justify-content:space-between; margin-bottom:12px;">
-          <span>SYSTEM STATUS</span>
-          <span style="color:#4ade80;"><i class="fa-solid fa-circle" style="font-size:8px; margin-right:4px;"></i> ONLINE</span>
+
+      <div class="monitor-panel">
+        <div class="mon-card">
+          <div style="font-weight:800; color:var(--text); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-microchip mon-blue"></i> DEVICE INFO</div>
+          <div class="mon-row"><span>Battery Level</span><span class="mon-val">${batt}</span></div>
+          <div class="mon-row"><span>Network Type</span><span class="mon-val">${net}</span></div>
+          <div class="mon-row"><span>Device RAM</span><span class="mon-val">${mem}</span></div>
+          <div class="mon-row"><span>Platform</span><span class="mon-val">${navigator.platform || "Mobile"}</span></div>
         </div>
-        <div style="font-size:12px; font-family:var(--font-mono); color:var(--muted); display:flex; justify-content:space-between;">
-          <span>DATABASE CONNECTION</span>
-          <span style="color:#4ade80;">GIST CONNECTED</span>
+        <div class="mon-card">
+          <div style="font-weight:800; color:var(--text); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-server mon-green"></i> SYSTEM STATUS</div>
+          <div class="mon-row"><span>API Connection</span><span class="mon-val mon-green">ONLINE</span></div>
+          <div class="mon-row"><span>Database (Gist)</span><span class="mon-val mon-green">CONNECTED</span></div>
+          <div class="mon-row"><span>Session Auth</span><span class="mon-val mon-green">ACTIVE</span></div>
+          <div class="mon-row"><span>Uptime</span><span class="mon-val">${Math.floor(performance.now()/1000)}s</span></div>
         </div>
       </div>
     `;
@@ -143,13 +161,13 @@
   function renderList() {
     const list = getData()[curTab] || [];
     $("#adContent").innerHTML = `
-      <button class="ad-list-btn" data-add><i class="fa-solid fa-plus"></i> Tambah Data Baru</button>
+      <button class="ad-list-btn" data-add><i class="fa-solid fa-plus"></i> TAMBAH DATA BARU</button>
       <div>
         ${list.map((it,i) => `
         <div class="ad-item">
           <div class="ad-item-info">
-            <b>${esc(it.name||it.label||it.id)}</b>
-            <small>${esc(it.price||it.cat||it.desc||it.value||"")}</small>
+            <b>${esc(it.name||it.label||it.username||it.id)}</b>
+            <small>${curTab === 'users' ? (it.role || 'Admin') : esc(it.price||it.cat||it.desc||it.value||"")}</small>
           </div>
           <div class="ad-item-btns">
             ${curTab === 'tools' ? `<button data-toggle="${i}" title="Toggle Status"><i class="fa-solid ${it.enabled !== false ? 'fa-toggle-on' : 'fa-toggle-off'}"></i></button>` : ''}
@@ -180,14 +198,23 @@
     const isNew = editing.idx === -1;
     const data = isNew ? {} : getData()[curTab][editing.idx];
     
-    let fields = `
-      <div class="ad-field"><label>Nama / Label</label><input id="fName" value="${esc(data.name||data.label||"")}" placeholder="..."></div>
-      <div class="ad-field"><label>Harga / Target Link / Kategori</label><input id="fPrice" value="${esc(data.price||data.target||data.cat||"")}" placeholder="..."></div>
-      <div class="ad-field"><label>Deskripsi / Icon Class (FontAwesome)</label><textarea id="fDesc" rows="2" placeholder="fa-solid fa-box">${esc(data.description||data.desc||data.icon||"")}</textarea></div>
-    `;
-
-    if (curTab === "tools") {
-      fields += `<div class="ad-field"><label>API Endpoint URL</label><input id="fApi" value="${esc(data.api||"")}" placeholder="https://..."></div>`;
+    let fields = "";
+    
+    if (curTab === "users") {
+      fields = `
+        <div class="ad-field"><label>Username</label><input id="fName" value="${esc(data.username||"")}" placeholder="admin_baru"></div>
+        <div class="ad-field"><label>Password</label><input id="fPrice" value="${esc(data.password||"")}" placeholder="password123"></div>
+        <div class="ad-field"><label>Role</label><input id="fDesc" value="${esc(data.role||"Admin")}" placeholder="Admin"></div>
+      `;
+    } else {
+      fields = `
+        <div class="ad-field"><label>Nama / Label</label><input id="fName" value="${esc(data.name||data.label||"")}" placeholder="..."></div>
+        <div class="ad-field"><label>Harga / Target Link / Kategori</label><input id="fPrice" value="${esc(data.price||data.target||data.cat||"")}" placeholder="..."></div>
+        <div class="ad-field"><label>Deskripsi / Icon Class (FontAwesome)</label><textarea id="fDesc" rows="2" placeholder="fa-solid fa-box">${esc(data.description||data.desc||data.icon||"")}</textarea></div>
+      `;
+      if (curTab === "tools") {
+        fields += `<div class="ad-field"><label>API Endpoint URL</label><input id="fApi" value="${esc(data.api||"")}" placeholder="https://..."></div>`;
+      }
     }
 
     $("#adContent").innerHTML = `
@@ -206,16 +233,25 @@
     $("#fCancel").onclick = () => { editing = null; render(); };
     $("#fSave").onclick = async () => {
       const obj = { ...data };
-      obj.name = $("#fName").value;
-      if(curTab==='sidebar') obj.label = $("#fName").value;
       
-      if(curTab==='sidebar') obj.target = $("#fPrice").value; else obj.price = $("#fPrice").value;
-      if(curTab==='tools') obj.cat = $("#fPrice").value;
+      if (curTab === "users") {
+        obj.username = $("#fName").value;
+        obj.password = $("#fPrice").value;
+        obj.role = $("#fDesc").value;
+        if(!obj.username || !obj.password) { toast("Username & Password wajib!", "error"); return; }
+      } else {
+        obj.name = $("#fName").value;
+        if(curTab==='sidebar') obj.label = $("#fName").value;
+        
+        if(curTab==='sidebar') obj.target = $("#fPrice").value; else obj.price = $("#fPrice").value;
+        if(curTab==='tools') obj.cat = $("#fPrice").value;
+        
+        if(curTab==='sidebar') obj.desc = $("#fDesc").value; else obj.description = $("#fDesc").value;
+        if(curTab==='tools') obj.desc = $("#fDesc").value;
+        if(curTab==='tools') obj.api = $("#fApi").value;
+      }
       
-      if(curTab==='sidebar') obj.desc = $("#fDesc").value; else obj.description = $("#fDesc").value;
-      if(curTab==='tools') obj.desc = $("#fDesc").value;
-      if(curTab==='tools') obj.api = $("#fApi").value;
-      
+      if (!getData()[curTab]) getData()[curTab] = [];
       if (isNew) getData()[curTab].push(obj);
       else getData()[curTab][editing.idx] = obj;
       
