@@ -1,4 +1,4 @@
-/* MSI ASTRA v7.3 - Core Script */
+/* MSI ASTRA v8.0 - Core Script */
 const CONFIG = {
   api: { baseUrl: "https://msi-astra-worker.muhammadbaimab.workers.dev" },
   admin: { username: "wthf_b6", password: "4_rXEgVV5!_t8cq" }
@@ -218,7 +218,7 @@ async function openFullPage(id) {
         s.parentNode.replaceChild(n, s);
       });
     } catch(e) {
-      body.innerHTML = `<div style="padding:40px;text-align:center;color:var(--muted)">Halaman <b>${id}.html</b> tidak ditemukan di folder pages.</div>`;
+      body.innerHTML = `<div style="padding:40px;text-align:center;color:var(--muted)">Halaman <b>${id}.html</b> tidak ditemukan.</div>`;
     }
   }
 }
@@ -237,22 +237,19 @@ function checkIsAdmin() {
   return IS_ADMIN;
 }
 
-function applyAdminMode() {
-  renderSidebar();
-}
+function applyAdminMode() { renderSidebar(); }
 
 function openAdminLogin() { $("#adminLoginModal").classList.add("show"); }
 function closeAdminLogin() { $("#adminLoginModal").classList.remove("show"); }
 
-// Menggunakan Full Page untuk Admin Panel
 async function openAdminPanel() {
   const fp = $("#fullpage"), title = $("#fullpageTitle"), subtitle = $("#fullpageSubtitle"), body = $("#fullpageBody");
   if (!fp || !title || !body) return;
   
-  title.textContent = "ADMIN TOOLS";
-  if(subtitle) subtitle.textContent = "Pusat Kendali Website";
+  title.textContent = "ADMIN WORKSPACE";
+  if(subtitle) subtitle.textContent = "MSI ASTRA · DEVELOPER CONTROL CENTER";
   
-  body.innerHTML = `<div style="padding:60px 20px;text-align:center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i></div>`;
+  body.innerHTML = `<div style="padding:60px 20px;text-align:center"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--primary)"></i></div>`;
   fp.classList.add("show");
   document.body.classList.add("no-scroll");
 
@@ -266,7 +263,7 @@ async function openAdminPanel() {
       s.parentNode.replaceChild(n, s);
     });
   } catch(e) {
-    body.innerHTML = `<div style="padding:20px;color:red;text-align:center">Gagal memuat admin.html</div>`;
+    body.innerHTML = `<div style="padding:20px;color:#f87171;text-align:center">Gagal memuat admin.html</div>`;
   }
 }
 
@@ -311,7 +308,6 @@ window.clearSession = () => { localStorage.removeItem(SESSION_KEY); IS_ADMIN = f
   checkIsAdmin();
   await refreshAll();
 
-  // Events
   $("#sidebarToggle").onclick = () => { $("#sidebar").classList.add("show"); $("#sidebarOverlay").classList.add("show"); };
   $("#sidebarClose").onclick = () => { $("#sidebar").classList.remove("show"); $("#sidebarOverlay").classList.remove("show"); };
   $("#sidebarOverlay").onclick = () => { $("#sidebar").classList.remove("show"); $("#sidebarOverlay").classList.remove("show"); };
@@ -346,11 +342,7 @@ window.clearSession = () => { localStorage.removeItem(SESSION_KEY); IS_ADMIN = f
     if (e.target.closest("#qrisClose")) $("#qrisModal").classList.remove("show");
 
     const copy = e.target.closest("[data-copy]");
-    if (copy) {
-      navigator.clipboard.writeText(copy.dataset.copy);
-      toast("Disalin", "success");
-      return;
-    }
+    if (copy) { navigator.clipboard.writeText(copy.dataset.copy); toast("Disalin", "success"); return; }
     const qris = e.target.closest("[data-pay='qris']");
     if (qris) {
       const p = CLOUD_DATA.payment.find(x => x.id === qris.dataset.id);
