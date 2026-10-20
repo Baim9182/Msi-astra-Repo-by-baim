@@ -1,217 +1,74 @@
 <style>
-.tw-wrap{max-width:960px;margin:0 auto;padding:4px 0 40px}
-.tw-header{padding:14px 0 18px;border-bottom:1px solid var(--border);margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
-.tw-title{font-size:22px;font-weight:800;letter-spacing:-.4px}
-.tw-title .accent{background:linear-gradient(120deg,var(--primary),var(--secondary));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.tw-sub{font-size:11.5px;color:var(--muted);margin-top:4px;font-family:var(--font-mono)}
-.tw-count{font-size:11px;padding:6px 12px;border-radius:999px;background:var(--primary-soft);color:var(--primary);border:1px solid var(--border-strong);font-family:var(--font-mono);font-weight:700;flex-shrink:0}
-.tw-search{position:relative;margin-bottom:14px}
-.tw-search i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted-2);font-size:13px}
-.tw-search input{width:100%;padding:13px 14px 13px 42px;border-radius:14px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:12.5px;outline:none}
-.tw-search input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
-.tw-cats{display:flex;gap:7px;overflow-x:auto;padding-bottom:10px;margin-bottom:18px;scrollbar-width:none}
-.tw-cats::-webkit-scrollbar{display:none}
-.tw-cat{flex-shrink:0;padding:9px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--border);font-size:11.5px;font-weight:600;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
-.tw-cat.active{background:var(--primary-soft);color:var(--primary);border-color:var(--primary)}
-.tw-cat i{font-size:11px}
-.tw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px}
-@media(min-width:640px){.tw-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}}
-.tw-card{padding:16px 10px;border-radius:16px;background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:all .25s cubic-bezier(.16,1,.3,1);display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;position:relative;overflow:hidden}
-.tw-card:active{transform:scale(.95);border-color:var(--primary);background:var(--surface-2)}
-.tw-icon{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;font-size:22px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary);flex-shrink:0;transition:transform .25s}
-.tw-card:active .tw-icon{transform:scale(1.1)}
-.tw-name{font-size:12.5px;font-weight:700;line-height:1.3;letter-spacing:-.1px}
-.tw-desc{font-size:10.5px;color:var(--muted-2);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:3px}
-.tw-empty{grid-column:1/-1;padding:40px 20px;text-align:center;border:1px dashed var(--border-strong);border-radius:16px}
-.tw-empty i{font-size:32px;color:var(--muted-2);margin-bottom:12px}
-.tw-empty p{font-size:12.5px;color:var(--muted)}
-.tw-modal{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.88);backdrop-filter:blur(8px)}
-.tw-modal.show{display:flex;animation:twFade .25s ease}
-@keyframes twFade{from{opacity:0}to{opacity:1}}
-.tw-box{width:100%;max-width:460px;background:var(--surface-2);border-radius:22px;border:1px solid var(--border-strong);padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.7);max-height:90vh;overflow-y:auto;position:relative;animation:twIn .35s cubic-bezier(.16,1,.3,1)}
-@keyframes twIn{from{opacity:0;transform:scale(.94) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.tw-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:11px;background:var(--surface-3);border:1px solid var(--border);display:grid;place-items:center;color:var(--muted);cursor:pointer;z-index:2}
-.tw-head{display:flex;align-items:center;gap:14px;margin-bottom:16px;padding-right:44px}
-.tw-head .tw-icon{width:56px;height:56px;font-size:24px}
-.tw-htitle{font-size:16px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px}
-.tw-hsub{font-size:11.5px;color:var(--muted);line-height:1.5}
-.tw-field{display:flex;flex-direction:column;gap:7px;margin-bottom:12px}
-.tw-field label{font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;font-family:var(--font-mono)}
-.tw-field input,.tw-field select{width:100%;padding:12px 14px;border-radius:12px;background:var(--surface-3);border:1px solid var(--border-strong);color:var(--text);font-family:inherit;font-size:13px;outline:none}
-.tw-field input:focus,.tw-field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
-.tw-result{margin-top:16px;padding:14px;border-radius:14px;background:var(--surface-3);border:1px solid var(--border);display:none}
-.tw-result.show{display:block}
-.tw-rtitle{font-size:10.5px;font-weight:700;color:var(--primary);letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px;font-family:var(--font-mono);display:flex;align-items:center;gap:6px}
-.tw-rimg{width:100%;border-radius:10px;margin-bottom:10px;border:1px solid var(--border);display:block}
-.tw-rlink{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;font-size:12px}
-.tw-rlink a{color:var(--primary);text-decoration:none;font-weight:600;display:flex;align-items:center;gap:6px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px}
-.tw-rlink button{padding:6px 10px;border-radius:8px;background:var(--primary);color:#000;border:none;font-size:10.5px;font-weight:700;cursor:pointer;font-family:var(--font-mono);flex-shrink:0}
-.tw-rjson{padding:12px;border-radius:10px;background:rgba(0,0,0,.4);border:1px solid var(--border);font-family:var(--font-mono);font-size:11px;line-height:1.5;color:var(--muted);max-height:220px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
-.tw-error{padding:14px;border-radius:12px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;font-size:12px;line-height:1.6}
-.tw-loading{padding:30px;text-align:center}
-.tw-loading i{font-size:24px;color:var(--primary);animation:twSpin 1s linear infinite}
-@keyframes twSpin{to{transform:rotate(360deg)}}
-.tw-loading p{margin-top:10px;font-size:11.5px;color:var(--muted);font-family:var(--font-mono)}
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;padding:10px 0}
+.tool-card{padding:16px 10px;border-radius:16px;background:var(--surface);border:1px solid var(--border);cursor:pointer;text-align:center;transition:all .2s}
+.tool-card:active{transform:scale(.95);border-color:var(--primary)}
+.tool-icon{width:48px;height:48px;margin:0 auto 10px;border-radius:14px;background:var(--surface-3);display:grid;place-items:center;font-size:22px;color:var(--primary)}
+.tool-name{font-size:12px;font-weight:700}
 </style>
 
-<div class="tw-wrap">
-  <div class="tw-header">
-    <div>
-      <div class="tw-title">Semua <span class="accent">Tools</span></div>
-      <div class="tw-sub">Downloader · Maker · Image · Web · Info</div>
-    </div>
-    <div class="tw-count" id="twCount">0</div>
-  </div>
-  <div class="tw-search">
-    <i class="fa-solid fa-magnifying-glass"></i>
-    <input type="text" id="twSearch" placeholder="Cari tool...">
-  </div>
-  <div class="tw-cats" id="twCats"></div>
-  <div class="tw-grid" id="twGrid"></div>
+<div style="margin-bottom:20px">
+  <h2 style="font-size:20px;font-weight:800">Tools Online</h2>
+  <p style="font-size:12px;color:var(--muted)">Kumpulan alat bantu digital.</p>
 </div>
+<div class="tool-grid" id="toolsGrid"></div>
 
-<div class="tw-modal" id="twModal">
-  <div class="tw-box" id="twBox"></div>
+<div class="modal" id="toolModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="document.getElementById('toolModal').classList.remove('show')"><i class="fa-solid fa-xmark"></i></button>
+    <h3 id="tmTitle" style="margin-bottom:14px;font-size:16px;color:var(--primary)">Tool Name</h3>
+    <div id="tmFields"></div>
+    <button class="btn btn-primary btn-block" id="tmRun" style="margin-top:12px"><i class="fa-solid fa-play"></i> Proses</button>
+    <div id="tmResult" style="margin-top:14px;font-size:12px;color:var(--muted)"></div>
+  </div>
 </div>
 
 <script>
 (function(){
-  const $ = window.$;
-  const esc = window.esc;
-  const toast = window.toast;
-  const getCloudData = window.getCloudData;
+  const $ = window.$, getData = window.getCloudData, toast = window.toast;
+  const grid = $("#toolsGrid");
+  if(!grid) return;
 
-  if (!$ || !getCloudData) {
-    console.error("[Tools] window.$ atau getCloudData tidak ada");
-    return;
-  }
+  const tools = (getData()?.tools || []).filter(t => t.enabled !== false);
 
-  const CATS = {
-    all: { label: "Semua", icon: "fa-layer-group" },
-    downloader: { label: "Downloader", icon: "fa-download" },
-    maker: { label: "Maker", icon: "fa-wand-magic-sparkles" },
-    image: { label: "Image", icon: "fa-image" },
-    web: { label: "Web", icon: "fa-globe" },
-    info: { label: "Info", icon: "fa-circle-info" }
-  };
-  let curCat = "all", q = "";
+  grid.innerHTML = tools.map(t => `
+    <div class="tool-card" data-id="${t.id}">
+      <div class="tool-icon" style="color:${t.color||'var(--primary)'}"><i class="${t.icon}"></i></div>
+      <div class="tool-name">${t.name}</div>
+    </div>
+  `).join("") || '<p style="color:var(--muted);grid-column:1/-1;text-align:center">Belum ada tools aktif.</p>';
 
-  function getTools(){
-    const d = getCloudData();
-    return (d?.tools || []).filter(t => t.enabled !== false);
-  }
+  grid.querySelectorAll(".tool-card").forEach(c => c.onclick = () => {
+    const t = tools.find(x => x.id === c.dataset.id);
+    const modal = $("#toolModal");
+    $("#tmTitle").textContent = t.name;
+    $("#tmResult").innerHTML = "";
+    
+    // Render Input Fields
+    $("#tmFields").innerHTML = (t.params||[]).map(p => `
+      <div class="field"><label>${p.label||p.key}</label><input type="${p.type==='url'?'url':'text'}" data-p="${p.key}" placeholder="${p.placeholder||''}"></div>
+    `).join("");
 
-  function renderCats(){
-    const el = $("#twCats"); if (!el) return;
-    el.innerHTML = Object.entries(CATS).map(([k, v]) =>
-      `<button class="tw-cat ${k === curCat ? 'active' : ''}" data-cat="${k}"><i class="fa-solid ${v.icon}"></i> ${v.label}</button>`
-    ).join("");
-    el.querySelectorAll("[data-cat]").forEach(b => b.onclick = () => { curCat = b.dataset.cat; renderCats(); renderTools(); });
-  }
-
-  function renderTools(){
-    const grid = $("#twGrid"); if (!grid) return;
-    let list = getTools();
-    if (curCat !== "all") list = list.filter(t => t.cat === curCat);
-    if (q) { const s = q.toLowerCase(); list = list.filter(t => (t.name + " " + (t.desc || "")).toLowerCase().includes(s)); }
-    const cnt = $("#twCount"); if (cnt) cnt.textContent = list.length + " tools";
-    if (!list.length) { grid.innerHTML = `<div class="tw-empty"><i class="fa-solid fa-folder-open"></i><p>Belum ada tools${curCat !== "all" ? " di kategori ini" : ""}.</p></div>`; return; }
-    grid.innerHTML = list.map(t => `
-      <div class="tw-card" data-tool="${esc(t.id)}">
-        <div class="tw-icon" style="${t.color ? `color:${esc(t.color)};border-color:${esc(t.color)}44` : ''}"><i class="${esc(t.icon || 'fa-solid fa-toolbox')}"></i></div>
-        <div style="min-width:0;width:100%">
-          <div class="tw-name">${esc(t.name)}</div>
-          <div class="tw-desc">${esc(t.desc || "")}</div>
-        </div>
-      </div>`).join("");
-    grid.querySelectorAll("[data-tool]").forEach(c => c.onclick = () => openTool(c.dataset.tool));
-  }
-
-  function openTool(id){
-    const tool = getTools().find(t => t.id === id); if (!tool) return;
-    const box = $("#twBox"), modal = $("#twModal"); if (!box || !modal) return;
-    box.innerHTML = `
-      <button class="tw-close" id="twClose"><i class="fa-solid fa-xmark"></i></button>
-      <div class="tw-head">
-        <div class="tw-icon" style="${tool.color ? `color:${esc(tool.color)};border-color:${esc(tool.color)}44` : ''}"><i class="${esc(tool.icon || 'fa-solid fa-toolbox')}"></i></div>
-        <div style="flex:1;min-width:0">
-          <div class="tw-htitle">${esc(tool.name)}</div>
-          <div class="tw-hsub">${esc(tool.desc || "")}</div>
-        </div>
-      </div>
-      ${(tool.params || []).map(p => `
-        <div class="tw-field">
-          <label>${esc(p.label || p.key)}</label>
-          <input type="${p.type === 'url' ? 'url' : 'text'}" data-param="${esc(p.key)}" placeholder="${esc(p.placeholder || '')}">
-        </div>`).join("")}
-      <button class="btn btn-primary btn-block" id="twSubmit" style="margin-top:8px"><i class="fa-solid fa-play"></i> Proses</button>
-      <div class="tw-result" id="twResult"></div>`;
-    box.querySelector("#twClose").onclick = closeTool;
-    box.querySelector("#twSubmit").onclick = () => runTool(tool, box);
-    modal.classList.add("show"); document.body.classList.add("no-scroll");
-  }
-
-  function closeTool(){ $("#twModal")?.classList.remove("show"); document.body.classList.remove("no-scroll"); }
-
-  async function runTool(tool, box){
-    const resEl = box.querySelector("#twResult"), btn = box.querySelector("#twSubmit");
-    const params = {};
-    for (const p of (tool.params || [])){
-      const inp = box.querySelector(`[data-param="${p.key}"]`);
-      const v = (inp?.value || "").trim();
-      if (p.required !== false && !v) { toast(`Isi ${p.label || p.key} dulu`, "error"); return; }
-      if (v) params[p.key] = v;
-    }
-    const url = new URL(tool.api);
-    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-    if (tool.extra) Object.entries(tool.extra).forEach(([k, v]) => url.searchParams.set(k, v));
-
-    resEl.innerHTML = `<div class="tw-loading"><i class="fa-solid fa-spinner"></i><p>Memproses...</p></div>`;
-    resEl.classList.add("show"); btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading...';
-
-    try {
-      const res = await fetch(url.toString(), { method: tool.method || "GET", headers: { "Accept": "application/json" } });
-      if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-      const ct = res.headers.get("content-type") || "";
-      let data;
-      if (ct.includes("application/json")) data = await res.json();
-      else { const txt = await res.text(); try { data = JSON.parse(txt); } catch { data = { result: txt }; } }
-      renderResult(resEl, data);
-    } catch (e) {
-      resEl.innerHTML = `<div class="tw-error"><b>Gagal:</b> ${esc(e.message || "Unknown error")}</div>`;
-    } finally {
-      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-play"></i> Proses';
-    }
-  }
-
-  function renderResult(el, data){
-    const urls = [], images = [];
-    (function walk(o, p = ""){
-      if (!o) return;
-      if (typeof o === "string"){
-        if (/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(o)) images.push({ url: o, path: p });
-        else if (/^https?:\/\//i.test(o)) urls.push({ url: o, path: p });
-        return;
+    // Run Button Logic
+    $("#tmRun").onclick = async () => {
+      const url = new URL(t.api);
+      (t.params||[]).forEach(p => {
+        const el = $("#tmFields").querySelector(`[data-p="${p.key}"]`);
+        if(el && el.value) url.searchParams.set(p.key, el.value);
+      });
+      
+      $("#tmResult").innerHTML = `<div style="text-align:center;padding:20px"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><br><br>Memproses...</div>`;
+      $("#tmRun").disabled = true;
+      
+      try {
+        const r = await fetch(url.toString());
+        const j = await r.json();
+        $("#tmResult").innerHTML = `<pre style="white-space:pre-wrap;font-size:10.5px;max-height:200px;overflow-y:auto;background:#000;padding:12px;border-radius:10px;border:1px solid var(--border);color:#4ade80">${JSON.stringify(j,null,2)}</pre>`;
+      } catch(e) {
+        $("#tmResult").innerHTML = `<p style="color:#f87171;text-align:center">Gagal: ${e.message}</p>`;
       }
-      if (typeof o !== "object") return;
-      for (const [k, v] of Object.entries(o)) walk(v, p ? `${p}.${k}` : k);
-    })(data);
-    let html = `<div class="tw-rtitle"><i class="fa-solid fa-check-circle"></i> Hasil</div>`;
-    if (images.length) html += images.slice(0, 3).map(i => `<img class="tw-rimg" src="${esc(i.url)}" alt="Result" onerror="this.style.display='none'">`).join("");
-    if (urls.length) html += urls.slice(0, 5).map(u => `<div class="tw-rlink"><a href="${esc(u.url)}" target="_blank" rel="noopener"><i class="fa-solid fa-link"></i> ${esc(u.path || "link")}</a><button data-copy="${esc(u.url)}">Copy</button></div>`).join("");
-    if (!images.length && !urls.length) html += `<div class="tw-rjson">${esc(JSON.stringify(data, null, 2))}</div>`;
-    el.innerHTML = html;
-    el.querySelectorAll("[data-copy]").forEach(b => b.onclick = () => {
-      try { navigator.clipboard.writeText(b.dataset.copy); toast("Disalin.", "success"); } catch (e) {}
-    });
-  }
-
-  const se = $("#twSearch");
-  if (se) se.addEventListener("input", e => { q = e.target.value.trim(); renderTools(); });
-  $("#twModal")?.addEventListener("click", e => { if (e.target.id === "twModal") closeTool(); });
-
-  renderCats();
-  renderTools();
+      $("#tmRun").disabled = false;
+    };
+    modal.classList.add("show");
+  });
 })();
 </script>
